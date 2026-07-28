@@ -95,5 +95,93 @@
     return { segmente, summe, warnungen };
   }
 
-  return { addTage, tageKalender, tageBank360, jahresSegmente, istSchaltjahr, round2, heute, zinsSegmente, halbjahresSegmente };
+  function berechneKonto(konto, stichtag, tabelle) {
+    const warnungen = [];
+    const staffel = [];
+    const verrechnungen = [];
+    const alle = (konto.buchungen || []).filter((b) => b.datum <= stichtag);
+    const ignorierteBuchungen = (konto.buchungen || []).length - alle.length;
+
+    const posten = alle.filter((b) => b.typ !== 'zahlung').map((b) => {
+      const verzinst = b.verzinsung && b.verzinsung.art !== 'keine';
+      return {
+        buchung: b, rest: round2(b.betrag), zinsOffen: 0,
+        abgerechnetBis: verzinst ? addTage(b.verzinsung.beginn, -1) : null,
+      };
+    });
+    const zahlungen = alle.filter((b) => b.typ === 'zahlung');
+    const nachDatum = (a, b) => (a.buchung.datum < b.buchung.datum ? -1 : 1);
+    const vom = (typ) => posten.filter((p) => p.buchung.typ === typ).sort(nachDatum);
+
+    function accrueBis(ziel) {
+      for (const p of posten) {
+        if (p.abgerechnetBis === null || p.rest <= 0) continue;
+        const v = p.buchung.verzinsung;
+        const ende = v.ende && v.ende < ziel ? v.ende : ziel;
+        if (ende <= p.abgerechnetBis) continue;
+        const r = zinsSegmente({ basis: p.rest, von: p.abgerechnetBis, bis: ende,
+          art: v.art, satz: v.satz, methode: v.methode, tabelle });
+        for (const s of r.segmente) staffel.push({ forderungId: p.buchung.id, basis: p.rest, ...s });
+        for (const w of r.warnungen) if (!warnungen.includes(w)) warnungen.push(w);
+        p.zinsOffen = round2(p.zinsOffen + r.summe);
+        p.abgerechnetBis = ende;
+      }
+    }
+
+    let ueberzahlung = 0;
+    for (const z of zahlungen.sort((a, b) => (a.datum < b.datum ? -1 : a.datum > b.datum ? 1 : 0))) {
+      accrueBis(addTage(z.datum, -1));
+      let rest = round2(z.betrag);
+      const stufe = (liste, feld) => {
+        let sum = 0;
+        for (const p of liste) {
+          if (rest <= 0) break;
+          const offen = p[feld];
+          if (offen <= 0) continue;
+          const t = Math.min(offen, rest);
+          p[feld] = round2(offen - t);
+          rest = round2(rest - t);
+          sum = round2(sum + t);
+        }
+        return sum;
+      };
+      const aufKosten = stufe(vom('nebenforderung'), 'rest');
+      const aufZinsen = round2(stufe(vom('zinsforderung'), 'rest') +
+        stufe(posten.filter((p) => p.zinsOffen > 0).sort(nachDatum), 'zinsOffen'));
+      const aufHauptforderung = stufe(vom('hauptforderung'), 'rest');
+      if (rest > 0) {
+        ueberzahlung = round2(ueberzahlung + rest);
+        if (!warnungen.some((w) => w.includes('Überzahlung'))) {
+          warnungen.push('Überzahlung: Zahlungen übersteigen die offenen Forderungen.');
+        }
+      }
+      verrechnungen.push({ zahlungId: z.id, datum: z.datum, betrag: round2(z.betrag),
+        aufKosten, aufZinsen, aufHauptforderung, ueberschuss: rest > 0 ? rest : 0 });
+    }
+    accrueBis(stichtag);
+
+    const summe = (typ, feld) => round2(vom(typ).reduce((s, p) =>
+      s + (feld === 'gesamt' ? p.buchung.betrag : p.rest), 0));
+    const laufendGesamt = round2(staffel.reduce((s, x) => s + x.zins, 0));
+    const laufendOffen = round2(posten.reduce((s, p) => s + p.zinsOffen, 0));
+    const summen = {
+      hauptforderung: { gesamt: summe('hauptforderung', 'gesamt'), offen: summe('hauptforderung', 'offen') },
+      nebenforderung: { gesamt: summe('nebenforderung', 'gesamt'), offen: summe('nebenforderung', 'offen') },
+      zinsforderung: { gesamt: summe('zinsforderung', 'gesamt'), offen: summe('zinsforderung', 'offen') },
+      laufendeZinsen: { gesamt: laufendGesamt, offen: laufendOffen },
+      zahlungen: round2(zahlungen.reduce((s, z) => s + z.betrag, 0)),
+      ueberzahlung,
+      saldo: 0,
+    };
+    summen.saldo = round2(summen.hauptforderung.offen + summen.nebenforderung.offen +
+      summen.zinsforderung.offen + summen.laufendeZinsen.offen - ueberzahlung);
+
+    return {
+      stichtag, staffel, verrechnungen, warnungen, ignorierteBuchungen, summen,
+      posten: posten.map((p) => ({ id: p.buchung.id, typ: p.buchung.typ, datum: p.buchung.datum,
+        text: p.buchung.text, betrag: round2(p.buchung.betrag), rest: p.rest, zinsOffen: p.zinsOffen })),
+    };
+  }
+
+  return { addTage, tageKalender, tageBank360, jahresSegmente, istSchaltjahr, round2, heute, zinsSegmente, halbjahresSegmente, berechneKonto };
 });
