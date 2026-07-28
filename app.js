@@ -786,6 +786,108 @@ if (typeof document !== 'undefined') {
     document.getElementById('btnDrucken').addEventListener('click', () => window.print());
   }
 
+  function basiszinsFehlerElement() {
+    let el = document.getElementById('basiszinsFehler');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'basiszinsFehler';
+      el.className = 'fehlerbereich';
+      el.setAttribute('role', 'alert');
+      document.getElementById('basiszinsForm').insertAdjacentElement('afterend', el);
+    }
+    return el;
+  }
+
+  App.renderBasiszins = function () {
+    const body = document.getElementById('basiszinsBody');
+    body.innerHTML = '';
+    const overrides = App.state.basiszinsOverrides || [];
+    const overrideAbs = new Set(overrides.map((o) => o.ab));
+    const eintraege = Basiszins.mitOverrides(overrides)
+      .slice()
+      .sort((a, b) => (a.ab < b.ab ? 1 : a.ab > b.ab ? -1 : 0));
+
+    eintraege.forEach((eintrag) => {
+      const tr = document.createElement('tr');
+
+      const tdAb = document.createElement('td');
+      tdAb.textContent = formatDatum(eintrag.ab);
+      tr.appendChild(tdAb);
+
+      const tdSatz = document.createElement('td');
+      tdSatz.className = 'num';
+      tdSatz.textContent = formatProzent(eintrag.satz);
+      tr.appendChild(tdSatz);
+
+      const tdAktionen = document.createElement('td');
+      tdAktionen.className = 'aktionen-spalte';
+
+      const istOverride = overrideAbs.has(eintrag.ab);
+      const badge = document.createElement('span');
+      badge.className = 'badge' + (istOverride ? ' badge--zahlung' : '');
+      badge.textContent = istOverride ? 'angepasst' : 'eingebaut';
+      tdAktionen.appendChild(badge);
+
+      if (istOverride) {
+        const btnZuruecksetzen = document.createElement('button');
+        btnZuruecksetzen.type = 'button';
+        btnZuruecksetzen.className = 'btn btn--sekundaer';
+        btnZuruecksetzen.textContent = 'Zurücksetzen';
+        btnZuruecksetzen.addEventListener('click', () => {
+          App.state.basiszinsOverrides = (App.state.basiszinsOverrides || [])
+            .filter((o) => o.ab !== eintrag.ab);
+          App.speichern();
+          App.renderBasiszins();
+        });
+        tdAktionen.appendChild(btnZuruecksetzen);
+      }
+
+      tr.appendChild(tdAktionen);
+      body.appendChild(tr);
+    });
+  };
+
+  function istHalbjahresStichtag(iso) {
+    const m = /^\d{4}-(\d{2})-(\d{2})$/.exec(iso || '');
+    if (!m) return false;
+    const [, monat, tag] = m;
+    return (monat === '01' && tag === '01') || (monat === '07' && tag === '01');
+  }
+
+  function initBasiszinsAnsicht() {
+    const abInput = document.getElementById('basiszinsAb');
+    const satzInput = document.getElementById('basiszinsSatz');
+    document.getElementById('basiszinsForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const fehlerEl = basiszinsFehlerElement();
+      fehlerEl.textContent = '';
+
+      const ab = parseDatum(abInput.value);
+      const satz = parseBetrag(satzInput.value);
+      const fehler = [];
+      if (!ab) {
+        fehler.push('Bitte ein gültiges Datum angeben.');
+      } else if (!istHalbjahresStichtag(ab)) {
+        fehler.push('Das Datum muss der 1. Januar oder 1. Juli eines Jahres sein.');
+      }
+      if (satz === null) {
+        fehler.push('Bitte einen gültigen Zinssatz angeben.');
+      }
+      if (fehler.length) {
+        fehlerEl.textContent = fehler.join(' ');
+        return;
+      }
+
+      const overrides = (App.state.basiszinsOverrides || []).filter((o) => o.ab !== ab);
+      overrides.push({ ab, satz });
+      App.state.basiszinsOverrides = overrides;
+      App.speichern();
+      abInput.value = '';
+      satzInput.value = '';
+      App.renderBasiszins();
+    });
+  }
+
   function initBuchungenAnsicht() {
     document.getElementById('btnNeuHF').addEventListener('click', () => App.oeffneBuchungDialog('hauptforderung'));
     document.getElementById('btnNeuNF').addEventListener('click', () => App.oeffneBuchungDialog('nebenforderung'));
@@ -821,6 +923,7 @@ if (typeof document !== 'undefined') {
     initKontoName();
     initBuchungenAnsicht();
     initReportAnsicht();
+    initBasiszinsAnsicht();
     App.zeigeAnsicht('konten');
   });
 
