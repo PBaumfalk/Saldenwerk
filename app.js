@@ -34,6 +34,39 @@
   }
 
   const EXPORT_BUCHUNG_TYPEN = ['hauptforderung', 'nebenforderung', 'zinsforderung', 'zahlung'];
+  const EXPORT_VERZINSUNG_ARTEN = ['fest', 'basiszins'];
+  const EXPORT_VERZINSUNG_METHODEN = ['kalender', 'bank360'];
+
+  function verzinsungFehlerText(v) {
+    if (v === null || v === undefined) return null;
+    if (typeof v !== 'object' || Array.isArray(v)) {
+      return 'Feld „verzinsung" hat ein ungültiges Format.';
+    }
+    if (v.art === 'keine') return null;
+    if (!EXPORT_VERZINSUNG_ARTEN.includes(v.art)) {
+      return `Verzinsungsart „${v.art}" ist unbekannt.`;
+    }
+    if (typeof v.satz !== 'number' || !isFinite(v.satz)) {
+      return 'Zinssatz der Verzinsung ist keine gültige Zahl.';
+    }
+    const beginn = parseDatum(v.beginn);
+    if (!beginn) {
+      return 'Verzinsungsbeginn fehlt oder ist ungültig.';
+    }
+    if (v.ende !== null && v.ende !== undefined) {
+      const ende = parseDatum(v.ende);
+      if (!ende) {
+        return 'Verzinsungsende ist ungültig.';
+      }
+      if (ende < beginn) {
+        return 'Das Ende der Verzinsung darf nicht vor dem Beginn liegen.';
+      }
+    }
+    if (!EXPORT_VERZINSUNG_METHODEN.includes(v.methode)) {
+      return `Zinsmethode „${v.methode}" ist unbekannt.`;
+    }
+    return null;
+  }
 
   function validiereExport(objekt) {
     if (!objekt || typeof objekt !== 'object' || Array.isArray(objekt)) {
@@ -69,8 +102,12 @@
         if (!parseDatum(b.datum)) {
           return { ok: false, fehler: `${buchungsBezeichnung}: ungültiges Datum.` };
         }
-        if (typeof b.betrag !== 'number' || !isFinite(b.betrag)) {
-          return { ok: false, fehler: `${buchungsBezeichnung}: Betrag ist keine gültige Zahl.` };
+        if (typeof b.betrag !== 'number' || !isFinite(b.betrag) || b.betrag <= 0) {
+          return { ok: false, fehler: `${buchungsBezeichnung}: Betrag muss eine Zahl größer als 0 sein.` };
+        }
+        const verzinsungFehler = verzinsungFehlerText(b.verzinsung);
+        if (verzinsungFehler) {
+          return { ok: false, fehler: `${buchungsBezeichnung}: ${verzinsungFehler}` };
         }
       }
     }
@@ -140,19 +177,23 @@ if (typeof document !== 'undefined') {
 
     bestaetige(text, cb) {
       const dialog = document.getElementById('confirmDialog');
-      document.getElementById('confirmText').textContent = text;
-      dialog.showModal();
       const okBtn = document.getElementById('confirmOk');
       const abbrechenBtn = document.getElementById('confirmAbbrechen');
-      function schliessen() {
+      document.getElementById('confirmText').textContent = text;
+
+      let bestaetigt = false;
+      function onOk() { bestaetigt = true; dialog.close(); }
+      function onAbbrechen() { dialog.close(); }
+      function onClose() {
         okBtn.removeEventListener('click', onOk);
         abbrechenBtn.removeEventListener('click', onAbbrechen);
-        dialog.close();
+        dialog.removeEventListener('close', onClose);
+        if (bestaetigt) cb();
       }
-      function onOk() { schliessen(); cb(); }
-      function onAbbrechen() { schliessen(); }
       okBtn.addEventListener('click', onOk);
       abbrechenBtn.addEventListener('click', onAbbrechen);
+      dialog.addEventListener('close', onClose);
+      dialog.showModal();
     },
   };
 
@@ -839,8 +880,10 @@ if (typeof document !== 'undefined') {
       ['Offene Nebenforderung', s.nebenforderung.offen],
       ['Offene Zinsforderung', s.zinsforderung.offen],
       ['Offene laufende Zinsen', s.laufendeZinsen.offen],
-      ['− Überzahlung', -s.ueberzahlung],
     ];
+    if (s.ueberzahlung > 0) {
+      zeilen.push(['− Überzahlung', -s.ueberzahlung]);
+    }
     zeilen.forEach(([label, wert]) => {
       const zeile = document.createElement('div');
       zeile.className = 'report-endsaldo__zeile';
@@ -1017,9 +1060,11 @@ if (typeof document !== 'undefined') {
       fBeginnManuell = true;
     });
 
+    document.getElementById('btnBuchungAbbrechen').addEventListener('click', () => {
+      f.dialog.close();
+    });
+
     document.getElementById('buchungForm').addEventListener('submit', (e) => {
-      const submitter = e.submitter;
-      if (!submitter || submitter.value === 'abbrechen') return;
       const fehler = validiereBuchungDialog();
       if (fehler.length) {
         e.preventDefault();

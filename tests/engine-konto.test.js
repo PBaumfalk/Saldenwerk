@@ -80,6 +80,25 @@ test('Überzahlung wird ausgewiesen', () => {
   assert.ok(r.warnungen.some((w) => w.toLowerCase().includes('überzahlung')));
 });
 
+test('Zahlung vor der ersten Forderung erzeugt Warnung', () => {
+  const konto = { buchungen: [
+    { id: 'z1', typ: 'zahlung', datum: '2024-01-01', betrag: 500, text: 'Zahlung' },
+    hf(1000, '2024-06-01', { art: 'keine' }),
+  ] };
+  const r = Engine.berechneKonto(konto, '2024-12-31', T);
+  assert.strictEqual(r.summen.hauptforderung.offen, 500);
+  assert.ok(r.warnungen.some((w) => w.includes('vor der ersten Forderung')));
+});
+
+test('Zahlung nach der Forderung erzeugt keine Warnung zu früher Zahlung', () => {
+  const konto = { buchungen: [
+    hf(1000, '2024-01-01', { art: 'keine' }),
+    { id: 'z1', typ: 'zahlung', datum: '2024-06-01', betrag: 500, text: 'Zahlung' },
+  ] };
+  const r = Engine.berechneKonto(konto, '2024-12-31', T);
+  assert.ok(!r.warnungen.some((w) => w.includes('vor der ersten Forderung')));
+});
+
 test('Buchungen nach Stichtag werden ignoriert', () => {
   const konto = { buchungen: [
     hf(100, '2024-01-01', { art: 'keine' }),

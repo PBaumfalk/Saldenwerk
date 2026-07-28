@@ -86,3 +86,61 @@ test('validiereExport: Konto ohne buchungen-Array liefert ok:false', () => {
   assert.strictEqual(ergebnis.ok, false);
   assert.ok(ergebnis.fehler);
 });
+
+test('validiereExport: verzinsung ohne beginn liefert ok:false', () => {
+  const datei = gueltigeDatei();
+  datei.konten[0].buchungen[0].verzinsung = { art: 'fest', satz: 5 };
+  const ergebnis = validiereExport(datei);
+  assert.strictEqual(ergebnis.ok, false);
+  assert.ok(ergebnis.fehler);
+});
+
+test('validiereExport: verzinsung mit Fremdwert bei art liefert ok:false', () => {
+  const datei = gueltigeDatei();
+  datei.konten[0].buchungen[0].verzinsung = { art: 'unsinn', satz: 5, beginn: '2024-01-01', methode: 'kalender' };
+  const ergebnis = validiereExport(datei);
+  assert.strictEqual(ergebnis.ok, false);
+  assert.ok(ergebnis.fehler);
+});
+
+test('validiereExport: verzinsung mit satz als String liefert ok:false', () => {
+  const datei = gueltigeDatei();
+  datei.konten[0].buchungen[0].verzinsung = { art: 'fest', satz: '5', beginn: '2024-01-01', methode: 'kalender' };
+  const ergebnis = validiereExport(datei);
+  assert.strictEqual(ergebnis.ok, false);
+  assert.ok(ergebnis.fehler);
+});
+
+test('validiereExport: verzinsung mit ende vor beginn liefert ok:false', () => {
+  const datei = gueltigeDatei();
+  datei.konten[0].buchungen[0].verzinsung = {
+    art: 'fest', satz: 5, beginn: '2024-06-01', ende: '2024-01-01', methode: 'kalender',
+  };
+  const ergebnis = validiereExport(datei);
+  assert.strictEqual(ergebnis.ok, false);
+  assert.ok(ergebnis.fehler);
+});
+
+test('validiereExport: verzinsung {art:"keine"} liefert ok:true', () => {
+  const datei = gueltigeDatei();
+  datei.konten[0].buchungen[0].verzinsung = { art: 'keine' };
+  const ergebnis = validiereExport(datei);
+  assert.strictEqual(ergebnis.ok, true);
+});
+
+test('validiereExport: vollständige fest-Verzinsung liefert ok:true', () => {
+  const datei = gueltigeDatei();
+  datei.konten[0].buchungen[0].verzinsung = {
+    art: 'fest', satz: 5, beginn: '2024-01-01', ende: null, methode: 'kalender',
+  };
+  const ergebnis = validiereExport(datei);
+  assert.strictEqual(ergebnis.ok, true);
+});
+
+test('validiereExport: betrag 0 liefert ok:false', () => {
+  const datei = gueltigeDatei();
+  datei.konten[0].buchungen[0].betrag = 0;
+  const ergebnis = validiereExport(datei);
+  assert.strictEqual(ergebnis.ok, false);
+  assert.ok(ergebnis.fehler);
+});

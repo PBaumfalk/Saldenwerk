@@ -113,6 +113,14 @@
     const nachDatum = (a, b) => (a.buchung.datum < b.buchung.datum ? -1 : 1);
     const vom = (typ) => posten.filter((p) => p.buchung.typ === typ).sort(nachDatum);
 
+    if (posten.length) {
+      const ersteForderung = posten.reduce((min, p) =>
+        (p.buchung.datum < min ? p.buchung.datum : min), posten[0].buchung.datum);
+      if (zahlungen.some((z) => z.datum < ersteForderung)) {
+        warnungen.push('Mindestens eine Zahlung liegt vor der ersten Forderung – bitte Datum prüfen.');
+      }
+    }
+
     function accrueBis(ziel) {
       for (const p of posten) {
         if (p.abgerechnetBis === null || p.rest <= 0) continue;
