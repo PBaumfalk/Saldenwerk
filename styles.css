@@ -649,6 +649,15 @@ dialog.dialog::backdrop {
   margin-bottom: 14px;
 }
 
+.fehlerbereich--erfolg {
+  color: var(--farbe-erfolg);
+}
+
+.fehlerbereich--erfolg:not(:empty) {
+  background: var(--farbe-erfolg-hell);
+  border-color: var(--farbe-erfolg);
+}
+
 .dialog__fuss {
   display: flex;
   justify-content: flex-end;

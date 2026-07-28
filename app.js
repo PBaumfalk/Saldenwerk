@@ -19,7 +19,7 @@
     return `${t}.${m}.${j}`;
   }
   function parseDatum(s) {
-    if (!s) return null;
+    if (typeof s !== 'string' || !s) return null;
     let m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s.trim());
     let j, mo, t;
     if (m) { [, j, mo, t] = m; }
@@ -32,12 +32,57 @@
     const d = new Date(iso + 'T00:00:00Z');
     return d.toISOString().slice(0, 10) === iso ? iso : null;
   }
-  return { formatEUR, parseBetrag, formatDatum, parseDatum };
+
+  const EXPORT_BUCHUNG_TYPEN = ['hauptforderung', 'nebenforderung', 'zinsforderung', 'zahlung'];
+
+  function validiereExport(objekt) {
+    if (!objekt || typeof objekt !== 'object' || Array.isArray(objekt)) {
+      return { ok: false, fehler: 'Die Datei enthält kein gültiges JSON-Objekt.' };
+    }
+    if (objekt.version !== 1) {
+      return { ok: false, fehler: 'Unbekannte oder fehlende Versionsnummer (erwartet: 1).' };
+    }
+    if (!Array.isArray(objekt.konten)) {
+      return { ok: false, fehler: 'Das Feld „konten" fehlt oder ist keine Liste.' };
+    }
+    for (let i = 0; i < objekt.konten.length; i++) {
+      const konto = objekt.konten[i];
+      const bezeichnung = `Konto ${i + 1}`;
+      if (!konto || typeof konto !== 'object') {
+        return { ok: false, fehler: `${bezeichnung}: ungültiges Format.` };
+      }
+      if (typeof konto.name !== 'string') {
+        return { ok: false, fehler: `${bezeichnung}: Feld „name" fehlt oder ist kein Text.` };
+      }
+      if (!Array.isArray(konto.buchungen)) {
+        return { ok: false, fehler: `${bezeichnung} („${konto.name}"): Feld „buchungen" fehlt oder ist keine Liste.` };
+      }
+      for (let j = 0; j < konto.buchungen.length; j++) {
+        const b = konto.buchungen[j];
+        const buchungsBezeichnung = `${bezeichnung} („${konto.name}"), Buchung ${j + 1}`;
+        if (!b || typeof b !== 'object') {
+          return { ok: false, fehler: `${buchungsBezeichnung}: ungültiges Format.` };
+        }
+        if (!EXPORT_BUCHUNG_TYPEN.includes(b.typ)) {
+          return { ok: false, fehler: `${buchungsBezeichnung}: unbekannter Buchungstyp „${b.typ}".` };
+        }
+        if (!parseDatum(b.datum)) {
+          return { ok: false, fehler: `${buchungsBezeichnung}: ungültiges Datum.` };
+        }
+        if (typeof b.betrag !== 'number' || !isFinite(b.betrag)) {
+          return { ok: false, fehler: `${buchungsBezeichnung}: Betrag ist keine gültige Zahl.` };
+        }
+      }
+    }
+    return { ok: true, fehler: null, konten: objekt.konten };
+  }
+
+  return { formatEUR, parseBetrag, formatDatum, parseDatum, validiereExport };
 });
 
 if (typeof document !== 'undefined') {
 (function () {
-  const { formatEUR, parseBetrag, formatDatum, parseDatum } = window.AppFormat;
+  const { formatEUR, parseBetrag, formatDatum, parseDatum, validiereExport } = window.AppFormat;
   const STORAGE_KEY = 'forderungskonto.v1';
 
   const App = {
@@ -149,15 +194,73 @@ if (typeof document !== 'undefined') {
     });
   }
 
-  function exportiereKonto(konto) {
-    const daten = { version: 1, konten: [konto] };
+  function ladeExportDatei(daten, dateiname) {
     const blob = new Blob([JSON.stringify(daten, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `forderungskonto-${konto.name}.json`;
+    a.download = dateiname;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  function exportiereKonto(konto) {
+    ladeExportDatei({ version: 1, konten: [konto] }, `forderungskonto-${konto.name}.json`);
+  }
+
+  function exportiereAlleKonten() {
+    ladeExportDatei({ version: 1, konten: App.state.konten }, `forderungskonten-${Engine.heute()}.json`);
+  }
+
+  function kontenMeldungElement() {
+    let el = document.getElementById('kontenMeldung');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'kontenMeldung';
+      el.className = 'fehlerbereich';
+      el.setAttribute('role', 'status');
+      document.querySelector('#view-konten .werkzeugleiste').insertAdjacentElement('afterend', el);
+    }
+    return el;
+  }
+
+  function zeigeKontenMeldung(text, istFehler) {
+    const el = kontenMeldungElement();
+    el.textContent = text;
+    el.classList.toggle('fehlerbereich--erfolg', !istFehler);
+  }
+
+  function importiereDatei(datei) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      let objekt;
+      try {
+        objekt = JSON.parse(reader.result);
+      } catch (e) {
+        zeigeKontenMeldung('Die Datei enthält kein gültiges JSON.', true);
+        return;
+      }
+      const ergebnis = validiereExport(objekt);
+      if (!ergebnis.ok) {
+        zeigeKontenMeldung(ergebnis.fehler, true);
+        return;
+      }
+      const importierteKonten = ergebnis.konten.map((konto) => ({
+        id: crypto.randomUUID(),
+        name: konto.name,
+        createdAt: (typeof konto.createdAt === 'string' && parseDatum(konto.createdAt)) || Engine.heute(),
+        updatedAt: Engine.heute(),
+        buchungen: neueBuchungenTiefkopie(konto.buchungen),
+      }));
+      App.state.konten.push(...importierteKonten);
+      App.speichern();
+      renderKontenListe();
+      zeigeKontenMeldung(`${importierteKonten.length} Konten importiert.`, false);
+    };
+    reader.onerror = () => {
+      zeigeKontenMeldung('Die Datei konnte nicht gelesen werden.', true);
+    };
+    reader.readAsText(datei);
   }
 
   function renderKontenListe() {
@@ -251,6 +354,17 @@ if (typeof document !== 'undefined') {
       App.state.aktivesKontoId = konto.id;
       App.speichern();
       App.zeigeAnsicht('buchungen');
+    });
+
+    document.getElementById('btnExportAlle').addEventListener('click', () => {
+      exportiereAlleKonten();
+    });
+
+    const importInput = document.getElementById('importDatei');
+    importInput.addEventListener('change', () => {
+      const datei = importInput.files[0];
+      importInput.value = '';
+      if (datei) importiereDatei(datei);
     });
   }
 
