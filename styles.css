@@ -123,7 +123,7 @@ button {
   font-size: 0.72rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--farbe-text-dezent);
+  color: var(--farbe-text-schwach);
 }
 
 /* Navigation als Aktenregister: Reiter, die auf der Kante der Leiste sitzen */
@@ -328,10 +328,6 @@ select:focus {
   border-color: #941616;
 }
 
-.btn--datei {
-  position: relative;
-}
-
 /* ---------- Karten / Konten-Liste ---------- */
 
 .konten-liste {
@@ -343,7 +339,7 @@ select:focus {
 .konten-liste:empty::after {
   content: "Noch keine Konten angelegt.";
   grid-column: 1 / -1;
-  color: var(--farbe-text-dezent);
+  color: var(--farbe-text-schwach);
   font-size: 0.9rem;
   padding: 28px 0;
   text-align: center;
@@ -392,7 +388,7 @@ select:focus {
   font-size: 0.74rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--farbe-text-dezent);
+  color: var(--farbe-text-schwach);
   font-weight: 620;
   background: var(--farbe-flaeche-erhoeht);
   border-bottom: 1px solid var(--farbe-rand-stark);
@@ -496,7 +492,7 @@ select:focus {
 
 .report-inhalt:empty::after {
   content: "Stichtag wählen, um den Report zu erzeugen.";
-  color: var(--farbe-text-dezent);
+  color: var(--farbe-text-schwach);
   font-size: 0.9rem;
 }
 
@@ -539,7 +535,7 @@ dialog.dialog::backdrop {
   font-weight: 620;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  color: var(--farbe-text-dezent);
+  color: var(--farbe-text-schwach);
   padding: 0 4px;
 }
 
