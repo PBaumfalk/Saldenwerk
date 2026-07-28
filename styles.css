@@ -41,6 +41,10 @@
 
 * { box-sizing: border-box; }
 
+/* Das hidden-Attribut muss jede display-Regel schlagen (z. B. .feld { display:flex }),
+   sonst bleiben per JS versteckte Formularteile sichtbar. */
+[hidden] { display: none !important; }
+
 html, body {
   margin: 0;
   padding: 0;
