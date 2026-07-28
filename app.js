@@ -706,7 +706,7 @@ if (typeof document !== 'undefined') {
     const wrapper = document.createElement('div');
     wrapper.className = 'tabellen-wrapper report-tabelle';
     const table = document.createElement('table');
-    table.className = 'tabelle';
+    table.className = 'tabelle tabelle--report';
     const thead = document.createElement('thead');
     thead.appendChild(reportKopfZeile(spalten));
     const tbody = document.createElement('tbody');
@@ -717,15 +717,34 @@ if (typeof document !== 'undefined') {
     return { wrapper, tbody, tfoot };
   }
 
+  const REPORT_ROEMISCH = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
+
+  function reportAbschnittsUeberschrift(titel, zaehler) {
+    zaehler.n += 1;
+    const h2 = document.createElement('h2');
+    h2.className = 'report-abschnitt__titel';
+    const nummer = document.createElement('span');
+    nummer.className = 'report-abschnitt__nummer';
+    nummer.textContent = `${REPORT_ROEMISCH[zaehler.n - 1] || zaehler.n}.`;
+    const titelSpan = document.createElement('span');
+    titelSpan.textContent = titel;
+    h2.append(nummer, titelSpan);
+    return h2;
+  }
+
   function renderReportKopf(container, konto, ergebnis) {
     const kopf = document.createElement('div');
     kopf.className = 'report-kopf';
+    const eyebrow = document.createElement('p');
+    eyebrow.className = 'report-kopf__eyebrow';
+    eyebrow.textContent = 'Saldenaufstellung';
     const h2 = document.createElement('h2');
+    h2.className = 'report-kopf__name';
     h2.textContent = konto.name;
     const meta = document.createElement('p');
-    meta.className = 'hinweistext';
+    meta.className = 'report-kopf__meta';
     meta.textContent = `Stichtag: ${formatDatum(ergebnis.stichtag)} · erstellt am ${formatDatum(Engine.heute())}`;
-    kopf.append(h2, meta);
+    kopf.append(eyebrow, h2, meta);
     container.appendChild(kopf);
   }
 
@@ -753,20 +772,22 @@ if (typeof document !== 'undefined') {
     { typ: 'zinsforderung', label: 'Zinsforderung' },
   ];
 
-  function renderReportForderungen(container, ergebnis) {
+  function renderReportForderungen(container, ergebnis, zaehler) {
     const typenMitPosten = REPORT_FORDERUNGS_TYPEN.filter(({ typ }) =>
       ergebnis.posten.some((p) => p.typ === typ));
     if (!typenMitPosten.length) return;
 
-    const h2 = document.createElement('h2');
-    h2.textContent = 'Forderungsaufstellung';
-    container.appendChild(h2);
+    const section = document.createElement('section');
+    section.className = 'report-abschnitt';
+    section.appendChild(reportAbschnittsUeberschrift('Forderungsaufstellung', zaehler));
 
     typenMitPosten.forEach(({ typ, label }) => {
       const posten = ergebnis.posten.filter((p) => p.typ === typ);
+      const gruppe = document.createElement('div');
+      gruppe.className = 'report-teilgruppe';
       const h3 = document.createElement('h3');
       h3.textContent = label;
-      container.appendChild(h3);
+      gruppe.appendChild(h3);
 
       const { wrapper, tbody, tfoot } = baueReportTabelle([
         { label: 'Datum' }, { label: 'Text' },
@@ -786,11 +807,13 @@ if (typeof document !== 'undefined') {
         { text: formatEUR(summe.gesamt), klasse: 'num' },
         { text: formatEUR(summe.offen), klasse: 'num' },
       ]));
-      container.appendChild(wrapper);
+      gruppe.appendChild(wrapper);
+      section.appendChild(gruppe);
     });
+    container.appendChild(section);
   }
 
-  function renderReportStaffel(container, ergebnis) {
+  function renderReportStaffel(container, ergebnis, zaehler) {
     if (!ergebnis.staffel.length) return;
     const postenById = new Map(ergebnis.posten.map((p) => [p.id, p]));
     const gruppen = new Map();
@@ -799,9 +822,9 @@ if (typeof document !== 'undefined') {
       gruppen.get(seg.forderungId).push(seg);
     });
 
-    const h2 = document.createElement('h2');
-    h2.textContent = 'Zinsstaffel';
-    container.appendChild(h2);
+    const section = document.createElement('section');
+    section.className = 'report-abschnitt';
+    section.appendChild(reportAbschnittsUeberschrift('Zinsstaffel', zaehler));
 
     const reihenfolge = [...gruppen.keys()].sort((a, b) => {
       const pa = postenById.get(a), pb = postenById.get(b);
@@ -812,9 +835,11 @@ if (typeof document !== 'undefined') {
     reihenfolge.forEach((forderungId) => {
       const posten = postenById.get(forderungId);
       const segmente = gruppen.get(forderungId);
+      const gruppe = document.createElement('div');
+      gruppe.className = 'report-staffel-gruppe';
       const h3 = document.createElement('h3');
       h3.textContent = posten ? `${posten.text} (${formatDatum(posten.datum)})` : 'Forderung';
-      container.appendChild(h3);
+      gruppe.appendChild(h3);
 
       const { wrapper, tbody } = baueReportTabelle([
         { label: 'Zeitraum' }, { label: 'Tage', klasse: 'num' }, { label: 'Basis', klasse: 'num' },
@@ -834,20 +859,22 @@ if (typeof document !== 'undefined') {
           { text: formatEUR(seg.zins), klasse: 'num' },
         ]));
       });
-      container.appendChild(wrapper);
+      gruppe.appendChild(wrapper);
+      section.appendChild(gruppe);
     });
 
     const summe = document.createElement('p');
     summe.className = 'report-summenzeile';
     summe.textContent = `Summe laufende Zinsen: ${formatEUR(ergebnis.summen.laufendeZinsen.gesamt)}`;
-    container.appendChild(summe);
+    section.appendChild(summe);
+    container.appendChild(section);
   }
 
-  function renderReportZahlungen(container, ergebnis) {
+  function renderReportZahlungen(container, ergebnis, zaehler) {
     if (!ergebnis.verrechnungen.length) return;
-    const h2 = document.createElement('h2');
-    h2.textContent = 'Zahlungen & Verrechnung';
-    container.appendChild(h2);
+    const section = document.createElement('section');
+    section.className = 'report-abschnitt';
+    section.appendChild(reportAbschnittsUeberschrift('Zahlungen & Verrechnung', zaehler));
 
     const { wrapper, tbody } = baueReportTabelle([
       { label: 'Datum' }, { label: 'Betrag', klasse: 'num' }, { label: 'Kosten', klasse: 'num' },
@@ -864,14 +891,15 @@ if (typeof document !== 'undefined') {
         { text: formatEUR(v.ueberschuss), klasse: 'num' },
       ]));
     });
-    container.appendChild(wrapper);
+    section.appendChild(wrapper);
+    container.appendChild(section);
   }
 
-  function renderReportEndsaldo(container, ergebnis) {
+  function renderReportEndsaldo(container, ergebnis, zaehler) {
     const s = ergebnis.summen;
-    const h2 = document.createElement('h2');
-    h2.textContent = 'Endsaldo';
-    container.appendChild(h2);
+    const section = document.createElement('section');
+    section.className = 'report-abschnitt';
+    section.appendChild(reportAbschnittsUeberschrift('Endsaldo', zaehler));
 
     const box = document.createElement('div');
     box.className = 'report-endsaldo';
@@ -904,7 +932,8 @@ if (typeof document !== 'undefined') {
     gesamt.append(spanLabel, spanWert);
     box.appendChild(gesamt);
 
-    container.appendChild(box);
+    section.appendChild(box);
+    container.appendChild(section);
   }
 
   App.renderReport = function () {
@@ -927,13 +956,14 @@ if (typeof document !== 'undefined') {
     }
 
     const ergebnis = Engine.berechneKonto(konto, stichtag, App.aktuelleTabelle());
+    const zaehler = { n: 0 };
 
     renderReportKopf(container, konto, ergebnis);
     renderReportWarnungen(container, ergebnis);
-    renderReportForderungen(container, ergebnis);
-    renderReportStaffel(container, ergebnis);
-    renderReportZahlungen(container, ergebnis);
-    renderReportEndsaldo(container, ergebnis);
+    renderReportForderungen(container, ergebnis, zaehler);
+    renderReportStaffel(container, ergebnis, zaehler);
+    renderReportZahlungen(container, ergebnis, zaehler);
+    renderReportEndsaldo(container, ergebnis, zaehler);
   };
 
   function initReportAnsicht() {

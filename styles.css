@@ -482,15 +482,22 @@ select:focus {
   flex-wrap: wrap;
 }
 
-/* ---------- Report ---------- */
+/* ---------- Report ----------
+   Der Report ist ein eigenständiges "Blatt" auf dem App-Hintergrund und
+   folgt der Ledger-Konvention klassischer Kanzlei-Abrechnungen: Abschnitte
+   sind römisch nummeriert (die Reihenfolge ist die tatsächliche Logik einer
+   Forderungsaufstellung), Summenzeilen tragen eine Doppellinie als
+   wiederkehrendes Ordnungsmerkmal, Tabellen bleiben fein liniert statt
+   flächig gestreift. */
 
 .report-inhalt {
   margin-top: 18px;
+  max-width: 800px;
   background: var(--farbe-flaeche);
   border: 1px solid var(--farbe-rand);
   border-radius: var(--radius);
-  box-shadow: var(--schatten-karte);
-  padding: 24px;
+  box-shadow: var(--schatten-erhoeht);
+  padding: 44px 52px 52px;
   min-height: 200px;
 }
 
@@ -500,45 +507,118 @@ select:focus {
   font-size: 0.9rem;
 }
 
+/* Kopf: Kontoname dominiert, Metadaten treten zurück */
 .report-kopf {
-  margin-bottom: 18px;
+  padding-bottom: 22px;
+  margin-bottom: 30px;
+  border-bottom: 3px double var(--farbe-rand-stark);
 }
 
-.report-kopf h2 {
-  margin-bottom: 4px;
+.report-kopf__eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--farbe-text-schwach);
 }
 
-.report-inhalt h2 {
-  margin: 28px 0 12px;
+.report-kopf__name {
+  margin: 0 0 8px;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 
-.report-inhalt h2:first-of-type {
-  margin-top: 0;
+.report-kopf__meta {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--farbe-text-schwach);
+}
+
+/* Abschnitte: nummeriert wie in einer Forderungsaufstellung üblich */
+.report-abschnitt + .report-abschnitt {
+  margin-top: 36px;
+}
+
+.report-abschnitt__titel {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--farbe-rand);
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.report-abschnitt__nummer {
+  color: var(--farbe-akzent);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.report-teilgruppe + .report-teilgruppe,
+.report-staffel-gruppe + .report-staffel-gruppe {
+  margin-top: 20px;
 }
 
 .report-inhalt h3 {
-  margin: 18px 0 8px;
-  font-size: 0.98rem;
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  font-weight: 620;
+  color: var(--farbe-text-schwach);
+}
+
+/* Tabellen im Report: flach statt kartenhaft, feine Linien statt Zebra */
+.report-inhalt .tabellen-wrapper {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.tabelle--report th,
+.tabelle--report td {
+  padding: 8px 10px;
+  font-size: 0.87rem;
+}
+
+.tabelle--report thead th {
+  position: static;
+  background: transparent;
+  border-bottom: 1px solid var(--farbe-rand-stark);
+}
+
+.tabelle--report tbody tr:nth-child(even) {
+  background: transparent;
+}
+
+.tabelle--report tbody tr:hover {
+  background: var(--farbe-akzent-hell);
 }
 
 .report-tabelle {
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .report-tabelle__fuss td {
   font-weight: 650;
-  border-top: 2px solid var(--farbe-rand-stark);
+  border-top: 3px double var(--farbe-rand-stark);
   border-bottom: none;
-  background: var(--farbe-flaeche-erhoeht);
+  background: transparent;
 }
 
 .report-hinweisbox {
   background: var(--farbe-warnung-hell);
-  border: 1px solid #e4c477;
+  border: none;
+  border-left: 3px solid #e4c477;
   color: var(--farbe-warnung-text);
-  border-radius: var(--radius-klein);
+  border-radius: 0 var(--radius-klein) var(--radius-klein) 0;
   padding: 12px 16px;
-  margin-bottom: 20px;
+  margin-bottom: 26px;
 }
 
 .report-hinweisbox ul {
@@ -553,15 +633,17 @@ select:focus {
 .report-summenzeile {
   text-align: right;
   font-weight: 620;
-  margin: 10px 4px 0;
+  margin: 12px 0 0;
 }
 
+/* Endsaldo: deutlich hervorgehobener Abschluss des Dokuments */
 .report-endsaldo {
-  margin-top: 8px;
+  margin-top: 10px;
   padding: 16px 18px;
   background: var(--farbe-flaeche-erhoeht);
   border: 1px solid var(--farbe-rand-stark);
-  border-radius: var(--radius);
+  border-top: 3px solid var(--farbe-akzent);
+  border-radius: 0 0 var(--radius) var(--radius);
   max-width: 420px;
   margin-left: auto;
 }
@@ -585,11 +667,11 @@ select:focus {
 
 .report-endsaldo__gesamt {
   margin-top: 4px;
-  padding-top: 10px;
-  border-top: 2px solid var(--farbe-rand-stark);
+  padding-top: 12px;
+  border-top: 3px double var(--farbe-text);
   font-weight: 700;
-  font-size: 1.05rem;
-  color: var(--farbe-akzent);
+  font-size: 1.2rem;
+  color: var(--farbe-akzent-dunkel);
 }
 
 /* ---------- Dialoge ---------- */
@@ -706,6 +788,18 @@ dialog.dialog::backdrop {
   .feld-gruppe {
     flex-direction: column;
   }
+
+  .report-inhalt {
+    padding: 26px 20px 32px;
+  }
+
+  .report-kopf__name {
+    font-size: 1.4rem;
+  }
+
+  .report-endsaldo {
+    max-width: none;
+  }
 }
 
 /* ---------- Druck ---------- */
@@ -743,6 +837,7 @@ dialog.dialog::backdrop {
   }
 
   .report-inhalt {
+    max-width: none;
     box-shadow: none;
     border: none;
     padding: 0;
@@ -753,5 +848,23 @@ dialog.dialog::backdrop {
   .report-inhalt * {
     color: #000 !important;
     background: transparent !important;
+  }
+
+  /* Seitenumbrüche: nie mitten in einer Zeile, Staffel-/Teilgruppen möglichst
+     zusammenhalten, Überschriften nicht als letzte Zeile auf der Seite. */
+  .report-tabelle tr {
+    break-inside: avoid;
+  }
+
+  .report-teilgruppe,
+  .report-staffel-gruppe,
+  .report-endsaldo {
+    break-inside: avoid;
+  }
+
+  .report-kopf,
+  .report-abschnitt__titel,
+  .report-inhalt h3 {
+    break-after: avoid;
   }
 }
