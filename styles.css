@@ -1,0 +1,656 @@
+/*
+  Forderungskonto — eigenständiges Design ohne Framework.
+  Leitidee: Aktenregister einer Kanzlei. Die Navigation ist als Reiter
+  gestaltet, Tabellen folgen der Ledger-Logik (Zebra, tabellarische Ziffern,
+  rechtsbündige Beträge). Nüchtern, präzise, vertrauenswürdig.
+*/
+
+:root {
+  /* Farbe */
+  --farbe-hintergrund: #f4f5f8;
+  --farbe-flaeche: #ffffff;
+  --farbe-flaeche-erhoeht: #fbfbfd;
+  --farbe-text: #1a2233;
+  --farbe-text-schwach: #5b6478;
+  --farbe-text-dezent: #8992a3;
+  --farbe-rand: #e1e4ec;
+  --farbe-rand-stark: #c7ccd9;
+
+  --farbe-akzent: #1d4ed8;
+  --farbe-akzent-dunkel: #15399e;
+  --farbe-akzent-hell: #e8eefc;
+
+  --farbe-erfolg: #157a44;
+  --farbe-erfolg-hell: #e5f4ec;
+  --farbe-gefahr: #b91c1c;
+  --farbe-gefahr-hell: #fbe9e9;
+  --farbe-warnung-hell: #fdf4e3;
+  --farbe-warnung-text: #92600a;
+
+  /* Typografie */
+  --schrift-system: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --schrift-zahlen: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Consolas, monospace;
+
+  /* Layout */
+  --radius: 8px;
+  --radius-klein: 5px;
+  --schatten-karte: 0 1px 2px rgba(20, 26, 43, 0.06), 0 1px 1px rgba(20, 26, 43, 0.04);
+  --schatten-erhoeht: 0 4px 16px rgba(20, 26, 43, 0.10), 0 1px 3px rgba(20, 26, 43, 0.08);
+  --appbar-hoehe: 64px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--schrift-system);
+  background: var(--farbe-hintergrund);
+  color: var(--farbe-text);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  margin: 0;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--farbe-text);
+}
+
+h1 { font-size: 1.375rem; }
+h2 { font-size: 1.125rem; }
+
+a { color: var(--farbe-akzent); }
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* ---------- App-Leiste ---------- */
+
+.appbar {
+  height: var(--appbar-hoehe);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 28px;
+  background: var(--farbe-flaeche);
+  border-bottom: 1px solid var(--farbe-rand);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.appbar__marke {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.appbar__logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-klein);
+  background: var(--farbe-akzent);
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.appbar__titel {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.appbar__titel strong {
+  font-size: 1.02rem;
+  letter-spacing: -0.01em;
+}
+
+.appbar__eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--farbe-text-dezent);
+}
+
+/* Navigation als Aktenregister: Reiter, die auf der Kante der Leiste sitzen */
+.appnav {
+  display: flex;
+  gap: 4px;
+  align-self: stretch;
+  align-items: flex-end;
+  overflow-x: auto;
+}
+
+.appnav__btn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-bottom: none;
+  background: transparent;
+  color: var(--farbe-text-schwach);
+  font-weight: 560;
+  font-size: 0.92rem;
+  padding: 9px 18px 10px;
+  border-radius: var(--radius-klein) var(--radius-klein) 0 0;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.12s ease, color 0.12s ease;
+  margin-bottom: -1px;
+}
+
+.appnav__btn:hover {
+  background: var(--farbe-hintergrund);
+  color: var(--farbe-text);
+}
+
+.appnav__btn.active {
+  background: var(--farbe-hintergrund);
+  color: var(--farbe-akzent);
+  border-color: var(--farbe-rand);
+  box-shadow: inset 0 2px 0 var(--farbe-akzent);
+}
+
+.appnav__btn:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--farbe-akzent);
+  outline-offset: 2px;
+}
+
+/* ---------- Layout ---------- */
+
+.hauptbereich {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 32px 28px 64px;
+}
+
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+  animation: einblenden 0.14s ease;
+}
+
+@keyframes einblenden {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ansicht-kopf {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.werkzeugleiste {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.report-werkzeugleiste {
+  align-items: flex-end;
+}
+
+/* ---------- Formularelemente ---------- */
+
+.feld {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.feld--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.feld--inline label {
+  white-space: nowrap;
+}
+
+.feld-gruppe {
+  display: flex;
+  gap: 14px;
+}
+
+.feld-gruppe .feld {
+  flex: 1;
+}
+
+.feld--konto-name {
+  min-width: 260px;
+  flex: 1;
+  max-width: 480px;
+}
+
+label {
+  font-size: 0.82rem;
+  font-weight: 560;
+  color: var(--farbe-text-schwach);
+}
+
+input[type="text"],
+input[type="date"],
+select {
+  font-family: inherit;
+  font-size: 0.94rem;
+  color: var(--farbe-text);
+  background: var(--farbe-flaeche);
+  border: 1px solid var(--farbe-rand-stark);
+  border-radius: var(--radius-klein);
+  padding: 8px 10px;
+}
+
+input[type="text"]:focus,
+input[type="date"]:focus,
+select:focus {
+  outline: none;
+  border-color: var(--farbe-akzent);
+  box-shadow: 0 0 0 3px var(--farbe-akzent-hell);
+}
+
+/* Beträge in Formularen tabellarisch setzen */
+#fBetrag, #fSatz, #basiszinsSatz {
+  font-family: var(--schrift-zahlen);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* ---------- Buttons ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-klein);
+  border: 1px solid transparent;
+  font-weight: 570;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.btn--primaer {
+  background: var(--farbe-akzent);
+  border-color: var(--farbe-akzent);
+  color: #fff;
+}
+
+.btn--primaer:hover {
+  background: var(--farbe-akzent-dunkel);
+  border-color: var(--farbe-akzent-dunkel);
+}
+
+.btn--sekundaer {
+  background: var(--farbe-flaeche);
+  border-color: var(--farbe-rand-stark);
+  color: var(--farbe-text);
+}
+
+.btn--sekundaer:hover {
+  background: var(--farbe-hintergrund);
+  border-color: var(--farbe-text-dezent);
+}
+
+.btn--gefahr {
+  background: var(--farbe-gefahr);
+  border-color: var(--farbe-gefahr);
+  color: #fff;
+}
+
+.btn--gefahr:hover {
+  background: #941616;
+  border-color: #941616;
+}
+
+.btn--datei {
+  position: relative;
+}
+
+/* ---------- Karten / Konten-Liste ---------- */
+
+.konten-liste {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.konten-liste:empty::after {
+  content: "Noch keine Konten angelegt.";
+  grid-column: 1 / -1;
+  color: var(--farbe-text-dezent);
+  font-size: 0.9rem;
+  padding: 28px 0;
+  text-align: center;
+  border: 1px dashed var(--farbe-rand-stark);
+  border-radius: var(--radius);
+}
+
+.karte {
+  background: var(--farbe-flaeche);
+  border: 1px solid var(--farbe-rand);
+  border-left: 3px solid var(--farbe-akzent);
+  border-radius: var(--radius);
+  box-shadow: var(--schatten-karte);
+  padding: 16px 18px;
+}
+
+.karte:hover {
+  box-shadow: var(--schatten-erhoeht);
+}
+
+/* ---------- Tabellen ---------- */
+
+.tabellen-wrapper {
+  overflow-x: auto;
+  background: var(--farbe-flaeche);
+  border: 1px solid var(--farbe-rand);
+  border-radius: var(--radius);
+  box-shadow: var(--schatten-karte);
+}
+
+.tabelle {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+}
+
+.tabelle th,
+.tabelle td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--farbe-rand);
+  font-size: 0.9rem;
+}
+
+.tabelle thead th {
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--farbe-text-dezent);
+  font-weight: 620;
+  background: var(--farbe-flaeche-erhoeht);
+  border-bottom: 1px solid var(--farbe-rand-stark);
+  position: sticky;
+  top: 0;
+}
+
+.tabelle tbody tr:nth-child(even) {
+  background: var(--farbe-flaeche-erhoeht);
+}
+
+.tabelle tbody tr:hover {
+  background: var(--farbe-akzent-hell);
+}
+
+.tabelle .num,
+.tabelle td.betrag {
+  text-align: right;
+  font-family: var(--schrift-zahlen);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tabelle .aktionen-spalte {
+  text-align: right;
+  width: 1%;
+  white-space: nowrap;
+}
+
+#buchungenBody:empty::after,
+#basiszinsBody:empty::after {
+  content: "";
+}
+
+#buchungenSaldo {
+  font-weight: 650;
+  background: var(--farbe-flaeche-erhoeht);
+}
+
+#buchungenSaldo td {
+  border-bottom: none;
+  border-top: 2px solid var(--farbe-rand-stark);
+}
+
+/* Betragskennzeichnung: Zahlungen grün, offene Salden akzentuiert */
+.betrag--zahlung { color: var(--farbe-erfolg); }
+.betrag--offen { color: var(--farbe-akzent); font-weight: 620; }
+.betrag--negativ { color: var(--farbe-gefahr); }
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: var(--farbe-akzent-hell);
+  color: var(--farbe-akzent-dunkel);
+}
+
+.badge--zahlung {
+  background: var(--farbe-erfolg-hell);
+  color: var(--farbe-erfolg);
+}
+
+/* ---------- Hinweistext ---------- */
+
+.hinweistext {
+  color: var(--farbe-text-schwach);
+  font-size: 0.88rem;
+  margin: -6px 0 18px;
+  max-width: 68ch;
+}
+
+/* ---------- Basiszins-Formular ---------- */
+
+.basiszins-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 16px 18px;
+  background: var(--farbe-flaeche);
+  border: 1px solid var(--farbe-rand);
+  border-radius: var(--radius);
+  box-shadow: var(--schatten-karte);
+  flex-wrap: wrap;
+}
+
+/* ---------- Report ---------- */
+
+.report-inhalt {
+  margin-top: 18px;
+  background: var(--farbe-flaeche);
+  border: 1px solid var(--farbe-rand);
+  border-radius: var(--radius);
+  box-shadow: var(--schatten-karte);
+  padding: 24px;
+  min-height: 200px;
+}
+
+.report-inhalt:empty::after {
+  content: "Stichtag wählen, um den Report zu erzeugen.";
+  color: var(--farbe-text-dezent);
+  font-size: 0.9rem;
+}
+
+/* ---------- Dialoge ---------- */
+
+dialog.dialog {
+  border: none;
+  border-radius: var(--radius);
+  box-shadow: var(--schatten-erhoeht);
+  padding: 24px 26px 20px;
+  width: min(480px, calc(100vw - 48px));
+  color: var(--farbe-text);
+}
+
+dialog.dialog--schmal {
+  width: min(380px, calc(100vw - 48px));
+}
+
+dialog.dialog::backdrop {
+  background: rgba(17, 22, 38, 0.45);
+  backdrop-filter: blur(1px);
+}
+
+.dialog__titel {
+  margin-bottom: 18px;
+}
+
+.verzinsungsblock {
+  border: 1px solid var(--farbe-rand);
+  border-radius: var(--radius-klein);
+  padding: 14px 16px 16px;
+  margin: 4px 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.verzinsungsblock legend {
+  font-size: 0.78rem;
+  font-weight: 620;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--farbe-text-dezent);
+  padding: 0 4px;
+}
+
+#buchungForm > .feld {
+  margin-bottom: 14px;
+}
+
+.fehlerbereich {
+  color: var(--farbe-gefahr);
+  font-size: 0.85rem;
+  min-height: 0;
+}
+
+.fehlerbereich:not(:empty) {
+  background: var(--farbe-gefahr-hell);
+  border: 1px solid var(--farbe-gefahr);
+  border-radius: var(--radius-klein);
+  padding: 8px 12px;
+  margin-bottom: 14px;
+}
+
+.dialog__fuss {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+#confirmText {
+  margin: 0 0 18px;
+  font-size: 0.94rem;
+}
+
+/* ---------- Responsiv ---------- */
+
+@media (max-width: 720px) {
+  .appbar {
+    padding: 0 16px;
+    gap: 12px;
+  }
+
+  .appbar__eyebrow {
+    display: none;
+  }
+
+  .hauptbereich {
+    padding: 20px 16px 48px;
+  }
+
+  .ansicht-kopf {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .werkzeugleiste {
+    justify-content: flex-start;
+  }
+
+  dialog.dialog {
+    padding: 20px 18px 16px;
+  }
+
+  .feld-gruppe {
+    flex-direction: column;
+  }
+}
+
+/* ---------- Druck ---------- */
+
+@media print {
+  .appbar,
+  .appnav,
+  .werkzeugleiste,
+  button,
+  dialog {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  .hauptbereich {
+    max-width: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .view {
+    display: none !important;
+  }
+
+  #view-report {
+    display: block !important;
+  }
+
+  #view-report h1 {
+    color: #000;
+  }
+
+  .report-inhalt {
+    box-shadow: none;
+    border: none;
+    padding: 0;
+    background: #fff;
+    color: #000;
+  }
+
+  .report-inhalt * {
+    color: #000 !important;
+    background: transparent !important;
+  }
+}

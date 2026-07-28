@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forderungskonto</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="appbar">
+  <div class="appbar__marke">
+    <span class="appbar__logo" aria-hidden="true">§</span>
+    <div class="appbar__titel">
+      <strong>Forderungskonto</strong>
+      <span class="appbar__eyebrow">Zins- &amp; Kontoführung</span>
+    </div>
+  </div>
+  <nav class="appnav" aria-label="Ansichten">
+    <button type="button" class="appnav__btn active" data-view="konten">Konten</button>
+    <button type="button" class="appnav__btn" data-view="buchungen">Buchungen</button>
+    <button type="button" class="appnav__btn" data-view="report">Report</button>
+    <button type="button" class="appnav__btn" data-view="basiszins">Basiszins</button>
+  </nav>
+</header>
+
+<main class="hauptbereich">
+
+  <section id="view-konten" class="view active">
+    <div class="ansicht-kopf">
+      <h1>Konten</h1>
+      <div class="werkzeugleiste">
+        <label class="btn btn--sekundaer btn--datei">
+          Importieren
+          <input type="file" id="importDatei" accept=".json" hidden>
+        </label>
+        <button type="button" id="btnExportAlle" class="btn btn--sekundaer">Alle exportieren</button>
+        <button type="button" id="btnNeuesKonto" class="btn btn--primaer">Neues Konto</button>
+      </div>
+    </div>
+    <div id="kontenListe" class="konten-liste"></div>
+  </section>
+
+  <section id="view-buchungen" class="view">
+    <div class="ansicht-kopf">
+      <div class="feld feld--konto-name">
+        <label for="kontoName">Kontobezeichnung</label>
+        <input type="text" id="kontoName" maxlength="80" placeholder="z. B. Mandant Müller ./. Schuldner Meier">
+      </div>
+      <div class="werkzeugleiste">
+        <button type="button" id="btnNeuHF" class="btn btn--sekundaer">+ Hauptforderung</button>
+        <button type="button" id="btnNeuNF" class="btn btn--sekundaer">+ Nebenforderung</button>
+        <button type="button" id="btnNeuZF" class="btn btn--sekundaer">+ Zinsforderung</button>
+        <button type="button" id="btnNeuZahlung" class="btn btn--primaer">+ Zahlung</button>
+      </div>
+    </div>
+
+    <div class="tabellen-wrapper">
+      <table id="buchungenTabelle" class="tabelle">
+        <thead>
+          <tr>
+            <th scope="col">Datum</th>
+            <th scope="col">Text</th>
+            <th scope="col">Typ</th>
+            <th scope="col" class="num">Betrag</th>
+            <th scope="col" class="num">Zinsen offen</th>
+            <th scope="col" class="num">Rest offen</th>
+            <th scope="col" class="aktionen-spalte">Aktionen</th>
+          </tr>
+        </thead>
+        <tbody id="buchungenBody"></tbody>
+        <tfoot>
+          <tr id="buchungenSaldo"></tr>
+        </tfoot>
+      </table>
+    </div>
+  </section>
+
+  <section id="view-report" class="view">
+    <div class="ansicht-kopf">
+      <h1>Report</h1>
+      <div class="werkzeugleiste report-werkzeugleiste">
+        <div class="feld feld--inline">
+          <label for="reportStichtag">Stichtag</label>
+          <input type="date" id="reportStichtag">
+        </div>
+        <button type="button" id="btnDrucken" class="btn btn--primaer">Drucken</button>
+      </div>
+    </div>
+    <div id="reportInhalt" class="report-inhalt"></div>
+  </section>
+
+  <section id="view-basiszins" class="view">
+    <div class="ansicht-kopf">
+      <h1>Basiszinssatz</h1>
+    </div>
+    <p class="hinweistext">
+      Verbindliche Werte veröffentlicht die
+      <a href="https://www.bundesbank.de/de/aufgaben/geldpolitik/zinssaetze/basiszinssatz" target="_blank" rel="noopener">Deutsche Bundesbank</a>
+      als offizielle Quelle gemäß § 247 BGB. Bitte Sätze vor Verwendung dort gegenprüfen.
+    </p>
+
+    <div class="tabellen-wrapper">
+      <table class="tabelle">
+        <thead>
+          <tr>
+            <th scope="col">Gültig ab</th>
+            <th scope="col" class="num">Satz (%)</th>
+            <th scope="col" class="aktionen-spalte">Aktionen</th>
+          </tr>
+        </thead>
+        <tbody id="basiszinsBody"></tbody>
+      </table>
+    </div>
+
+    <form id="basiszinsForm" class="basiszins-form">
+      <div class="feld feld--inline">
+        <label for="basiszinsAb">Gültig ab</label>
+        <input type="date" id="basiszinsAb">
+      </div>
+      <div class="feld feld--inline">
+        <label for="basiszinsSatz">Satz (%)</label>
+        <input type="text" id="basiszinsSatz" inputmode="decimal" placeholder="z. B. 1,27">
+      </div>
+      <button type="submit" id="btnBasiszinsSpeichern" class="btn btn--primaer">Speichern</button>
+    </form>
+  </section>
+
+</main>
+
+<dialog id="buchungDialog" class="dialog">
+  <form method="dialog" id="buchungForm">
+    <h2 class="dialog__titel">Buchung erfassen</h2>
+
+    <div class="feld">
+      <label for="fDatum">Datum</label>
+      <input type="date" id="fDatum">
+    </div>
+
+    <div class="feld">
+      <label for="fBetrag">Betrag</label>
+      <input type="text" id="fBetrag" inputmode="decimal" placeholder="0,00">
+    </div>
+
+    <div class="feld">
+      <label for="fText">Text</label>
+      <input type="text" id="fText" placeholder="Bezeichnung der Buchung">
+    </div>
+
+    <fieldset id="fVerzinsung" class="verzinsungsblock">
+      <legend>Verzinsung</legend>
+
+      <div class="feld">
+        <label for="fArt">Art</label>
+        <select id="fArt">
+          <option value="keine">Keine</option>
+          <option value="fest">Fester Zinssatz</option>
+          <option value="basiszins">Basiszinssatz + Aufschlag</option>
+        </select>
+      </div>
+
+      <div class="feld">
+        <label id="fSatzLabel" for="fSatz">Zinssatz (%)</label>
+        <input type="text" id="fSatz" inputmode="decimal" placeholder="0,00">
+      </div>
+
+      <div class="feld-gruppe">
+        <div class="feld">
+          <label for="fBeginn">Beginn</label>
+          <input type="date" id="fBeginn">
+        </div>
+        <div class="feld">
+          <label for="fEnde">Ende (optional)</label>
+          <input type="date" id="fEnde">
+        </div>
+      </div>
+
+      <div class="feld">
+        <label for="fMethode">Zinsmethode</label>
+        <select id="fMethode">
+          <option value="kalender">Kalendertage / 365 (§ 187 BGB)</option>
+          <option value="bank360">Bankmethode 30/360</option>
+        </select>
+      </div>
+    </fieldset>
+
+    <div id="fFehler" class="fehlerbereich" role="alert" aria-live="polite"></div>
+
+    <div class="dialog__fuss">
+      <button type="submit" value="abbrechen" formnovalidate class="btn btn--sekundaer">Abbrechen</button>
+      <button type="submit" value="speichern" class="btn btn--primaer">Speichern</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="confirmDialog" class="dialog dialog--schmal">
+  <p id="confirmText"></p>
+  <div class="dialog__fuss">
+    <button type="button" id="confirmAbbrechen" class="btn btn--sekundaer">Abbrechen</button>
+    <button type="button" id="confirmOk" class="btn btn--gefahr">Löschen</button>
+  </div>
+</dialog>
+
+<script src="basiszins.js"></script>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
