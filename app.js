@@ -513,6 +513,279 @@ if (typeof document !== 'undefined') {
     saldoZeile.append(tdLabel, tdSaldo, tdLeer);
   };
 
+  function formatProzent(n) {
+    if (n === null || n === undefined) return '–';
+    return new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      .format(n) + ' %';
+  }
+
+  function formatPP(n) {
+    return new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 }).format(n) + ' PP';
+  }
+
+  function reportKopfZeile(spalten) {
+    const tr = document.createElement('tr');
+    spalten.forEach(({ label, klasse }) => {
+      const th = document.createElement('th');
+      th.scope = 'col';
+      if (klasse) th.className = klasse;
+      th.textContent = label;
+      tr.appendChild(th);
+    });
+    return tr;
+  }
+
+  function reportZeile(zellen) {
+    const tr = document.createElement('tr');
+    zellen.forEach(({ text, klasse, colSpan }) => {
+      const td = document.createElement('td');
+      if (klasse) td.className = klasse;
+      if (colSpan) td.colSpan = colSpan;
+      td.textContent = text;
+      tr.appendChild(td);
+    });
+    return tr;
+  }
+
+  function baueReportTabelle(spalten) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'tabellen-wrapper report-tabelle';
+    const table = document.createElement('table');
+    table.className = 'tabelle';
+    const thead = document.createElement('thead');
+    thead.appendChild(reportKopfZeile(spalten));
+    const tbody = document.createElement('tbody');
+    const tfoot = document.createElement('tfoot');
+    tfoot.className = 'report-tabelle__fuss';
+    table.append(thead, tbody, tfoot);
+    wrapper.appendChild(table);
+    return { wrapper, tbody, tfoot };
+  }
+
+  function renderReportKopf(container, konto, ergebnis) {
+    const kopf = document.createElement('div');
+    kopf.className = 'report-kopf';
+    const h2 = document.createElement('h2');
+    h2.textContent = konto.name;
+    const meta = document.createElement('p');
+    meta.className = 'hinweistext';
+    meta.textContent = `Stichtag: ${formatDatum(ergebnis.stichtag)} · erstellt am ${formatDatum(Engine.heute())}`;
+    kopf.append(h2, meta);
+    container.appendChild(kopf);
+  }
+
+  function renderReportWarnungen(container, ergebnis) {
+    const meldungen = [...ergebnis.warnungen];
+    if (ergebnis.ignorierteBuchungen > 0) {
+      meldungen.push(`${ergebnis.ignorierteBuchungen} Buchung(en) nach dem Stichtag wurden nicht berücksichtigt.`);
+    }
+    if (!meldungen.length) return;
+    const box = document.createElement('div');
+    box.className = 'report-hinweisbox';
+    const ul = document.createElement('ul');
+    meldungen.forEach((text) => {
+      const li = document.createElement('li');
+      li.textContent = text;
+      ul.appendChild(li);
+    });
+    box.appendChild(ul);
+    container.appendChild(box);
+  }
+
+  const REPORT_FORDERUNGS_TYPEN = [
+    { typ: 'hauptforderung', label: 'Hauptforderung' },
+    { typ: 'nebenforderung', label: 'Nebenforderung' },
+    { typ: 'zinsforderung', label: 'Zinsforderung' },
+  ];
+
+  function renderReportForderungen(container, ergebnis) {
+    const typenMitPosten = REPORT_FORDERUNGS_TYPEN.filter(({ typ }) =>
+      ergebnis.posten.some((p) => p.typ === typ));
+    if (!typenMitPosten.length) return;
+
+    const h2 = document.createElement('h2');
+    h2.textContent = 'Forderungsaufstellung';
+    container.appendChild(h2);
+
+    typenMitPosten.forEach(({ typ, label }) => {
+      const posten = ergebnis.posten.filter((p) => p.typ === typ);
+      const h3 = document.createElement('h3');
+      h3.textContent = label;
+      container.appendChild(h3);
+
+      const { wrapper, tbody, tfoot } = baueReportTabelle([
+        { label: 'Datum' }, { label: 'Text' },
+        { label: 'Betrag', klasse: 'num' }, { label: 'Offen', klasse: 'num' },
+      ]);
+      posten.forEach((p) => {
+        tbody.appendChild(reportZeile([
+          { text: formatDatum(p.datum) },
+          { text: p.text },
+          { text: formatEUR(p.betrag), klasse: 'num' },
+          { text: formatEUR(p.rest), klasse: 'num' },
+        ]));
+      });
+      const summe = ergebnis.summen[typ];
+      tfoot.appendChild(reportZeile([
+        { text: 'Zwischensumme', colSpan: 2 },
+        { text: formatEUR(summe.gesamt), klasse: 'num' },
+        { text: formatEUR(summe.offen), klasse: 'num' },
+      ]));
+      container.appendChild(wrapper);
+    });
+  }
+
+  function renderReportStaffel(container, ergebnis) {
+    if (!ergebnis.staffel.length) return;
+    const postenById = new Map(ergebnis.posten.map((p) => [p.id, p]));
+    const gruppen = new Map();
+    ergebnis.staffel.forEach((seg) => {
+      if (!gruppen.has(seg.forderungId)) gruppen.set(seg.forderungId, []);
+      gruppen.get(seg.forderungId).push(seg);
+    });
+
+    const h2 = document.createElement('h2');
+    h2.textContent = 'Zinsstaffel';
+    container.appendChild(h2);
+
+    const reihenfolge = [...gruppen.keys()].sort((a, b) => {
+      const pa = postenById.get(a), pb = postenById.get(b);
+      if (!pa || !pb) return 0;
+      return pa.datum < pb.datum ? -1 : pa.datum > pb.datum ? 1 : 0;
+    });
+
+    reihenfolge.forEach((forderungId) => {
+      const posten = postenById.get(forderungId);
+      const segmente = gruppen.get(forderungId);
+      const h3 = document.createElement('h3');
+      h3.textContent = posten ? `${posten.text} (${formatDatum(posten.datum)})` : 'Forderung';
+      container.appendChild(h3);
+
+      const { wrapper, tbody } = baueReportTabelle([
+        { label: 'Zeitraum' }, { label: 'Tage', klasse: 'num' }, { label: 'Basis', klasse: 'num' },
+        { label: 'Satz', klasse: 'num' }, { label: 'Zins', klasse: 'num' },
+      ]);
+      segmente.forEach((seg) => {
+        let satzText = formatProzent(seg.satzProzent);
+        if (seg.basiszins !== null) {
+          const aufschlag = Engine.round2(seg.satzProzent - seg.basiszins);
+          satzText += ` (Basiszins ${formatProzent(seg.basiszins)} + ${formatPP(aufschlag)})`;
+        }
+        tbody.appendChild(reportZeile([
+          { text: `${formatDatum(Engine.addTage(seg.von, 1))}–${formatDatum(seg.bis)}` },
+          { text: String(seg.tage), klasse: 'num' },
+          { text: formatEUR(seg.basis), klasse: 'num' },
+          { text: satzText, klasse: 'num' },
+          { text: formatEUR(seg.zins), klasse: 'num' },
+        ]));
+      });
+      container.appendChild(wrapper);
+    });
+
+    const summe = document.createElement('p');
+    summe.className = 'report-summenzeile';
+    summe.textContent = `Summe laufende Zinsen: ${formatEUR(ergebnis.summen.laufendeZinsen.gesamt)}`;
+    container.appendChild(summe);
+  }
+
+  function renderReportZahlungen(container, ergebnis) {
+    if (!ergebnis.verrechnungen.length) return;
+    const h2 = document.createElement('h2');
+    h2.textContent = 'Zahlungen & Verrechnung';
+    container.appendChild(h2);
+
+    const { wrapper, tbody } = baueReportTabelle([
+      { label: 'Datum' }, { label: 'Betrag', klasse: 'num' }, { label: 'Kosten', klasse: 'num' },
+      { label: 'Zinsen', klasse: 'num' }, { label: 'Hauptforderung', klasse: 'num' },
+      { label: 'Überschuss', klasse: 'num' },
+    ]);
+    ergebnis.verrechnungen.forEach((v) => {
+      tbody.appendChild(reportZeile([
+        { text: formatDatum(v.datum) },
+        { text: formatEUR(v.betrag), klasse: 'num' },
+        { text: formatEUR(v.aufKosten), klasse: 'num' },
+        { text: formatEUR(v.aufZinsen), klasse: 'num' },
+        { text: formatEUR(v.aufHauptforderung), klasse: 'num' },
+        { text: formatEUR(v.ueberschuss), klasse: 'num' },
+      ]));
+    });
+    container.appendChild(wrapper);
+  }
+
+  function renderReportEndsaldo(container, ergebnis) {
+    const s = ergebnis.summen;
+    const h2 = document.createElement('h2');
+    h2.textContent = 'Endsaldo';
+    container.appendChild(h2);
+
+    const box = document.createElement('div');
+    box.className = 'report-endsaldo';
+    const zeilen = [
+      ['Offene Hauptforderung', s.hauptforderung.offen],
+      ['Offene Nebenforderung', s.nebenforderung.offen],
+      ['Offene Zinsforderung', s.zinsforderung.offen],
+      ['Offene laufende Zinsen', s.laufendeZinsen.offen],
+      ['− Überzahlung', -s.ueberzahlung],
+    ];
+    zeilen.forEach(([label, wert]) => {
+      const zeile = document.createElement('div');
+      zeile.className = 'report-endsaldo__zeile';
+      const spanLabel = document.createElement('span');
+      spanLabel.textContent = label;
+      const spanWert = document.createElement('span');
+      spanWert.textContent = formatEUR(wert);
+      zeile.append(spanLabel, spanWert);
+      box.appendChild(zeile);
+    });
+
+    const gesamt = document.createElement('div');
+    gesamt.className = 'report-endsaldo__zeile report-endsaldo__gesamt';
+    const spanLabel = document.createElement('span');
+    spanLabel.textContent = 'Gesamtsaldo zum Stichtag';
+    const spanWert = document.createElement('span');
+    spanWert.textContent = formatEUR(s.saldo);
+    gesamt.append(spanLabel, spanWert);
+    box.appendChild(gesamt);
+
+    container.appendChild(box);
+  }
+
+  App.renderReport = function () {
+    const konto = App.aktivesKonto();
+    const container = document.getElementById('reportInhalt');
+    container.innerHTML = '';
+    if (!konto) return;
+
+    const stichtagInput = document.getElementById('reportStichtag');
+    if (!stichtagInput.value) stichtagInput.value = Engine.heute();
+    const stichtag = parseDatum(stichtagInput.value) || Engine.heute();
+
+    if (!konto.buchungen.length) {
+      renderReportKopf(container, konto, { stichtag });
+      const hinweis = document.createElement('p');
+      hinweis.className = 'hinweistext';
+      hinweis.textContent = 'Für dieses Konto sind noch keine Buchungen erfasst.';
+      container.appendChild(hinweis);
+      return;
+    }
+
+    const ergebnis = Engine.berechneKonto(konto, stichtag, App.aktuelleTabelle());
+
+    renderReportKopf(container, konto, ergebnis);
+    renderReportWarnungen(container, ergebnis);
+    renderReportForderungen(container, ergebnis);
+    renderReportStaffel(container, ergebnis);
+    renderReportZahlungen(container, ergebnis);
+    renderReportEndsaldo(container, ergebnis);
+  };
+
+  function initReportAnsicht() {
+    const input = document.getElementById('reportStichtag');
+    input.value = Engine.heute();
+    input.addEventListener('change', () => App.renderReport());
+    document.getElementById('btnDrucken').addEventListener('click', () => window.print());
+  }
+
   function initBuchungenAnsicht() {
     document.getElementById('btnNeuHF').addEventListener('click', () => App.oeffneBuchungDialog('hauptforderung'));
     document.getElementById('btnNeuNF').addEventListener('click', () => App.oeffneBuchungDialog('nebenforderung'));
@@ -547,6 +820,7 @@ if (typeof document !== 'undefined') {
     initKontenAnsicht();
     initKontoName();
     initBuchungenAnsicht();
+    initReportAnsicht();
     App.zeigeAnsicht('konten');
   });
 
