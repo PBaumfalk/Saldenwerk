@@ -904,6 +904,7 @@ dialog.dialog::backdrop {
 .druck-tabelle {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .druck-tabelle th {
@@ -916,6 +917,7 @@ dialog.dialog::backdrop {
 .druck-tabelle td {
   padding: 2pt 4pt;
   vertical-align: top;
+  font-size: 8pt;
 }
 
 .druck-tabelle .num {
@@ -924,7 +926,7 @@ dialog.dialog::backdrop {
 }
 
 .druck-tabelle .druck-text {
-  width: 34%;
+  overflow-wrap: break-word;
 }
 
 .druck-zeile--detail {
