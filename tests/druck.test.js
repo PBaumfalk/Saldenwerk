@@ -236,3 +236,21 @@ test('seite2: Überzahlung erscheint in Zahlungen und Salden', () => {
   assert.strictEqual(m.seite2.salden.ueberzahlung, 50);
   assert.strictEqual(m.seite2.salden.gesamt, -50);
 });
+
+test('seite2: Zinsforderung wird in zinsenAufHauptforderungen kategorisiert', () => {
+  const konto = {
+    name: 'Mit Zinsforderung',
+    buchungen: [
+      { id: 'hf1', typ: 'hauptforderung', datum: '2024-01-01', betrag: 1000, text: 'Hauptforderung', verzinsung: null },
+      { id: 'zf1', typ: 'zinsforderung', datum: '2024-06-01', betrag: 50, text: 'Titulierte Zinsen', verzinsung: null },
+    ],
+  };
+  const ergebnis = Engine.berechneKonto(konto, '2024-12-31');
+  const m = Druck.baueDruckmodell(konto, ergebnis);
+
+  // Zinsforderung soll in zinsenAufHauptforderungen landen, nicht in hauptforderungen
+  assert.strictEqual(m.seite2.summen.hauptforderungen, 1000);
+  assert.strictEqual(m.seite2.summen.zinsenAufHauptforderungen, 50);
+  assert.strictEqual(m.seite2.salden.hauptforderungen, 1000);
+  assert.strictEqual(m.seite2.salden.zinsenAufHauptforderungen, 50);
+});
