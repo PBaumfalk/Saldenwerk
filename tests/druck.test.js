@@ -85,3 +85,74 @@ test('baueDruckmodell: Buchungen nach Stichtag erscheinen nicht', () => {
   assert.strictEqual(m.zeilen.length, 2);
   assert.strictEqual(m.saldozeile.gesamtsaldo, 1100);
 });
+
+function verzinstesKonto() {
+  return {
+    name: 'Verzinst',
+    buchungen: [
+      { id: 'hf1', typ: 'hauptforderung', datum: '2024-01-01', betrag: 1000, text: 'Rechnung 4711',
+        verzinsung: { art: 'fest', satz: 10, methode: 'kalender', beginn: '2024-01-01', ende: null } },
+      { id: 'nf1', typ: 'nebenforderung', datum: '2024-01-01', betrag: 100, text: 'Mahnkosten', verzinsung: null },
+      { id: 'nf2', typ: 'nebenforderung', datum: '2024-01-01', betrag: 200, text: 'Gerichtskosten',
+        verzinsung: { art: 'fest', satz: 5, methode: 'kalender', beginn: '2024-01-01', ende: null } },
+      { id: 'z1', typ: 'zahlung', datum: '2024-07-01', betrag: 300, text: 'Zahlung Schuldner', verzinsung: null },
+    ],
+  };
+}
+
+test('baueDruckmodell: Sammelzeilen vor Zahlung und am Stichtag, getrennt nach HF-/Kostenzinsen', () => {
+  const konto = verzinstesKonto();
+  const ergebnis = Engine.berechneKonto(konto, '2024-12-31');
+  const m = Druck.baueDruckmodell(konto, ergebnis);
+
+  const sammel = m.zeilen.filter((z) => z.art === 'sammel');
+  assert.deepStrictEqual(sammel.map((z) => [z.datum, z.spalte, z.betrag]), [
+    ['2024-06-30', 'hfZinsen', 49.73],
+    ['2024-06-30', 'kostenzinsen', 4.97],
+    ['2024-12-31', 'hfZinsen', 50.27],
+  ]);
+  assert.strictEqual(sammel[0].text, 'Aufgelaufene Zinsen vom 01.01.2024 bis zum 30.06.2024');
+  assert.strictEqual(sammel[1].text, 'Aufgelaufene Kostenzinsen vom 01.01.2024 bis zum 30.06.2024');
+
+  // Reihenfolge: Buchungen 01.01. → Sammelzeilen 30.06. → Zahlung 01.07. → Sammelzeile 31.12.
+  assert.deepStrictEqual(
+    m.zeilen.filter((z) => z.art !== 'detail').map((z) => [z.datum, z.spalte]), [
+      ['2024-01-01', 'hauptforderung'], ['2024-01-01', 'unverzinslKosten'], ['2024-01-01', 'verzinslKosten'],
+      ['2024-06-30', 'hfZinsen'], ['2024-06-30', 'kostenzinsen'],
+      ['2024-07-01', 'zahlung'],
+      ['2024-12-31', 'hfZinsen'],
+    ]);
+});
+
+test('baueDruckmodell: Detailzeilen direkt nach ihrer Sammelzeile, Summe konsistent', () => {
+  const konto = verzinstesKonto();
+  const ergebnis = Engine.berechneKonto(konto, '2024-12-31');
+  const m = Druck.baueDruckmodell(konto, ergebnis);
+
+  const idxSammel = m.zeilen.findIndex((z) => z.art === 'sammel');
+  const detail = m.zeilen[idxSammel + 1];
+  assert.strictEqual(detail.art, 'detail');
+  assert.strictEqual(detail.datum, null);
+  assert.strictEqual(detail.gesamtsaldo, null);
+  assert.strictEqual(detail.spalte, 'hfZinsen');
+  assert.strictEqual(detail.betrag, 49.73);
+  assert.strictEqual(detail.text,
+    'davon 10,00000% Zinsen aus 1.000,00 EUR ab dem 01.01.2024 bis zum 30.06.2024 (182 Zinstage) aus „Rechnung 4711"');
+
+  // Invariante: je Sammelzeile ist die Summe ihrer Detailzeilen gleich dem Sammelbetrag
+  const sammelIdx = m.zeilen.map((z, i) => (z.art === 'sammel' ? i : -1)).filter((i) => i >= 0);
+  for (const i of sammelIdx) {
+    let summe = 0;
+    for (let j = i + 1; j < m.zeilen.length && m.zeilen[j].art === 'detail'; j++) summe += m.zeilen[j].betrag;
+    assert.strictEqual(Engine.round2(summe), m.zeilen[i].betrag);
+  }
+});
+
+test('baueDruckmodell: Saldozeile und Endsaldo mit Zinsen (Invariante gegen Engine)', () => {
+  const konto = verzinstesKonto();
+  const ergebnis = Engine.berechneKonto(konto, '2024-12-31');
+  const m = Druck.baueDruckmodell(konto, ergebnis);
+  assert.strictEqual(m.saldozeile.gesamtsaldo, ergebnis.summen.saldo); // 1104.97
+  assert.strictEqual(m.saldozeile.hfZinsen, 100.00);
+  assert.strictEqual(m.saldozeile.kostenzinsen, 4.97);
+});

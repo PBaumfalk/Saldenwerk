@@ -69,7 +69,43 @@
       }
     };
 
+    const postenById = new Map(ergebnis.posten.map((p) => [p.id, p]));
+    const zinsSpalte = (forderungId) => {
+      const p = postenById.get(forderungId);
+      return p && p.typ === 'nebenforderung' ? 'kostenzinsen' : 'hfZinsen';
+    };
+
+    let offeneSegmente = ergebnis.staffel.slice();
+    const pushZinsZeilen = (datum, cutoff) => {
+      const faellig = offeneSegmente.filter((s) => cutoff === null || s.bis <= cutoff);
+      offeneSegmente = cutoff === null ? [] : offeneSegmente.filter((s) => s.bis > cutoff);
+      for (const spalte of ['hfZinsen', 'kostenzinsen']) {
+        const segs = faellig.filter((s) => zinsSpalte(s.forderungId) === spalte);
+        if (!segs.length) continue;
+        const betrag = Engine.round2(segs.reduce((sum, s) => sum + s.zins, 0));
+        const von = segs.reduce((min, s) => (s.von < min ? s.von : min), segs[0].von);
+        const bis = segs.reduce((max, s) => (s.bis > max ? s.bis : max), segs[0].bis);
+        saldo = Engine.round2(saldo + betrag);
+        spaltensummen[spalte] = Engine.round2(spaltensummen[spalte] + betrag);
+        const wort = spalte === 'kostenzinsen' ? 'Kostenzinsen' : 'Zinsen';
+        zeilen.push({ art: 'sammel', datum,
+          text: `Aufgelaufene ${wort} vom ${formatDatum(Engine.addTage(von, 1))} bis zum ${formatDatum(bis)}`,
+          spalte, betrag, gesamtsaldo: saldo });
+        for (const s of segs) {
+          const posten = postenById.get(s.forderungId);
+          zeilen.push({ art: 'detail', datum: null,
+            text: `davon ${formatProzent5(s.satzProzent === null ? 0 : s.satzProzent)} Zinsen aus ` +
+              `${formatBetragEUR(s.basis)} ab dem ${formatDatum(Engine.addTage(s.von, 1))} bis zum ` +
+              `${formatDatum(s.bis)} (${s.tage} Zinstage) aus „${posten ? posten.text : 'Forderung'}"`,
+            spalte, betrag: s.zins, gesamtsaldo: null });
+        }
+      }
+    };
+
     for (const v of ergebnis.verrechnungen) {
+      const cutoff = Engine.addTage(v.datum, -1);
+      pushForderungenBis(cutoff);
+      pushZinsZeilen(cutoff, cutoff);
       const zahlung = buchungById.get(v.zahlungId);
       pushForderungenBis(v.datum);
       const betrag = Engine.round2(v.betrag);
@@ -80,6 +116,7 @@
         spalte: 'zahlung', betrag, gesamtsaldo: saldo });
     }
     pushForderungenBis(null);
+    pushZinsZeilen(stichtag, null);
 
     const saldozeile = { ...spaltensummen, umsatz: saldo, gesamtsaldo: saldo };
     return { kopf: { kontoName: konto.name, stichtag }, zeilen, saldozeile };
