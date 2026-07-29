@@ -32,6 +32,9 @@ zwischen Geräten den Export/Import verwenden (siehe unten).
 - **Report**: Saldenreport zu einem wählbaren Stichtag mit
   Forderungsaufstellung, Zinsstaffel (Herleitung jedes Zinssegments) und
   Verrechnungsübersicht je Zahlung, druckbar über die Browser-Druckfunktion.
+- **PDF-Export:** „PDF exportieren" im Report erzeugt eine Forderungsaufstellung im
+  Kanzlei-Stil (Querformat-Kontoblatt mit Zinsstaffel-Details, Summenseite mit
+  Salden-Chart) über den Browser-Druckdialog („Als PDF sichern").
 - **Basiszins-Pflege**: Ansicht der eingebauten Basiszinssatz-Tabelle
   (halbjährlich ab 1. Januar 2002) mit der Möglichkeit, einzelne
   Halbjahreswerte durch eigene Werte zu überschreiben (Overrides) oder
