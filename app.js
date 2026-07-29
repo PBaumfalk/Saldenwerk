@@ -939,7 +939,12 @@ if (typeof document !== 'undefined') {
   App.renderReport = function () {
     const konto = App.aktivesKonto();
     const btnPdf = document.getElementById('btnPdfExport');
-    if (btnPdf) btnPdf.disabled = !konto || !konto.buchungen.length;
+    if (btnPdf) {
+      btnPdf.disabled = !konto || !konto.buchungen.length;
+      btnPdf.title = btnPdf.disabled
+        ? 'Für den Export müssen zuerst Buchungen erfasst werden.'
+        : '';
+    }
     const container = document.getElementById('reportInhalt');
     container.innerHTML = '';
     if (!konto) return;

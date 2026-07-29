@@ -299,6 +299,11 @@ select:focus {
   transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 }
 
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .btn--primaer {
   background: var(--farbe-akzent);
   border-color: var(--farbe-akzent);
