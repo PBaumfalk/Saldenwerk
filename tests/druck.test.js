@@ -281,3 +281,38 @@ test('chart: leeres Konto liefert leere Punktliste', () => {
   const m = Druck.baueDruckmodell(konto, ergebnis);
   assert.deepStrictEqual(m.chart, []);
 });
+
+test('baueDruckmodell: zwei Zahlungen an verschiedenen Daten ergeben drei Sammelzeilen-Phasen', () => {
+  const konto = {
+    name: 'Zwei Zahlungen',
+    buchungen: [
+      { id: 'hf1', typ: 'hauptforderung', datum: '2024-01-01', betrag: 1000, text: 'HF',
+        verzinsung: { art: 'fest', satz: 10, methode: 'kalender', beginn: '2024-01-01', ende: null } },
+      { id: 'z1', typ: 'zahlung', datum: '2024-04-01', betrag: 200, text: 'Zahlung 1', verzinsung: null },
+      { id: 'z2', typ: 'zahlung', datum: '2024-08-01', betrag: 300, text: 'Zahlung 2', verzinsung: null },
+    ],
+  };
+  const ergebnis = Engine.berechneKonto(konto, '2024-12-31');
+  const m = Druck.baueDruckmodell(konto, ergebnis);
+
+  // (1) Drei Sammelzeilen-Phasen: je vor einer Zahlung und am Stichtag
+  const sammel = m.zeilen.filter((z) => z.art === 'sammel');
+  assert.deepStrictEqual(sammel.map((z) => z.datum), ['2024-03-31', '2024-07-31', '2024-12-31']);
+
+  // (2) Jede Sammelzeile ist die round2-Summe ihrer Detailzeilen
+  const sammelIdx = m.zeilen.map((z, i) => (z.art === 'sammel' ? i : -1)).filter((i) => i >= 0);
+  for (const i of sammelIdx) {
+    let summe = 0;
+    for (let j = i + 1; j < m.zeilen.length && m.zeilen[j].art === 'detail'; j++) summe += m.zeilen[j].betrag;
+    assert.strictEqual(Engine.round2(summe), m.zeilen[i].betrag);
+  }
+
+  // (3) Invariante: laufender Gesamtsaldo endet beim Engine-Saldo
+  assert.strictEqual(m.saldozeile.gesamtsaldo, ergebnis.summen.saldo);
+
+  // (4) Zeilenreihenfolge: Sammelzeile jeweils vor ihrer Zahlungszeile
+  const zahlungIdx1 = m.zeilen.findIndex((z) => z.spalte === 'zahlung' && z.datum === '2024-04-01');
+  const zahlungIdx2 = m.zeilen.findIndex((z) => z.spalte === 'zahlung' && z.datum === '2024-08-01');
+  assert.ok(sammelIdx[0] < zahlungIdx1);
+  assert.ok(sammelIdx[1] < zahlungIdx2);
+});

@@ -1015,7 +1015,7 @@ if (typeof document !== 'undefined') {
       DRUCK_SPALTEN.forEach((key) => {
         tr.appendChild(druckZelle('td', key === z.spalte ? Druck.formatBetragEUR(z.betrag) : '', 'num'));
       });
-      tr.appendChild(druckZelle('td', Druck.formatBetragEUR(z.betrag), 'num'));
+      tr.appendChild(druckZelle('td', Druck.formatBetragEUR(z.spalte === 'zahlung' ? -z.betrag : z.betrag), 'num'));
       tr.appendChild(druckZelle('td', z.gesamtsaldo === null ? '' : Druck.formatBetragEUR(z.gesamtsaldo), 'num druck-saldo'));
       tbody.appendChild(tr);
     });
@@ -1091,7 +1091,7 @@ if (typeof document !== 'undefined') {
     uebersicht.appendChild(druckSummenBlock('Zahlungen', modell.seite2.zahlungen, 'Summe Zahlungen:',
       modell.seite2.zahlungen.ueberschuss > 0 ? [['Überschuss (nicht verrechnet):', modell.seite2.zahlungen.ueberschuss]] : []));
     uebersicht.appendChild(druckSummenBlock('Salden', modell.seite2.salden, 'Gesamtsaldo:',
-      modell.seite2.salden.ueberzahlung > 0 ? [['− Überzahlung:', -modell.seite2.salden.ueberzahlung]] : []));
+      modell.seite2.salden.ueberzahlung > 0 ? [['− Überzahlung:', modell.seite2.salden.ueberzahlung]] : []));
     uebersicht.appendChild(druckZelle('p',
       `Tageszins: ${Druck.formatZahl5(modell.tageszins.betragProTag)} EUR ab dem ${formatDatum(modell.tageszins.ab)}`,
       'druck-uebersicht__tageszins'));
@@ -1128,18 +1128,25 @@ if (typeof document !== 'undefined') {
     const ms = (iso) => new Date(iso + 'T00:00:00Z').getTime();
     const t0 = ms(punkte[0].datum), t1 = ms(punkte[punkte.length - 1].datum);
     const maxSaldo = Math.max(...punkte.map((p) => p.saldo), 1);
-    const schritt = druckChartSchritt(maxSaldo);
+    const minSaldo = Math.min(...punkte.map((p) => p.saldo), 0);
+    const schritt = druckChartSchritt(Math.max(maxSaldo - minSaldo, 1));
+    const yMin = Math.floor(minSaldo / schritt) * schritt;
     const yMax = Math.ceil(maxSaldo / schritt) * schritt;
     const x = (t) => L + ((t - t0) / (t1 - t0 || 1)) * (B - L - R);
-    const y = (s) => T + (1 - s / yMax) * (H - T - U);
+    const y = (s) => T + (1 - (s - yMin) / (yMax - yMin)) * (H - T - U);
 
-    for (let s = 0; s <= yMax; s += schritt) {
+    for (let s = yMin; s <= yMax; s += schritt) {
       svg.appendChild(svgElement('line', { x1: L, y1: y(s), x2: B - R, y2: y(s),
         stroke: '#999', 'stroke-width': 0.5, 'stroke-dasharray': '3 3' }));
       const label = svgElement('text', { x: L - 6, y: y(s) + 3, 'text-anchor': 'end', 'font-size': 11 });
       label.textContent = new Intl.NumberFormat('de-DE').format(s);
       svg.appendChild(label);
     }
+
+    const achsentitel = svgElement('text', { x: 14, y: (H - U + T) / 2, 'font-size': 11,
+      'text-anchor': 'middle', transform: `rotate(-90 14 ${(H - U + T) / 2})` });
+    achsentitel.textContent = 'Saldo';
+    svg.appendChild(achsentitel);
 
     const jahr0 = Number(punkte[0].datum.slice(0, 4));
     const jahr1 = Number(punkte[punkte.length - 1].datum.slice(0, 4));
@@ -1178,7 +1185,14 @@ if (typeof document !== 'undefined') {
     container.appendChild(renderDruckSeite2(modell));
   }
 
+  function raeumeDruckmodusAuf() {
+    document.body.classList.remove('druckmodus');
+    const stil = document.getElementById('druckQuerformat');
+    if (stil) stil.remove();
+  }
+
   function druckeForderungsaufstellung() {
+    raeumeDruckmodusAuf();
     const konto = App.aktivesKonto();
     if (!konto || !konto.buchungen.length) return;
     const stichtagInput = document.getElementById('reportStichtag');
@@ -1198,11 +1212,7 @@ if (typeof document !== 'undefined') {
 
   function initDruckansicht() {
     document.getElementById('btnPdfExport').addEventListener('click', druckeForderungsaufstellung);
-    window.addEventListener('afterprint', () => {
-      document.body.classList.remove('druckmodus');
-      const stil = document.getElementById('druckQuerformat');
-      if (stil) stil.remove();
-    });
+    window.addEventListener('afterprint', raeumeDruckmodusAuf);
   }
 
   function basiszinsFehlerElement() {
