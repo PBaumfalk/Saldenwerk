@@ -66,6 +66,25 @@
   const SEITE2_KATEGORIEN = ['hauptforderungen', 'zinsenAufHauptforderungen',
     'verzinslicheKosten', 'kostenzinsen', 'unverzinslicheKosten'];
 
+  function chartPunkte(konto, ergebnis) {
+    const deltas = new Map();
+    const add = (datum, betrag) => deltas.set(datum, (deltas.get(datum) || 0) + betrag);
+    for (const b of (konto.buchungen || []).filter((x) => x.datum <= ergebnis.stichtag)) {
+      add(b.datum, b.typ === 'zahlung' ? -b.betrag : b.betrag);
+    }
+    for (const s of ergebnis.staffel) add(s.bis, s.zins);
+    const punkte = [];
+    let saldo = 0;
+    for (const datum of [...deltas.keys()].sort()) {
+      saldo = Engine.round2(saldo + deltas.get(datum));
+      punkte.push({ datum, saldo });
+    }
+    if (punkte.length && punkte[punkte.length - 1].datum < ergebnis.stichtag) {
+      punkte.push({ datum: ergebnis.stichtag, saldo });
+    }
+    return punkte;
+  }
+
   function baueSeite2(konto, ergebnis) {
     const buchungById = new Map((konto.buchungen || []).map((b) => [b.id, b]));
     const leer = () => Object.fromEntries(SEITE2_KATEGORIEN.map((k) => [k, 0]));
@@ -178,7 +197,7 @@
     pushZinsZeilen(stichtag, null);
 
     const saldozeile = { ...spaltensummen, umsatz: saldo, gesamtsaldo: saldo };
-    return { kopf: { kontoName: konto.name, stichtag }, zeilen, saldozeile, tageszins: tageszinsNach(stichtag, konto, ergebnis, tabelle), seite2: baueSeite2(konto, ergebnis) };
+    return { kopf: { kontoName: konto.name, stichtag }, zeilen, saldozeile, tageszins: tageszinsNach(stichtag, konto, ergebnis, tabelle), seite2: baueSeite2(konto, ergebnis), chart: chartPunkte(konto, ergebnis) };
   }
 
   return { formatBetragEUR, formatZahl5, formatProzent5, istVerzinst, spalteFuerBuchung, verzinsungsZusatz, baueDruckmodell };

@@ -254,3 +254,30 @@ test('seite2: Zinsforderung wird in zinsenAufHauptforderungen kategorisiert', ()
   assert.strictEqual(m.seite2.salden.hauptforderungen, 1000);
   assert.strictEqual(m.seite2.salden.zinsenAufHauptforderungen, 50);
 });
+
+test('chart: Punkte monoton nach Datum, letzter Punkt = Saldo am Stichtag', () => {
+  const konto = verzinstesKonto();
+  const ergebnis = Engine.berechneKonto(konto, '2024-12-31');
+  const m = Druck.baueDruckmodell(konto, ergebnis);
+
+  for (let i = 1; i < m.chart.length; i++) assert.ok(m.chart[i - 1].datum < m.chart[i].datum);
+  const letzter = m.chart[m.chart.length - 1];
+  assert.strictEqual(letzter.datum, '2024-12-31');
+  assert.strictEqual(letzter.saldo, ergebnis.summen.saldo);
+  assert.deepStrictEqual(m.chart[0], { datum: '2024-01-01', saldo: 1300 });
+});
+
+test('chart: Zahlung senkt den Saldo', () => {
+  const konto = unverzinstesKonto();
+  const ergebnis = Engine.berechneKonto(konto, '2024-12-31');
+  const m = Druck.baueDruckmodell(konto, ergebnis);
+  const punkt = m.chart.find((p) => p.datum === '2024-03-01');
+  assert.strictEqual(punkt.saldo, 800);
+});
+
+test('chart: leeres Konto liefert leere Punktliste', () => {
+  const konto = { name: 'Leer', buchungen: [] };
+  const ergebnis = Engine.berechneKonto(konto, '2024-12-31');
+  const m = Druck.baueDruckmodell(konto, ergebnis);
+  assert.deepStrictEqual(m.chart, []);
+});
