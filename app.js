@@ -1045,11 +1045,137 @@ if (typeof document !== 'undefined') {
     return fuss;
   }
 
+  const SEITE2_LABELS = [
+    ['hauptforderungen', 'Hauptforderungen:'],
+    ['zinsenAufHauptforderungen', 'Zinsen auf Hauptforderungen:'],
+    ['verzinslicheKosten', 'Verzinsliche Kosten:'],
+    ['kostenzinsen', 'Kostenzinsen:'],
+    ['unverzinslicheKosten', 'Unverzinsliche Kosten:'],
+  ];
+
+  function druckSummenBlock(titel, werte, gesamtLabel, extraZeilen) {
+    const block = document.createElement('div');
+    block.className = 'druck-summenblock';
+    block.appendChild(druckZelle('h3', titel, ''));
+    SEITE2_LABELS.forEach(([key, label]) => {
+      const zeile = document.createElement('div');
+      zeile.className = 'druck-summenzeile';
+      zeile.append(druckZelle('span', label, ''), druckZelle('span', Druck.formatBetragEUR(werte[key]), ''));
+      block.appendChild(zeile);
+    });
+    (extraZeilen || []).forEach(([label, wert]) => {
+      const zeile = document.createElement('div');
+      zeile.className = 'druck-summenzeile';
+      zeile.append(druckZelle('span', label, ''), druckZelle('span', Druck.formatBetragEUR(wert), ''));
+      block.appendChild(zeile);
+    });
+    const gesamt = document.createElement('div');
+    gesamt.className = 'druck-summenzeile druck-summenzeile--gesamt';
+    gesamt.append(druckZelle('span', gesamtLabel, ''), druckZelle('span', Druck.formatBetragEUR(werte.gesamt), ''));
+    block.appendChild(gesamt);
+    return block;
+  }
+
+  function renderDruckSeite2(modell) {
+    const seite = document.createElement('section');
+    seite.className = 'druck-seite druck-seite--zwei';
+    seite.appendChild(druckZelle('h1', `Forderungskonto per ${formatDatum(modell.kopf.stichtag)}`, 'druck-titel'));
+
+    const layout = document.createElement('div');
+    layout.className = 'druck-seite2-layout';
+
+    const uebersicht = document.createElement('div');
+    uebersicht.className = 'druck-uebersicht';
+    uebersicht.appendChild(druckZelle('div', `Stand des Forderungskontos per ${formatDatum(modell.kopf.stichtag)}`, 'druck-uebersicht__titel'));
+    uebersicht.appendChild(druckSummenBlock('Summen', modell.seite2.summen, 'Gesamtsumme:'));
+    uebersicht.appendChild(druckSummenBlock('Zahlungen', modell.seite2.zahlungen, 'Summe Zahlungen:',
+      modell.seite2.zahlungen.ueberschuss > 0 ? [['Überschuss (nicht verrechnet):', modell.seite2.zahlungen.ueberschuss]] : []));
+    uebersicht.appendChild(druckSummenBlock('Salden', modell.seite2.salden, 'Gesamtsaldo:',
+      modell.seite2.salden.ueberzahlung > 0 ? [['− Überzahlung:', -modell.seite2.salden.ueberzahlung]] : []));
+    uebersicht.appendChild(druckZelle('p',
+      `Tageszins: ${Druck.formatZahl5(modell.tageszins.betragProTag)} EUR ab dem ${formatDatum(modell.tageszins.ab)}`,
+      'druck-uebersicht__tageszins'));
+
+    const chartBox = document.createElement('div');
+    chartBox.className = 'druck-chartbox';
+    chartBox.appendChild(druckZelle('h3', 'Salden-Entwicklung', 'druck-chartbox__titel'));
+    chartBox.appendChild(renderDruckChart(modell.chart));
+
+    layout.append(uebersicht, chartBox);
+    seite.appendChild(layout);
+    seite.appendChild(renderDruckFusszeile(modell));
+    return seite;
+  }
+
+  function svgElement(name, attrs) {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', name);
+    Object.entries(attrs || {}).forEach(([k, v]) => el.setAttribute(k, v));
+    return el;
+  }
+
+  function druckChartSchritt(maxWert) {
+    const stufen = [10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000, 20000, 50000, 100000];
+    for (const s of stufen) if (maxWert / s <= 18) return s;
+    return Math.pow(10, Math.ceil(Math.log10(maxWert / 18)));
+  }
+
+  function renderDruckChart(punkte) {
+    const B = 760, H = 460, L = 80, R = 15, T = 15, U = 55;
+    const svg = svgElement('svg', { viewBox: `0 0 ${B} ${H}`, class: 'druck-chart', role: 'img',
+      'aria-label': 'Salden-Entwicklung' });
+    if (punkte.length < 2) return svg;
+
+    const ms = (iso) => new Date(iso + 'T00:00:00Z').getTime();
+    const t0 = ms(punkte[0].datum), t1 = ms(punkte[punkte.length - 1].datum);
+    const maxSaldo = Math.max(...punkte.map((p) => p.saldo), 1);
+    const schritt = druckChartSchritt(maxSaldo);
+    const yMax = Math.ceil(maxSaldo / schritt) * schritt;
+    const x = (t) => L + ((t - t0) / (t1 - t0 || 1)) * (B - L - R);
+    const y = (s) => T + (1 - s / yMax) * (H - T - U);
+
+    for (let s = 0; s <= yMax; s += schritt) {
+      svg.appendChild(svgElement('line', { x1: L, y1: y(s), x2: B - R, y2: y(s),
+        stroke: '#999', 'stroke-width': 0.5, 'stroke-dasharray': '3 3' }));
+      const label = svgElement('text', { x: L - 6, y: y(s) + 3, 'text-anchor': 'end', 'font-size': 11 });
+      label.textContent = new Intl.NumberFormat('de-DE').format(s);
+      svg.appendChild(label);
+    }
+
+    const jahr0 = Number(punkte[0].datum.slice(0, 4));
+    const jahr1 = Number(punkte[punkte.length - 1].datum.slice(0, 4));
+    for (let jahr = jahr0; jahr <= jahr1; jahr++) {
+      const t = ms(`${jahr}-01-01`);
+      if (t < t0 || t > t1) continue;
+      svg.appendChild(svgElement('line', { x1: x(t), y1: T, x2: x(t), y2: H - U,
+        stroke: '#999', 'stroke-width': 0.5, 'stroke-dasharray': '3 3' }));
+      const label = svgElement('text', { x: x(t), y: H - U + 16, 'text-anchor': 'middle', 'font-size': 11 });
+      label.textContent = String(jahr);
+      svg.appendChild(label);
+    }
+
+    svg.appendChild(svgElement('rect', { x: L, y: T, width: B - L - R, height: H - T - U,
+      fill: 'none', stroke: '#333', 'stroke-width': 0.75 }));
+    svg.appendChild(svgElement('polyline', {
+      points: punkte.map((p) => `${x(ms(p.datum)).toFixed(1)},${y(p.saldo).toFixed(1)}`).join(' '),
+      fill: 'none', stroke: '#d2233c', 'stroke-width': 1.5 }));
+
+    const legende = svgElement('g', {});
+    legende.appendChild(svgElement('rect', { x: B / 2 - 70, y: H - 24, width: 140, height: 20,
+      fill: '#fff', stroke: '#333', 'stroke-width': 0.75 }));
+    legende.appendChild(svgElement('line', { x1: B / 2 - 60, y1: H - 14, x2: B / 2 - 35, y2: H - 14,
+      stroke: '#d2233c', 'stroke-width': 1.5 }));
+    const legendeText = svgElement('text', { x: B / 2 - 28, y: H - 10, 'font-size': 11 });
+    legendeText.textContent = 'Gesamtsaldo';
+    legende.appendChild(legendeText);
+    svg.appendChild(legende);
+    return svg;
+  }
+
   function renderDruckansicht(modell) {
     const container = document.getElementById('druckansicht');
     container.innerHTML = '';
     container.appendChild(renderDruckSeite1(modell));
-    // Seite 2 folgt in Task 9
+    container.appendChild(renderDruckSeite2(modell));
   }
 
   function druckeForderungsaufstellung() {

@@ -952,6 +952,74 @@ dialog.dialog::backdrop {
   border-top: 0.5pt solid #999;
 }
 
+.druck-seite--zwei {
+  break-before: page;
+}
+
+.druck-seite2-layout {
+  display: flex;
+  gap: 16pt;
+  align-items: flex-start;
+}
+
+.druck-uebersicht {
+  flex: 0 0 38%;
+  background: #ececec;
+  padding: 0 0 8pt;
+}
+
+.druck-uebersicht__titel {
+  background: #d5ead5;
+  font-weight: 700;
+  text-align: center;
+  padding: 3pt 6pt;
+  margin-bottom: 6pt;
+}
+
+.druck-summenblock {
+  padding: 0 8pt;
+  margin-bottom: 8pt;
+}
+
+.druck-summenblock h3 {
+  font-size: 9pt;
+  margin: 6pt 0 3pt;
+}
+
+.druck-summenzeile {
+  display: flex;
+  justify-content: space-between;
+  padding: 1pt 0;
+}
+
+.druck-summenzeile--gesamt {
+  font-weight: 700;
+  border-top: 0.5pt solid #999;
+  margin-top: 2pt;
+  padding-top: 2pt;
+}
+
+.druck-uebersicht__tageszins {
+  font-weight: 700;
+  padding: 0 8pt;
+  margin: 4pt 0 0;
+}
+
+.druck-chartbox {
+  flex: 1 1 auto;
+}
+
+.druck-chartbox__titel {
+  text-align: center;
+  font-size: 10pt;
+  margin: 0 0 4pt;
+}
+
+.druck-chart {
+  width: 100%;
+  height: auto;
+}
+
 @media print {
   body.druckmodus .appbar,
   body.druckmodus .hauptbereich,
