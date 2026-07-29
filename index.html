@@ -84,7 +84,8 @@
           <label for="reportStichtag">Stichtag</label>
           <input type="date" id="reportStichtag">
         </div>
-        <button type="button" id="btnDrucken" class="btn btn--primaer">Drucken</button>
+        <button type="button" id="btnPdfExport" class="btn btn--primaer">PDF exportieren</button>
+        <button type="button" id="btnDrucken" class="btn btn--sekundaer">Drucken</button>
       </div>
     </div>
     <div id="reportInhalt" class="report-inhalt"></div>
@@ -127,6 +128,8 @@
   </section>
 
 </main>
+
+<div id="druckansicht" class="druckansicht" aria-hidden="true"></div>
 
 <dialog id="buchungDialog" class="dialog">
   <form method="dialog" id="buchungForm">
@@ -204,5 +207,6 @@
 <script src="basiszins.js"></script>
 <script src="engine.js"></script>
 <script src="app.js"></script>
+<script src="druck.js"></script>
 </body>
 </html>

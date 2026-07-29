@@ -868,3 +868,102 @@ dialog.dialog::backdrop {
     break-after: avoid;
   }
 }
+
+/* ---------- Druckansicht Forderungsaufstellung ---------- */
+
+.druckansicht {
+  display: none;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 8.5pt;
+  line-height: 1.35;
+  color: #000;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.druck-titel {
+  text-align: center;
+  font-size: 12pt;
+  margin: 0 0 10pt;
+}
+
+.druck-balken {
+  display: flex;
+  justify-content: space-between;
+  background: #e0e0e0;
+  font-weight: 700;
+  padding: 3pt 6pt;
+  margin-bottom: 4pt;
+}
+
+.druck-tabelle {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.druck-tabelle th {
+  background: #e0e0e0;
+  font-weight: 700;
+  text-align: center;
+  padding: 3pt 4pt;
+}
+
+.druck-tabelle td {
+  padding: 2pt 4pt;
+  vertical-align: top;
+}
+
+.druck-tabelle .num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.druck-tabelle .druck-text {
+  width: 34%;
+}
+
+.druck-zeile--detail {
+  font-style: italic;
+  color: #333;
+}
+
+.druck-zeile--sammel td,
+.druck-zeile--buchung td {
+  border-top: 0.5pt solid #ccc;
+}
+
+.druck-saldo,
+.druck-saldozeile {
+  font-weight: 700;
+}
+
+.druck-saldozeile td {
+  background: #d5ead5;
+  border-top: 1pt solid #000;
+  padding: 3pt 4pt;
+}
+
+.druck-fusszeile {
+  display: flex;
+  justify-content: space-between;
+  font-style: italic;
+  margin-top: 8pt;
+  padding-top: 4pt;
+  border-top: 0.5pt solid #999;
+}
+
+@media print {
+  body.druckmodus .appbar,
+  body.druckmodus .hauptbereich,
+  body.druckmodus dialog {
+    display: none !important;
+  }
+
+  body.druckmodus .druckansicht {
+    display: block;
+  }
+
+  .druck-tabelle tr {
+    break-inside: avoid;
+  }
+}

@@ -938,6 +938,8 @@ if (typeof document !== 'undefined') {
 
   App.renderReport = function () {
     const konto = App.aktivesKonto();
+    const btnPdf = document.getElementById('btnPdfExport');
+    if (btnPdf) btnPdf.disabled = !konto || !konto.buchungen.length;
     const container = document.getElementById('reportInhalt');
     container.innerHTML = '';
     if (!konto) return;
@@ -971,6 +973,110 @@ if (typeof document !== 'undefined') {
     input.value = Engine.heute();
     input.addEventListener('change', () => App.renderReport());
     document.getElementById('btnDrucken').addEventListener('click', () => window.print());
+  }
+
+  const DRUCK_SPALTEN = ['zahlung', 'hauptforderung', 'hfZinsen', 'verzinslKosten', 'kostenzinsen', 'unverzinslKosten'];
+  const DRUCK_SPALTEN_LABELS = ['Zahlung', 'Hauptforderung', 'HF-Zinsen', 'Verzinsl. Kosten',
+    'Kostenzinsen', 'Unverzinsl. Kosten'];
+
+  function druckZelle(tag, text, klasse) {
+    const el = document.createElement(tag);
+    if (klasse) el.className = klasse;
+    el.textContent = text;
+    return el;
+  }
+
+  function renderDruckSeite1(modell) {
+    const seite = document.createElement('section');
+    seite.className = 'druck-seite';
+
+    const h1 = druckZelle('h1', `Forderungsaufstellung per ${formatDatum(modell.kopf.stichtag)}`, 'druck-titel');
+    const balken = document.createElement('div');
+    balken.className = 'druck-balken';
+    balken.append(
+      druckZelle('span', `Forderungskonto: ${modell.kopf.kontoName}`, ''),
+      druckZelle('span', `Berechnungsstand: ${formatDatum(modell.kopf.stichtag)}`, ''));
+    seite.append(h1, balken);
+
+    const table = document.createElement('table');
+    table.className = 'druck-tabelle';
+    const thead = document.createElement('thead');
+    const kopfzeile = document.createElement('tr');
+    ['Datum', 'Bezeichnung', ...DRUCK_SPALTEN_LABELS, 'Umsatz', 'Gesamtsaldo']
+      .forEach((label) => kopfzeile.appendChild(druckZelle('th', label, '')));
+    thead.appendChild(kopfzeile);
+    const tbody = document.createElement('tbody');
+
+    modell.zeilen.forEach((z) => {
+      const tr = document.createElement('tr');
+      tr.className = `druck-zeile druck-zeile--${z.art}`;
+      tr.appendChild(druckZelle('td', z.datum ? formatDatum(z.datum) : '', 'druck-datum'));
+      tr.appendChild(druckZelle('td', z.text, 'druck-text'));
+      DRUCK_SPALTEN.forEach((key) => {
+        tr.appendChild(druckZelle('td', key === z.spalte ? Druck.formatBetragEUR(z.betrag) : '', 'num'));
+      });
+      tr.appendChild(druckZelle('td', Druck.formatBetragEUR(z.betrag), 'num'));
+      tr.appendChild(druckZelle('td', z.gesamtsaldo === null ? '' : Druck.formatBetragEUR(z.gesamtsaldo), 'num druck-saldo'));
+      tbody.appendChild(tr);
+    });
+
+    const saldoTr = document.createElement('tr');
+    saldoTr.className = 'druck-saldozeile';
+    saldoTr.appendChild(druckZelle('td', `Saldo per ${formatDatum(modell.kopf.stichtag)}`, ''));
+    saldoTr.appendChild(druckZelle('td', '', ''));
+    DRUCK_SPALTEN.forEach((key) => saldoTr.appendChild(druckZelle('td', Druck.formatBetragEUR(modell.saldozeile[key]), 'num')));
+    saldoTr.appendChild(druckZelle('td', Druck.formatBetragEUR(modell.saldozeile.umsatz), 'num'));
+    saldoTr.appendChild(druckZelle('td', Druck.formatBetragEUR(modell.saldozeile.gesamtsaldo), 'num'));
+    tbody.appendChild(saldoTr);
+
+    table.append(thead, tbody);
+    seite.appendChild(table);
+    seite.appendChild(renderDruckFusszeile(modell));
+    return seite;
+  }
+
+  function renderDruckFusszeile(modell) {
+    const fuss = document.createElement('div');
+    fuss.className = 'druck-fusszeile';
+    fuss.append(
+      druckZelle('span', `Erstellt am ${formatDatum(Engine.heute())}`, ''),
+      druckZelle('span', `Gesamtsaldo: ${Druck.formatBetragEUR(modell.saldozeile.gesamtsaldo)}`, ''),
+      druckZelle('span', `Tageszins: ${Druck.formatZahl5(modell.tageszins.betragProTag)} EUR ab dem ${formatDatum(modell.tageszins.ab)}`, ''));
+    return fuss;
+  }
+
+  function renderDruckansicht(modell) {
+    const container = document.getElementById('druckansicht');
+    container.innerHTML = '';
+    container.appendChild(renderDruckSeite1(modell));
+    // Seite 2 folgt in Task 9
+  }
+
+  function druckeForderungsaufstellung() {
+    const konto = App.aktivesKonto();
+    if (!konto || !konto.buchungen.length) return;
+    const stichtagInput = document.getElementById('reportStichtag');
+    const stichtag = parseDatum(stichtagInput.value) || Engine.heute();
+    const tabelle = App.aktuelleTabelle();
+    const ergebnis = Engine.berechneKonto(konto, stichtag, tabelle);
+    const modell = Druck.baueDruckmodell(konto, ergebnis, tabelle);
+    renderDruckansicht(modell);
+    document.body.classList.add('druckmodus');
+    const stil = document.createElement('style');
+    stil.id = 'druckQuerformat';
+    stil.media = 'print';
+    stil.textContent = '@page { size: A4 landscape; margin: 12mm; }';
+    document.head.appendChild(stil);
+    window.print();
+  }
+
+  function initDruckansicht() {
+    document.getElementById('btnPdfExport').addEventListener('click', druckeForderungsaufstellung);
+    window.addEventListener('afterprint', () => {
+      document.body.classList.remove('druckmodus');
+      const stil = document.getElementById('druckQuerformat');
+      if (stil) stil.remove();
+    });
   }
 
   function basiszinsFehlerElement() {
@@ -1112,6 +1218,7 @@ if (typeof document !== 'undefined') {
     initKontoName();
     initBuchungenAnsicht();
     initReportAnsicht();
+    initDruckansicht();
     initBasiszinsAnsicht();
     App.zeigeAnsicht('konten');
   });
