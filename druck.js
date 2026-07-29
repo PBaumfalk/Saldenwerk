@@ -39,5 +39,51 @@
     return `verzinst mit ${formatZahl5(verzinsung.satz)} % p. a. ${zeitraum}`;
   }
 
-  return { formatBetragEUR, formatZahl5, formatProzent5, istVerzinst, spalteFuerBuchung, verzinsungsZusatz };
+  function baueDruckmodell(konto, ergebnis, tabelle) {
+    const stichtag = ergebnis.stichtag;
+    const buchungen = (konto.buchungen || [])
+      .filter((b) => b.datum <= stichtag)
+      .slice()
+      .sort((a, b) => (a.datum < b.datum ? -1 : a.datum > b.datum ? 1 :
+        (a.typ === 'zahlung' ? 1 : 0) - (b.typ === 'zahlung' ? 1 : 0)));
+    const buchungById = new Map(buchungen.map((b) => [b.id, b]));
+
+    const zeilen = [];
+    const spaltensummen = { zahlung: 0, hauptforderung: 0, hfZinsen: 0,
+      verzinslKosten: 0, kostenzinsen: 0, unverzinslKosten: 0 };
+    let saldo = 0;
+
+    const forderungen = buchungen.filter((b) => b.typ !== 'zahlung');
+    let fi = 0;
+    const pushForderungenBis = (datum) => {
+      while (fi < forderungen.length && (datum === null || forderungen[fi].datum <= datum)) {
+        const b = forderungen[fi++];
+        const spalte = spalteFuerBuchung(b);
+        const betrag = Engine.round2(b.betrag);
+        saldo = Engine.round2(saldo + betrag);
+        spaltensummen[spalte] = Engine.round2(spaltensummen[spalte] + betrag);
+        const zusatz = verzinsungsZusatz(b.verzinsung, stichtag);
+        zeilen.push({ art: 'buchung', datum: b.datum,
+          text: zusatz ? `${b.text} ${zusatz}` : b.text,
+          spalte, betrag, gesamtsaldo: saldo });
+      }
+    };
+
+    for (const v of ergebnis.verrechnungen) {
+      const zahlung = buchungById.get(v.zahlungId);
+      pushForderungenBis(v.datum);
+      const betrag = Engine.round2(v.betrag);
+      saldo = Engine.round2(saldo - betrag);
+      spaltensummen.zahlung = Engine.round2(spaltensummen.zahlung + betrag);
+      zeilen.push({ art: 'buchung', datum: v.datum,
+        text: zahlung ? zahlung.text : 'Zahlung',
+        spalte: 'zahlung', betrag, gesamtsaldo: saldo });
+    }
+    pushForderungenBis(null);
+
+    const saldozeile = { ...spaltensummen, umsatz: saldo, gesamtsaldo: saldo };
+    return { kopf: { kontoName: konto.name, stichtag }, zeilen, saldozeile };
+  }
+
+  return { formatBetragEUR, formatZahl5, formatProzent5, istVerzinst, spalteFuerBuchung, verzinsungsZusatz, baueDruckmodell };
 });
