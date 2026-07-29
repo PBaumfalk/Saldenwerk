@@ -156,3 +156,38 @@ test('baueDruckmodell: Saldozeile und Endsaldo mit Zinsen (Invariante gegen Engi
   assert.strictEqual(m.saldozeile.hfZinsen, 100.00);
   assert.strictEqual(m.saldozeile.kostenzinsen, 4.97);
 });
+
+test('tageszins: fester Zinssatz, offener Rest, Folgetag im Normaljahr', () => {
+  const konto = verzinstesKonto();
+  const ergebnis = Engine.berechneKonto(konto, '2024-12-31');
+  const m = Druck.baueDruckmodell(konto, ergebnis);
+  // Nur HF offen und verzinst: 1000 × 10 % / 365 (2025 ist kein Schaltjahr)
+  assert.strictEqual(m.tageszins.ab, '2025-01-01');
+  assert.ok(Math.abs(m.tageszins.betragProTag - 1000 * 0.10 / 365) < 1e-9);
+});
+
+test('tageszins: Basiszins-Verzinsung nutzt Tabelle am Folgetag', () => {
+  const konto = {
+    name: 'Basiszins',
+    buchungen: [{ id: 'hf1', typ: 'hauptforderung', datum: '2024-01-01', betrag: 1000, text: 'HF',
+      verzinsung: { art: 'basiszins', satz: 5, methode: 'kalender', beginn: '2024-01-01', ende: null } }],
+  };
+  const ergebnis = Engine.berechneKonto(konto, '2024-06-30');
+  const m = Druck.baueDruckmodell(konto, ergebnis);
+  // Folgetag 01.07.2024: Basiszins 3,37 + 5 = 8,37 %; 2024 ist Schaltjahr → 366
+  assert.ok(Math.abs(m.tageszins.betragProTag - 1000 * 0.0837 / 366) < 1e-9);
+});
+
+test('tageszins: 0 bei getilgtem Rest, Verzinsungsende vor Folgetag und unverzinsten Posten', () => {
+  const konto = {
+    name: 'Null',
+    buchungen: [
+      { id: 'hf1', typ: 'hauptforderung', datum: '2024-01-01', betrag: 500, text: 'HF beendet',
+        verzinsung: { art: 'fest', satz: 10, methode: 'kalender', beginn: '2024-01-01', ende: '2024-06-30' } },
+      { id: 'nf1', typ: 'nebenforderung', datum: '2024-01-01', betrag: 100, text: 'Unverzinst', verzinsung: null },
+    ],
+  };
+  const ergebnis = Engine.berechneKonto(konto, '2024-12-31');
+  const m = Druck.baueDruckmodell(konto, ergebnis);
+  assert.strictEqual(m.tageszins.betragProTag, 0);
+});

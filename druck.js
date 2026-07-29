@@ -22,6 +22,30 @@
     return !!(verzinsung && verzinsung.art !== 'keine');
   }
 
+  function tageszinsNach(stichtag, konto, ergebnis, tabelle) {
+    const folgetag = Engine.addTage(stichtag, 1);
+    const buchungById = new Map((konto.buchungen || []).map((b) => [b.id, b]));
+    let summe = 0;
+    for (const p of ergebnis.posten) {
+      if (p.rest <= 0) continue;
+      const b = buchungById.get(p.id);
+      const v = b && b.verzinsung;
+      if (!istVerzinst(v)) continue;
+      if (v.ende && v.ende < folgetag) continue;
+      if (v.beginn > folgetag) continue;
+      let satz = v.satz;
+      if (v.art === 'basiszins') {
+        const basis = Basiszins.satzAm(folgetag, tabelle);
+        if (basis === null) continue;
+        satz = Engine.round2(basis + v.satz);
+      }
+      const nenner = v.methode === 'bank360' ? 360
+        : (Engine.istSchaltjahr(Number(folgetag.slice(0, 4))) ? 366 : 365);
+      summe += p.rest * (satz / 100) / nenner;
+    }
+    return { betragProTag: summe, ab: folgetag };
+  }
+
   function spalteFuerBuchung(b) {
     if (b.typ === 'zahlung') return 'zahlung';
     if (b.typ === 'hauptforderung') return 'hauptforderung';
@@ -119,7 +143,7 @@
     pushZinsZeilen(stichtag, null);
 
     const saldozeile = { ...spaltensummen, umsatz: saldo, gesamtsaldo: saldo };
-    return { kopf: { kontoName: konto.name, stichtag }, zeilen, saldozeile };
+    return { kopf: { kontoName: konto.name, stichtag }, zeilen, saldozeile, tageszins: tageszinsNach(stichtag, konto, ergebnis, tabelle) };
   }
 
   return { formatBetragEUR, formatZahl5, formatProzent5, istVerzinst, spalteFuerBuchung, verzinsungsZusatz, baueDruckmodell };
