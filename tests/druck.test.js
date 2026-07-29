@@ -191,3 +191,48 @@ test('tageszins: 0 bei getilgtem Rest, Verzinsungsende vor Folgetag und unverzin
   const m = Druck.baueDruckmodell(konto, ergebnis);
   assert.strictEqual(m.tageszins.betragProTag, 0);
 });
+
+test('seite2: Summen, Zahlungen und Salden je Kategorie', () => {
+  const konto = verzinstesKonto();
+  const ergebnis = Engine.berechneKonto(konto, '2024-12-31');
+  const m = Druck.baueDruckmodell(konto, ergebnis);
+
+  assert.deepStrictEqual(m.seite2.summen, {
+    hauptforderungen: 1000, zinsenAufHauptforderungen: 100.00, verzinslicheKosten: 200,
+    kostenzinsen: 4.97, unverzinslicheKosten: 100, gesamt: 1404.97,
+  });
+  assert.deepStrictEqual(m.seite2.zahlungen, {
+    hauptforderungen: 0, zinsenAufHauptforderungen: 0, verzinslicheKosten: 200,
+    kostenzinsen: 0, unverzinslicheKosten: 100, ueberschuss: 0, gesamt: 300,
+  });
+  assert.deepStrictEqual(m.seite2.salden, {
+    hauptforderungen: 1000, zinsenAufHauptforderungen: 100.00, verzinslicheKosten: 0,
+    kostenzinsen: 4.97, unverzinslicheKosten: 0, ueberzahlung: 0, gesamt: 1104.97,
+  });
+});
+
+test('seite2: Invarianten — Summen − Salden = Zahlungen, Salden-Gesamt = Engine-Saldo', () => {
+  const konto = verzinstesKonto();
+  const ergebnis = Engine.berechneKonto(konto, '2024-12-31');
+  const m = Druck.baueDruckmodell(konto, ergebnis);
+  for (const k of ['hauptforderungen', 'zinsenAufHauptforderungen', 'verzinslicheKosten', 'kostenzinsen', 'unverzinslicheKosten']) {
+    assert.strictEqual(Engine.round2(m.seite2.summen[k] - m.seite2.salden[k]), m.seite2.zahlungen[k], k);
+  }
+  assert.strictEqual(m.seite2.salden.gesamt, ergebnis.summen.saldo);
+});
+
+test('seite2: Überzahlung erscheint in Zahlungen und Salden', () => {
+  const konto = {
+    name: 'Überzahlt',
+    buchungen: [
+      { id: 'hf1', typ: 'hauptforderung', datum: '2024-01-01', betrag: 100, text: 'HF', verzinsung: null },
+      { id: 'z1', typ: 'zahlung', datum: '2024-02-01', betrag: 150, text: 'Zahlung', verzinsung: null },
+    ],
+  };
+  const ergebnis = Engine.berechneKonto(konto, '2024-12-31');
+  const m = Druck.baueDruckmodell(konto, ergebnis);
+  assert.strictEqual(m.seite2.zahlungen.ueberschuss, 50);
+  assert.strictEqual(m.seite2.zahlungen.gesamt, 150);
+  assert.strictEqual(m.seite2.salden.ueberzahlung, 50);
+  assert.strictEqual(m.seite2.salden.gesamt, -50);
+});

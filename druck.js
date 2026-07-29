@@ -63,6 +63,41 @@
     return `verzinst mit ${formatZahl5(verzinsung.satz)} % p. a. ${zeitraum}`;
   }
 
+  const SEITE2_KATEGORIEN = ['hauptforderungen', 'zinsenAufHauptforderungen',
+    'verzinslicheKosten', 'kostenzinsen', 'unverzinslicheKosten'];
+
+  function baueSeite2(konto, ergebnis) {
+    const buchungById = new Map((konto.buchungen || []).map((b) => [b.id, b]));
+    const leer = () => Object.fromEntries(SEITE2_KATEGORIEN.map((k) => [k, 0]));
+    const gesamt = leer();
+    const offen = leer();
+    const addiere = (ziel, key, wert) => { ziel[key] = Engine.round2(ziel[key] + wert); };
+
+    for (const s of ergebnis.staffel) {
+      const p = ergebnis.posten.find((x) => x.id === s.forderungId);
+      addiere(gesamt, p && p.typ === 'nebenforderung' ? 'kostenzinsen' : 'zinsenAufHauptforderungen', s.zins);
+    }
+    for (const p of ergebnis.posten) {
+      const b = buchungById.get(p.id);
+      const key = p.typ === 'hauptforderung' ? 'hauptforderungen'
+        : p.typ === 'zinsforderung' ? 'zinsenAufHauptforderungen'
+        : istVerzinst(b && b.verzinsung) ? 'verzinslicheKosten' : 'unverzinslicheKosten';
+      addiere(gesamt, key, p.betrag);
+      addiere(offen, key, p.rest);
+      addiere(offen, p.typ === 'nebenforderung' ? 'kostenzinsen' : 'zinsenAufHauptforderungen', p.zinsOffen);
+    }
+
+    const getilgt = leer();
+    for (const k of SEITE2_KATEGORIEN) getilgt[k] = Engine.round2(gesamt[k] - offen[k]);
+    const summe = (o) => Engine.round2(SEITE2_KATEGORIEN.reduce((s, k) => s + o[k], 0));
+
+    return {
+      summen: { ...gesamt, gesamt: summe(gesamt) },
+      zahlungen: { ...getilgt, ueberschuss: ergebnis.summen.ueberzahlung, gesamt: ergebnis.summen.zahlungen },
+      salden: { ...offen, ueberzahlung: ergebnis.summen.ueberzahlung, gesamt: ergebnis.summen.saldo },
+    };
+  }
+
   function baueDruckmodell(konto, ergebnis, tabelle) {
     const stichtag = ergebnis.stichtag;
     const buchungen = (konto.buchungen || [])
@@ -143,7 +178,7 @@
     pushZinsZeilen(stichtag, null);
 
     const saldozeile = { ...spaltensummen, umsatz: saldo, gesamtsaldo: saldo };
-    return { kopf: { kontoName: konto.name, stichtag }, zeilen, saldozeile, tageszins: tageszinsNach(stichtag, konto, ergebnis, tabelle) };
+    return { kopf: { kontoName: konto.name, stichtag }, zeilen, saldozeile, tageszins: tageszinsNach(stichtag, konto, ergebnis, tabelle), seite2: baueSeite2(konto, ergebnis) };
   }
 
   return { formatBetragEUR, formatZahl5, formatProzent5, istVerzinst, spalteFuerBuchung, verzinsungsZusatz, baueDruckmodell };
