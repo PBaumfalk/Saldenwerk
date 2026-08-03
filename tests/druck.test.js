@@ -66,6 +66,33 @@ test('baueDruckmodell: Buchungszeilen chronologisch mit laufendem Saldo', () => 
   assert.ok(m.zeilen.every((z) => z.art === 'buchung'));
 });
 
+test('baueDruckmodell: übernimmt Engine-Warnungen ins Modell', () => {
+  const T = [{ ab: '2024-01-01', satz: 3.62 }];
+  const konto = {
+    name: 'K',
+    buchungen: [{ id: 'hf1', typ: 'hauptforderung', datum: '2024-01-05', betrag: 1000, text: 'HF',
+      verzinsung: { art: 'basiszins', satz: 5, methode: 'kalender', beginn: '2024-01-06', ende: null } }],
+  };
+  const ergebnis = Engine.berechneKonto(konto, '2024-12-31', T);
+  const m = Druck.baueDruckmodell(konto, ergebnis, T);
+  assert.ok(m.warnungen.some((w) => w.includes('kein Basiszinssatz hinterlegt')));
+});
+
+test('baueDruckmodell: ergänzt Hinweis auf ignorierte Buchungen', () => {
+  const konto = unverzinstesKonto();
+  konto.buchungen.push({ id: 'sp1', typ: 'hauptforderung', datum: '2025-06-01', betrag: 10, text: 'spät', verzinsung: null });
+  const ergebnis = Engine.berechneKonto(konto, '2024-12-31');
+  const m = Druck.baueDruckmodell(konto, ergebnis);
+  assert.ok(m.warnungen.some((w) => w.includes('1 Buchung(en) nach dem Stichtag')));
+});
+
+test('baueDruckmodell: ohne Auffälligkeiten keine Warnungen', () => {
+  const konto = unverzinstesKonto();
+  const ergebnis = Engine.berechneKonto(konto, '2024-12-31');
+  const m = Druck.baueDruckmodell(konto, ergebnis);
+  assert.deepStrictEqual(m.warnungen, []);
+});
+
 test('baueDruckmodell: Saldozeile mit Spaltensummen', () => {
   const konto = unverzinstesKonto();
   const ergebnis = Engine.berechneKonto(konto, '2024-12-31');

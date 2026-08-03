@@ -56,11 +56,7 @@
     // Grob-Segmente: je konstantem Satz
     const grob = art === 'basiszins' ? halbjahresSegmente(von, bis) : [{ von, bis }];
     if (art === 'basiszins') {
-      const letzter = t.length ? t[t.length - 1] : null;
-      const letzteGrenze = letzter
-        ? (letzter.ab.slice(5) === '01-01' ? letzter.ab.slice(0, 4) + '-06-30'
-                                           : letzter.ab.slice(0, 4) + '-12-31')
-        : null;
+      const letzteGrenze = Basiszins.deckungsEnde(t);
       if (letzteGrenze && bis > letzteGrenze) {
         warnungen.push('Für Zeiträume nach dem ' + letzteGrenze +
           ' ist noch kein Basiszinssatz hinterlegt – der letzte bekannte Satz wird verwendet.');

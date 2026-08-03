@@ -304,7 +304,41 @@ if (typeof document !== 'undefined') {
     reader.readAsText(datei);
   }
 
+  function renderBasiszinsHinweis() {
+    const ende = Basiszins.deckungsEnde(App.aktuelleTabelle());
+    const faellig = ende && ende < Engine.heute();
+    [['view-konten', true], ['view-basiszins', false]].forEach(([viewId, mitButton]) => {
+      const view = document.getElementById(viewId);
+      let banner = view.querySelector('.app-hinweisbanner');
+      if (!faellig) {
+        if (banner) banner.remove();
+        return;
+      }
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.className = 'app-hinweisbanner';
+        banner.setAttribute('role', 'status');
+        view.querySelector('.ansicht-kopf').insertAdjacentElement('afterend', banner);
+      }
+      banner.innerHTML = '';
+      const text = document.createElement('p');
+      text.textContent = `Der Basiszinssatz ist nur bis zum ${formatDatum(ende)} hinterlegt – ` +
+        'für spätere Zeiträume wird der letzte bekannte Satz verwendet. ' +
+        'Bitte den aktuellen Satz der Bundesbank ergänzen.';
+      banner.appendChild(text);
+      if (mitButton) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn--sekundaer';
+        btn.textContent = 'Basiszins pflegen';
+        btn.addEventListener('click', () => App.zeigeAnsicht('basiszins'));
+        banner.appendChild(btn);
+      }
+    });
+  }
+
   function renderKontenListe() {
+    renderBasiszinsHinweis();
     const container = document.getElementById('kontenListe');
     container.innerHTML = '';
     renderLadeFehler(container);
@@ -1003,6 +1037,19 @@ if (typeof document !== 'undefined') {
       druckZelle('span', `Berechnungsstand: ${formatDatum(modell.kopf.stichtag)}`, ''));
     seite.append(h1, balken);
 
+    if (modell.warnungen.length) {
+      const hinweise = document.createElement('div');
+      hinweise.className = 'druck-hinweise';
+      const ul = document.createElement('ul');
+      modell.warnungen.forEach((text) => {
+        const li = document.createElement('li');
+        li.textContent = text;
+        ul.appendChild(li);
+      });
+      hinweise.appendChild(ul);
+      seite.appendChild(hinweise);
+    }
+
     const table = document.createElement('table');
     table.className = 'druck-tabelle';
     // Feste Spaltenbreiten (Summe 100 %): Datum, Bezeichnung, 6 Betragsspalten, Umsatz, Gesamtsaldo.
@@ -1241,6 +1288,7 @@ if (typeof document !== 'undefined') {
   }
 
   App.renderBasiszins = function () {
+    renderBasiszinsHinweis();
     const body = document.getElementById('basiszinsBody');
     body.innerHTML = '';
     const overrides = App.state.basiszinsOverrides || [];

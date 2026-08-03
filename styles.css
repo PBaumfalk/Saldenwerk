@@ -635,6 +635,24 @@ select:focus {
   margin-top: 4px;
 }
 
+.app-hinweisbanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: var(--farbe-warnung-hell);
+  border-left: 3px solid #e4c477;
+  color: var(--farbe-warnung-text);
+  border-radius: 0 var(--radius-klein) var(--radius-klein) 0;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+}
+
+.app-hinweisbanner p {
+  margin: 0;
+}
+
 .report-summenzeile {
   text-align: right;
   font-weight: 620;
@@ -899,6 +917,18 @@ dialog.dialog::backdrop {
   font-weight: 700;
   padding: 3pt 6pt;
   margin-bottom: 4pt;
+}
+
+.druck-hinweise {
+  border: 1pt solid #000;
+  padding: 3pt 6pt;
+  margin-bottom: 4pt;
+  font-size: 8pt;
+}
+
+.druck-hinweise ul {
+  margin: 0;
+  padding-left: 12pt;
 }
 
 .druck-tabelle {

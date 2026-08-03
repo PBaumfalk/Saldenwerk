@@ -39,6 +39,14 @@
     return gefunden;
   }
 
+  function deckungsEnde(tabelle) {
+    if (!tabelle || !tabelle.length) return null;
+    const letzter = tabelle[tabelle.length - 1];
+    return letzter.ab.slice(5) === '01-01'
+      ? letzter.ab.slice(0, 4) + '-06-30'
+      : letzter.ab.slice(0, 4) + '-12-31';
+  }
+
   function mitOverrides(overrides) {
     const map = new Map(TABELLE.map((e) => [e.ab, e.satz]));
     for (const o of overrides || []) map.set(o.ab, o.satz);
@@ -47,5 +55,5 @@
       .sort((a, b) => (a.ab < b.ab ? -1 : 1));
   }
 
-  return { TABELLE, satzAm, mitOverrides };
+  return { TABELLE, satzAm, deckungsEnde, mitOverrides };
 });

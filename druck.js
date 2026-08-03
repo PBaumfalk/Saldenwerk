@@ -197,7 +197,11 @@
     pushZinsZeilen(stichtag, null);
 
     const saldozeile = { ...spaltensummen, umsatz: saldo, gesamtsaldo: saldo };
-    return { kopf: { kontoName: konto.name, stichtag }, zeilen, saldozeile, tageszins: tageszinsNach(stichtag, konto, ergebnis, tabelle), seite2: baueSeite2(konto, ergebnis), chart: chartPunkte(konto, ergebnis) };
+    const warnungen = [...ergebnis.warnungen];
+    if (ergebnis.ignorierteBuchungen > 0) {
+      warnungen.push(`${ergebnis.ignorierteBuchungen} Buchung(en) nach dem Stichtag wurden nicht berücksichtigt.`);
+    }
+    return { kopf: { kontoName: konto.name, stichtag }, zeilen, saldozeile, warnungen, tageszins: tageszinsNach(stichtag, konto, ergebnis, tabelle), seite2: baueSeite2(konto, ergebnis), chart: chartPunkte(konto, ergebnis) };
   }
 
   return { formatBetragEUR, formatZahl5, formatProzent5, istVerzinst, spalteFuerBuchung, verzinsungsZusatz, baueDruckmodell };
