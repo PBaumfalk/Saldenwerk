@@ -90,6 +90,9 @@
       if (!Array.isArray(konto.buchungen)) {
         return { ok: false, fehler: `${bezeichnung} („${konto.name}"): Feld „buchungen" fehlt oder ist keine Liste.` };
       }
+      if (konto.tilgungsreihenfolge != null && !['367', '497'].includes(konto.tilgungsreihenfolge)) {
+        return { ok: false, fehler: `${bezeichnung} („${konto.name}"): unbekannte Tilgungsreihenfolge „${konto.tilgungsreihenfolge}".` };
+      }
       for (let j = 0; j < konto.buchungen.length; j++) {
         const b = konto.buchungen[j];
         const buchungsBezeichnung = `${bezeichnung} („${konto.name}"), Buchung ${j + 1}`;
@@ -114,12 +117,18 @@
     return { ok: true, fehler: null, konten: objekt.konten };
   }
 
-  return { formatEUR, parseBetrag, formatDatum, parseDatum, validiereExport };
+  function verrechnungsText(reihenfolge) {
+    return reihenfolge === '497'
+      ? 'Verrechnung nach § 497 Abs. 3 BGB'
+      : 'Verrechnung nach § 367 BGB';
+  }
+
+  return { formatEUR, parseBetrag, formatDatum, parseDatum, validiereExport, verrechnungsText };
 });
 
 if (typeof document !== 'undefined') {
 (function () {
-  const { formatEUR, parseBetrag, formatDatum, parseDatum, validiereExport } = window.AppFormat;
+  const { formatEUR, parseBetrag, formatDatum, parseDatum, validiereExport, verrechnungsText } = window.AppFormat;
   const STORAGE_KEY = 'forderungskonto.v1';
 
   const App = {
@@ -286,13 +295,17 @@ if (typeof document !== 'undefined') {
         zeigeKontenMeldung(ergebnis.fehler, true);
         return;
       }
-      const importierteKonten = ergebnis.konten.map((konto) => ({
-        id: crypto.randomUUID(),
-        name: konto.name,
-        createdAt: (typeof konto.createdAt === 'string' && parseDatum(konto.createdAt)) || Engine.heute(),
-        updatedAt: Engine.heute(),
-        buchungen: neueBuchungenTiefkopie(konto.buchungen),
-      }));
+      const importierteKonten = ergebnis.konten.map((konto) => {
+        const neu = {
+          id: crypto.randomUUID(),
+          name: konto.name,
+          createdAt: (typeof konto.createdAt === 'string' && parseDatum(konto.createdAt)) || Engine.heute(),
+          updatedAt: Engine.heute(),
+          buchungen: neueBuchungenTiefkopie(konto.buchungen),
+        };
+        if (konto.tilgungsreihenfolge === '497') neu.tilgungsreihenfolge = '497';
+        return neu;
+      });
       App.state.konten.push(...importierteKonten);
       App.speichern();
       renderKontenListe();
@@ -380,6 +393,7 @@ if (typeof document !== 'undefined') {
           updatedAt: Engine.heute(),
           buchungen: neueBuchungenTiefkopie(konto.buchungen),
         };
+        if (konto.tilgungsreihenfolge === '497') kopie.tilgungsreihenfolge = '497';
         App.state.konten.push(kopie);
         App.speichern();
         renderKontenListe();
@@ -778,7 +792,10 @@ if (typeof document !== 'undefined') {
     const meta = document.createElement('p');
     meta.className = 'report-kopf__meta';
     meta.textContent = `Stichtag: ${formatDatum(ergebnis.stichtag)} · erstellt am ${formatDatum(Engine.heute())}`;
-    kopf.append(eyebrow, h2, meta);
+    const verrechnung = document.createElement('p');
+    verrechnung.className = 'report-kopf__meta';
+    verrechnung.textContent = verrechnungsText(konto.tilgungsreihenfolge);
+    kopf.append(eyebrow, h2, meta, verrechnung);
     container.appendChild(kopf);
   }
 
@@ -1101,7 +1118,8 @@ if (typeof document !== 'undefined') {
     fuss.append(
       druckZelle('span', `Erstellt am ${formatDatum(Engine.heute())}`, ''),
       druckZelle('span', `Gesamtsaldo: ${Druck.formatBetragEUR(modell.saldozeile.gesamtsaldo)}`, ''),
-      druckZelle('span', `Tageszins: ${Druck.formatZahl5(modell.tageszins.betragProTag)} EUR ab dem ${formatDatum(modell.tageszins.ab)}`, ''));
+      druckZelle('span', `Tageszins: ${Druck.formatZahl5(modell.tageszins.betragProTag)} EUR ab dem ${formatDatum(modell.tageszins.ab)}`, ''),
+      druckZelle('span', verrechnungsText(modell.kopf.tilgungsreihenfolge), ''));
     return fuss;
   }
 

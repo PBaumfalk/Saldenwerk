@@ -66,6 +66,16 @@ test('baueDruckmodell: Buchungszeilen chronologisch mit laufendem Saldo', () => 
   assert.ok(m.zeilen.every((z) => z.art === 'buchung'));
 });
 
+test('baueDruckmodell: Kopf enthält normalisierte Tilgungsreihenfolge', () => {
+  const konto = unverzinstesKonto();
+  const ergebnis = Engine.berechneKonto(konto, '2024-12-31');
+  assert.strictEqual(Druck.baueDruckmodell(konto, ergebnis).kopf.tilgungsreihenfolge, '367');
+
+  konto.tilgungsreihenfolge = '497';
+  const ergebnis497 = Engine.berechneKonto(konto, '2024-12-31');
+  assert.strictEqual(Druck.baueDruckmodell(konto, ergebnis497).kopf.tilgungsreihenfolge, '497');
+});
+
 test('baueDruckmodell: übernimmt Engine-Warnungen ins Modell', () => {
   const T = [{ ab: '2024-01-01', satz: 3.62 }];
   const konto = {

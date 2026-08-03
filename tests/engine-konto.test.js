@@ -40,6 +40,52 @@ test('Zahlung tilgt Kosten, dann Zinsen, dann Hauptforderung (§ 367)', () => {
   assert.strictEqual(r.summen.nebenforderung.offen, 0);
 });
 
+function konto497Fixture() {
+  return { tilgungsreihenfolge: '497', buchungen: [
+    hf(1000, '2024-01-01', fest5('2024-01-01')),
+    { id: 'nf', typ: 'nebenforderung', datum: '2024-01-01', betrag: 50, text: 'Kosten',
+      verzinsung: { art: 'keine' } },
+    { id: 'zf', typ: 'zinsforderung', datum: '2024-01-01', betrag: 20, text: 'Altzins' },
+    { id: 'z1', typ: 'zahlung', datum: '2024-12-31', betrag: 200, text: 'Zahlung' },
+  ] };
+}
+
+test('Zahlung tilgt Kosten, dann Hauptforderung, zuletzt Zinsen (§ 497 Abs. 3)', () => {
+  const r = Engine.berechneKonto(konto497Fixture(), '2024-12-31', T);
+  const v = r.verrechnungen[0];
+  assert.strictEqual(v.aufKosten, 50);
+  assert.strictEqual(v.aufHauptforderung, 150);
+  assert.strictEqual(v.aufZinsen, 0);
+  assert.strictEqual(r.summen.hauptforderung.offen, 850);
+  assert.strictEqual(r.summen.zinsforderung.offen, 20);
+  // 49.86 bis zum Zahlungsvortag + 0.12 am Stichtag auf Rest-HF 850
+  assert.strictEqual(r.summen.laufendeZinsen.offen, 49.98);
+});
+
+test('ohne Angabe und mit expliziter 367 identische Verrechnung (Default)', () => {
+  const ohneFeld = konto497Fixture();
+  delete ohneFeld.tilgungsreihenfolge;
+  const explizit367 = { ...konto497Fixture(), tilgungsreihenfolge: '367' };
+  const r1 = Engine.berechneKonto(ohneFeld, '2024-12-31', T);
+  const r2 = Engine.berechneKonto(explizit367, '2024-12-31', T);
+  assert.deepStrictEqual(r1.verrechnungen, r2.verrechnungen);
+  assert.strictEqual(r1.verrechnungen[0].aufKosten, 50);
+  assert.strictEqual(r1.verrechnungen[0].aufZinsen, 69.86);
+});
+
+test('§ 497: Rest nach Kosten und Hauptforderung geht auf Zinsen', () => {
+  const konto = konto497Fixture();
+  konto.buchungen[3].betrag = 1100;
+  const r = Engine.berechneKonto(konto, '2024-12-31', T);
+  const v = r.verrechnungen[0];
+  assert.strictEqual(v.aufKosten, 50);
+  assert.strictEqual(v.aufHauptforderung, 1000);
+  assert.strictEqual(v.aufZinsen, 50); // 20 Zinsforderung + 30 laufende Zinsen
+  assert.strictEqual(r.summen.zinsforderung.offen, 0);
+  assert.strictEqual(r.summen.laufendeZinsen.offen, 19.86);
+  assert.strictEqual(r.summen.ueberzahlung, 0);
+});
+
 test('nach Teiltilgung läuft Zins nur auf Restbetrag', () => {
   const konto = { buchungen: [
     hf(1000, '2024-01-01', fest5('2024-01-01')),

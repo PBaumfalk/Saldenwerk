@@ -25,6 +25,25 @@ test('validiereExport: gültige Datei liefert ok:true mit konten', () => {
   assert.strictEqual(ergebnis.konten.length, 1);
 });
 
+test('validiereExport: akzeptiert tilgungsreihenfolge 497 und fehlendes Feld', () => {
+  const mit497 = gueltigeDatei();
+  mit497.konten[0].tilgungsreihenfolge = '497';
+  assert.strictEqual(validiereExport(mit497).ok, true);
+  assert.strictEqual(validiereExport(gueltigeDatei()).ok, true);
+});
+
+test('validiereExport: unbekannte tilgungsreihenfolge liefert ok:false', () => {
+  const datei = gueltigeDatei();
+  datei.konten[0].tilgungsreihenfolge = '123';
+  const ergebnis = validiereExport(datei);
+  assert.strictEqual(ergebnis.ok, false);
+  assert.ok(ergebnis.fehler.includes('Tilgungsreihenfolge'));
+
+  const zahl = gueltigeDatei();
+  zahl.konten[0].tilgungsreihenfolge = 497;
+  assert.strictEqual(validiereExport(zahl).ok, false);
+});
+
 test('validiereExport: leeres Objekt ohne version liefert ok:false', () => {
   const ergebnis = validiereExport({});
   assert.strictEqual(ergebnis.ok, false);

@@ -150,9 +150,17 @@
         return sum;
       };
       const aufKosten = stufe(vom('nebenforderung'), 'rest');
-      const aufZinsen = round2(stufe(vom('zinsforderung'), 'rest') +
+      const zinsStufe = () => round2(stufe(vom('zinsforderung'), 'rest') +
         stufe(posten.filter((p) => p.zinsOffen > 0).sort(nachDatum), 'zinsOffen'));
-      const aufHauptforderung = stufe(vom('hauptforderung'), 'rest');
+      // § 497 Abs. 3 BGB (Verbraucherdarlehen): Hauptforderung vor Zinsen
+      let aufZinsen, aufHauptforderung;
+      if (konto.tilgungsreihenfolge === '497') {
+        aufHauptforderung = stufe(vom('hauptforderung'), 'rest');
+        aufZinsen = zinsStufe();
+      } else {
+        aufZinsen = zinsStufe();
+        aufHauptforderung = stufe(vom('hauptforderung'), 'rest');
+      }
       if (rest > 0) {
         ueberzahlung = round2(ueberzahlung + rest);
         if (!warnungen.some((w) => w.includes('Überzahlung'))) {
