@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { formatEUR, parseBetrag, formatDatum, parseDatum, verrechnungsText } = require('../app.js');
+const { formatEUR, parseBetrag, formatDatum, parseDatum, verrechnungsText, backupErinnerungFaellig } = require('../app.js');
 
 test('formatEUR deutsches Format', () => {
   assert.strictEqual(formatEUR(1234.5), '1.234,50 €');
@@ -18,6 +18,28 @@ test('verrechnungsText benennt die Tilgungsreihenfolge', () => {
   assert.strictEqual(verrechnungsText('497'), 'Verrechnung nach § 497 Abs. 3 BGB');
   assert.strictEqual(verrechnungsText('367'), 'Verrechnung nach § 367 BGB');
   assert.strictEqual(verrechnungsText(undefined), 'Verrechnung nach § 367 BGB');
+});
+test('backupErinnerungFaellig: frisch gesichert ohne Änderungen ist nicht fällig', () => {
+  assert.strictEqual(backupErinnerungFaellig(
+    { letzterExport: '2026-08-01', aenderungenSeitExport: 0 }, '2026-08-03'), false);
+});
+test('backupErinnerungFaellig: Export älter als 14 Tage mit Änderungen ist fällig', () => {
+  assert.strictEqual(backupErinnerungFaellig(
+    { letzterExport: '2026-07-19', aenderungenSeitExport: 1 }, '2026-08-03'), true);
+  assert.strictEqual(backupErinnerungFaellig(
+    { letzterExport: '2026-07-20', aenderungenSeitExport: 1 }, '2026-08-03'), false);
+});
+test('backupErinnerungFaellig: mehr als 50 Speicherungen sind fällig', () => {
+  assert.strictEqual(backupErinnerungFaellig(
+    { letzterExport: '2026-08-02', aenderungenSeitExport: 51 }, '2026-08-03'), true);
+});
+test('backupErinnerungFaellig: ohne Änderungen nie fällig', () => {
+  assert.strictEqual(backupErinnerungFaellig(
+    { letzterExport: '2025-01-01', aenderungenSeitExport: 0 }, '2026-08-03'), false);
+});
+test('backupErinnerungFaellig: ohne Metadaten fällig sobald Änderungen existieren', () => {
+  assert.strictEqual(backupErinnerungFaellig(null, '2026-08-03'), false);
+  assert.strictEqual(backupErinnerungFaellig({ aenderungenSeitExport: 3 }, '2026-08-03'), true);
 });
 test('Datum hin und zurück', () => {
   assert.strictEqual(formatDatum('2024-07-01'), '01.07.2024');

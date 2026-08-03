@@ -71,6 +71,32 @@ test('validiereExport: unbekannte tilgungsreihenfolge liefert ok:false', () => {
   assert.strictEqual(validiereExport(zahl).ok, false);
 });
 
+test('validiereExport: akzeptiert gültige basiszinsOverrides und fehlendes Feld', () => {
+  const mitOverrides = gueltigeDatei();
+  mitOverrides.basiszinsOverrides = [{ ab: '2027-01-01', satz: 1.5 }];
+  const ergebnis = validiereExport(mitOverrides);
+  assert.strictEqual(ergebnis.ok, true);
+  assert.deepStrictEqual(ergebnis.basiszinsOverrides, [{ ab: '2027-01-01', satz: 1.5 }]);
+
+  const ohne = validiereExport(gueltigeDatei());
+  assert.strictEqual(ohne.ok, true);
+  assert.deepStrictEqual(ohne.basiszinsOverrides, []);
+});
+
+test('validiereExport: ungültige basiszinsOverrides liefern ok:false', () => {
+  const keinArray = gueltigeDatei();
+  keinArray.basiszinsOverrides = 'x';
+  assert.strictEqual(validiereExport(keinArray).ok, false);
+
+  const kaputtesDatum = gueltigeDatei();
+  kaputtesDatum.basiszinsOverrides = [{ ab: 'kein-datum', satz: 1 }];
+  assert.strictEqual(validiereExport(kaputtesDatum).ok, false);
+
+  const kaputterSatz = gueltigeDatei();
+  kaputterSatz.basiszinsOverrides = [{ ab: '2027-01-01', satz: 'x' }];
+  assert.strictEqual(validiereExport(kaputterSatz).ok, false);
+});
+
 test('validiereExport: leeres Objekt ohne version liefert ok:false', () => {
   const ergebnis = validiereExport({});
   assert.strictEqual(ergebnis.ok, false);

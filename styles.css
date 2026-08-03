@@ -184,6 +184,20 @@ a:focus-visible {
   padding: 32px 28px 64px;
 }
 
+.datei-status {
+  font-size: 0.8rem;
+  color: var(--farbe-text-schwach);
+  white-space: nowrap;
+}
+
+.datei-werkzeuge {
+  display: contents;
+}
+
+#dateiBanner .app-hinweisbanner {
+  margin-bottom: 24px;
+}
+
 .view {
   display: none;
 }

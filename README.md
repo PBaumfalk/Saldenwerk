@@ -11,13 +11,43 @@ Daten werden ausschließlich lokal im `localStorage` des Browsers gespeichert.
 `index.html` im Browser öffnen (Doppelklick genügt, kein Build-Schritt, kein
 Server erforderlich). Die Daten bleiben im `localStorage` des jeweiligen
 Browsers erhalten – bei einem anderen Browser, Gerät oder nach dem Leeren
-der Browserdaten sind sie nicht mehr da. Für Sicherung und Übertragung
-zwischen Geräten den Export/Import verwenden (siehe unten).
+der Browserdaten sind sie nicht mehr da. Empfohlen ist deshalb die
+**Datei-Speicherung** (siehe unten) oder regelmäßiger Export/Import.
+
+## Datei-Speicherung
+
+In Chrome und Edge kann die App ihren gesamten Datenbestand in einer
+JSON-Datei führen (File System Access API). In der Konten-Ansicht:
+
+- **„In Datei speichern…"** legt eine neue Datei an (z. B. auf einem
+  Netzlaufwerk der Kanzlei) und verbindet die App damit.
+- **„Datei öffnen…"** verbindet die App mit einer bestehenden Datei; deren
+  Inhalt ersetzt dann den lokalen Stand.
+- Verbunden speichert die App Änderungen automatisch (kurz verzögert) in die
+  Datei; der Status oben rechts zeigt Dateiname und Speicherzustand.
+  „Jetzt speichern" schreibt sofort, „Trennen" löst die Verbindung.
+- Nach einem Neustart des Browsers fragt ein Banner, ob wieder mit der
+  Datei verbunden werden soll (der Browser verlangt dafür einen Klick).
+- Wird die Datei zwischenzeitlich an einem anderen Arbeitsplatz geändert,
+  warnt die App vor dem Überschreiben („Datei neu laden" oder „Trotzdem
+  überschreiben"). Die Datei ist für **nacheinander** arbeitende Nutzer
+  gedacht, nicht für gleichzeitiges Arbeiten.
+- Die Datei hat dasselbe Format wie der Export (inklusive
+  Basiszins-Overrides) und kann daher auch importiert werden.
+
+In Browsern ohne File System Access API (Firefox, Safari) bleibt es beim
+`localStorage`; ein Banner erinnert an fällige Sicherungen per
+„Alle exportieren" (nach 14 Tagen oder 50 Änderungen seit dem letzten
+Export).
 
 ## Funktionsüberblick
 
 - **Konten**: Beliebig viele Forderungskonten anlegen, öffnen, duplizieren,
-  löschen sowie einzeln oder alle zusammen exportieren.
+  löschen sowie einzeln oder alle zusammen exportieren. Über den Dialog
+  „Kontodaten" lassen sich Aktenzeichen, Gläubiger und Schuldner erfassen;
+  sie erscheinen auf Kontokarte, Report und PDF. Die Kontenübersicht ist
+  durchsuchbar (Name, Aktenzeichen, Parteien) und sortierbar (zuletzt
+  geändert, Name, Aktenzeichen).
 - **Buchungen**: Je Konto vier Buchungstypen:
   - *Hauptforderung* – die Grundforderung (z. B. Rechnungsbetrag).
   - *Nebenforderung* – Kosten (z. B. Mahn-, Inkasso- oder Anwaltskosten),
@@ -57,6 +87,14 @@ zwischen Geräten den Export/Import verwenden (siehe unten).
   (Nebenforderungen), dann auf Zinsen (Zinsforderungen und aufgelaufene
   laufende Zinsen), zuletzt auf die Hauptforderung. Ein verbleibender
   Überschuss wird als Überzahlung ausgewiesen.
+- **Tilgungsreihenfolge nach § 497 Abs. 3 BGB (Verbraucherdarlehen)**: Im
+  Dialog „Kontodaten" kann pro Konto stattdessen die Reihenfolge für
+  Verbraucherdarlehensforderungen gewählt werden – zuerst Kosten der
+  Rechtsverfolgung, dann die Hauptforderung, zuletzt die Zinsen. Die
+  angewandte Reihenfolge wird im Report-Kopf und auf dem PDF ausgewiesen.
+  Ob § 497 Abs. 3 BGB im Einzelfall einschlägig ist, ist rechtlich zu
+  prüfen; weitere Besonderheiten des Verzugs bei Verbraucherdarlehen
+  (z. B. § 497 Abs. 1 BGB zum Zinssatz) bildet die App nicht automatisch ab.
 - **Rundung je Teilperiode**: Zinsbeträge werden kaufmännisch auf zwei
   Nachkommastellen gerundet – und zwar für jedes einzelne Zinssegment
   (z. B. je Kalenderjahr-Abschnitt oder je Basiszins-Halbjahr) separat,
@@ -83,14 +121,19 @@ verbindliche Werte ist die offizielle Quelle der Deutschen Bundesbank
 heranzuziehen. Fehlt ein aktueller Wert oder soll ein Wert korrigiert
 werden, kann er in der Ansicht „Basiszins“ als Override erfasst werden;
 Overrides werden lokal gespeichert und können jederzeit zurückgesetzt
-werden.
+werden. Deckt die Tabelle das heutige Datum nicht mehr ab, zeigt die App
+ein Warnbanner (in Konten- und Basiszins-Ansicht) und weist auch im Report
+und auf dem PDF darauf hin, dass mit dem letzten bekannten Satz
+weitergerechnet wird.
 
 ## Export/Import
 
 - **Export**: In der Konten-Ansicht kann ein einzelnes Konto über den
   Button „Exportieren“ auf der jeweiligen Kontokarte oder alle Konten
   gemeinsam über „Alle exportieren“ als JSON-Datei heruntergeladen werden.
-  Das Dateiformat ist in beiden Fällen `{ "version": 1, "konten": [...] }`.
+  Das Dateiformat ist `{ "version": 1, "konten": [...] }`; „Alle
+  exportieren“ ergänzt zusätzlich die Basiszins-Overrides
+  (`"basiszinsOverrides": [...]`).
 - **Import**: Über „Importieren“ kann eine zuvor exportierte JSON-Datei
   ausgewählt werden. Die Datei wird vollständig geprüft (Version, Struktur
   der Konten und Buchungen); ist auch nur eine Angabe ungültig, wird

@@ -22,9 +22,12 @@
     <button type="button" class="appnav__btn" data-view="report">Report</button>
     <button type="button" class="appnav__btn" data-view="basiszins">Basiszins</button>
   </nav>
+  <span id="dateiStatus" class="datei-status" role="status"></span>
 </header>
 
 <main class="hauptbereich">
+
+  <div id="dateiBanner"></div>
 
   <section id="view-konten" class="view active">
     <div class="ansicht-kopf">
@@ -35,6 +38,7 @@
           <input type="file" id="importDatei" accept=".json" hidden>
         </label>
         <button type="button" id="btnExportAlle" class="btn btn--sekundaer">Alle exportieren</button>
+        <span id="dateiWerkzeuge" class="datei-werkzeuge"></span>
         <button type="button" id="btnNeuesKonto" class="btn btn--primaer">Neues Konto</button>
       </div>
     </div>
@@ -251,6 +255,7 @@
 
 <script src="basiszins.js"></script>
 <script src="engine.js"></script>
+<script src="dateispeicher.js"></script>
 <script src="app.js"></script>
 <script src="druck.js"></script>
 </body>

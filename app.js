@@ -78,6 +78,18 @@
     if (!Array.isArray(objekt.konten)) {
       return { ok: false, fehler: 'Das Feld „konten" fehlt oder ist keine Liste.' };
     }
+    if (objekt.basiszinsOverrides != null) {
+      if (!Array.isArray(objekt.basiszinsOverrides)) {
+        return { ok: false, fehler: 'Das Feld „basiszinsOverrides" ist keine Liste.' };
+      }
+      for (let i = 0; i < objekt.basiszinsOverrides.length; i++) {
+        const o = objekt.basiszinsOverrides[i];
+        if (!o || typeof o !== 'object' || !parseDatum(o.ab) ||
+            typeof o.satz !== 'number' || !isFinite(o.satz)) {
+          return { ok: false, fehler: `Basiszins-Override ${i + 1}: ungültiges Format (erwartet Datum „ab" und Zahl „satz").` };
+        }
+      }
+    }
     for (let i = 0; i < objekt.konten.length; i++) {
       const konto = objekt.konten[i];
       const bezeichnung = `Konto ${i + 1}`;
@@ -119,7 +131,18 @@
         }
       }
     }
-    return { ok: true, fehler: null, konten: objekt.konten };
+    return { ok: true, fehler: null, konten: objekt.konten,
+      basiszinsOverrides: Array.isArray(objekt.basiszinsOverrides) ? objekt.basiszinsOverrides : [] };
+  }
+
+  function backupErinnerungFaellig(meta, heute) {
+    if (!meta) return false;
+    const aenderungen = meta.aenderungenSeitExport || 0;
+    if (!aenderungen) return false;
+    if (aenderungen > 50) return true;
+    if (!meta.letzterExport) return true;
+    const tage = (new Date(heute) - new Date(meta.letzterExport)) / 86400000;
+    return tage > 14;
   }
 
   function verrechnungsText(reihenfolge) {
@@ -128,13 +151,28 @@
       : 'Verrechnung nach § 367 BGB';
   }
 
-  return { formatEUR, parseBetrag, formatDatum, parseDatum, validiereExport, verrechnungsText };
+  return { formatEUR, parseBetrag, formatDatum, parseDatum, validiereExport, verrechnungsText, backupErinnerungFaellig };
 });
 
 if (typeof document !== 'undefined') {
 (function () {
-  const { formatEUR, parseBetrag, formatDatum, parseDatum, validiereExport, verrechnungsText } = window.AppFormat;
+  const { formatEUR, parseBetrag, formatDatum, parseDatum, validiereExport, verrechnungsText, backupErinnerungFaellig } = window.AppFormat;
   const STORAGE_KEY = 'forderungskonto.v1';
+  const META_KEY = 'forderungskonto.meta.v1';
+
+  function ladeMeta() {
+    try {
+      return JSON.parse(localStorage.getItem(META_KEY)) || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function speichereMeta(meta) {
+    try {
+      localStorage.setItem(META_KEY, JSON.stringify(meta));
+    } catch (e) { /* Meta ist verzichtbar */ }
+  }
 
   const App = {
     state: { konten: [], aktivesKontoId: null, basiszinsOverrides: [] },
@@ -145,6 +183,10 @@ if (typeof document !== 'undefined') {
       } catch (e) {
         console.error('Speichern fehlgeschlagen', e);
       }
+      const meta = ladeMeta() || { letzterExport: null, aenderungenSeitExport: 0 };
+      meta.aenderungenSeitExport = (meta.aenderungenSeitExport || 0) + 1;
+      speichereMeta(meta);
+      if (window.Dateispeicher) Dateispeicher.markiereGeaendert();
     },
 
     laden() {
@@ -264,7 +306,11 @@ if (typeof document !== 'undefined') {
   }
 
   function exportiereAlleKonten() {
-    ladeExportDatei({ version: 1, konten: App.state.konten }, `forderungskonten-${Engine.heute()}.json`);
+    ladeExportDatei({ version: 1, konten: App.state.konten,
+      basiszinsOverrides: App.state.basiszinsOverrides || [] },
+      `forderungskonten-${Engine.heute()}.json`);
+    speichereMeta({ letzterExport: Engine.heute(), aenderungenSeitExport: 0 });
+    renderKontenListe();
   }
 
   function kontenMeldungElement() {
@@ -330,14 +376,14 @@ if (typeof document !== 'undefined') {
     const faellig = ende && ende < Engine.heute();
     [['view-konten', true], ['view-basiszins', false]].forEach(([viewId, mitButton]) => {
       const view = document.getElementById(viewId);
-      let banner = view.querySelector('.app-hinweisbanner');
+      let banner = view.querySelector('.app-hinweisbanner--basiszins');
       if (!faellig) {
         if (banner) banner.remove();
         return;
       }
       if (!banner) {
         banner = document.createElement('div');
-        banner.className = 'app-hinweisbanner';
+        banner.className = 'app-hinweisbanner app-hinweisbanner--basiszins';
         banner.setAttribute('role', 'status');
         view.querySelector('.ansicht-kopf').insertAdjacentElement('afterend', banner);
       }
@@ -388,8 +434,40 @@ if (typeof document !== 'undefined') {
     return teile.join(' · ');
   }
 
+  function renderBackupErinnerung() {
+    const view = document.getElementById('view-konten');
+    let banner = view.querySelector('.app-hinweisbanner--backup');
+    const verbunden = window.Dateispeicher && Dateispeicher.istVerbunden();
+    const meta = ladeMeta();
+    const faellig = !verbunden && backupErinnerungFaellig(meta, Engine.heute());
+    if (!faellig) {
+      if (banner) banner.remove();
+      return;
+    }
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.className = 'app-hinweisbanner app-hinweisbanner--backup';
+      banner.setAttribute('role', 'status');
+      view.querySelector('.ansicht-kopf').insertAdjacentElement('afterend', banner);
+    }
+    banner.innerHTML = '';
+    const text = document.createElement('p');
+    const letzter = meta && meta.letzterExport
+      ? `Letzte Sicherung am ${formatDatum(meta.letzterExport)}.`
+      : 'Die Daten wurden noch nie gesichert.';
+    text.textContent = `${letzter} Die Daten liegen nur in diesem Browser – bitte per „Alle exportieren" sichern.`;
+    banner.appendChild(text);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn--sekundaer';
+    btn.textContent = 'Alle exportieren';
+    btn.addEventListener('click', exportiereAlleKonten);
+    banner.appendChild(btn);
+  }
+
   function renderKontenListe() {
     renderBasiszinsHinweis();
+    renderBackupErinnerung();
     const container = document.getElementById('kontenListe');
     container.innerHTML = '';
     renderLadeFehler(container);
@@ -1553,6 +1631,7 @@ if (typeof document !== 'undefined') {
     initDruckansicht();
     initBasiszinsAnsicht();
     App.zeigeAnsicht('konten');
+    if (window.Dateispeicher) Dateispeicher.init(App);
   });
 
   window.App = App;
