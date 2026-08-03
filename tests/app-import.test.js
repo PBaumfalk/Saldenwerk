@@ -25,6 +25,33 @@ test('validiereExport: gültige Datei liefert ok:true mit konten', () => {
   assert.strictEqual(ergebnis.konten.length, 1);
 });
 
+test('validiereExport: akzeptiert Akten-Metadaten als Text oder fehlend', () => {
+  const mitMetadaten = gueltigeDatei();
+  Object.assign(mitMetadaten.konten[0], {
+    aktenzeichen: '12 C 345/26', glaeubiger: 'Müller GmbH', schuldner: 'Meier',
+  });
+  assert.strictEqual(validiereExport(mitMetadaten).ok, true);
+  assert.strictEqual(validiereExport(gueltigeDatei()).ok, true);
+});
+
+test('validiereExport: Akten-Metadaten mit falschem Typ liefern ok:false', () => {
+  const zahl = gueltigeDatei();
+  zahl.konten[0].aktenzeichen = 42;
+  const e1 = validiereExport(zahl);
+  assert.strictEqual(e1.ok, false);
+  assert.ok(e1.fehler.includes('aktenzeichen'));
+
+  const objekt = gueltigeDatei();
+  objekt.konten[0].glaeubiger = {};
+  const e2 = validiereExport(objekt);
+  assert.strictEqual(e2.ok, false);
+  assert.ok(e2.fehler.includes('glaeubiger'));
+
+  const liste = gueltigeDatei();
+  liste.konten[0].schuldner = [];
+  assert.strictEqual(validiereExport(liste).ok, false);
+});
+
 test('validiereExport: akzeptiert tilgungsreihenfolge 497 und fehlendes Feld', () => {
   const mit497 = gueltigeDatei();
   mit497.konten[0].tilgungsreihenfolge = '497';

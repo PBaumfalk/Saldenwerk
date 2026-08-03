@@ -202,6 +202,9 @@
       warnungen.push(`${ergebnis.ignorierteBuchungen} Buchung(en) nach dem Stichtag wurden nicht berücksichtigt.`);
     }
     return { kopf: { kontoName: konto.name, stichtag,
+      aktenzeichen: konto.aktenzeichen || null,
+      glaeubiger: konto.glaeubiger || null,
+      schuldner: konto.schuldner || null,
       tilgungsreihenfolge: konto.tilgungsreihenfolge === '497' ? '497' : '367' }, zeilen, saldozeile, warnungen, tageszins: tageszinsNach(stichtag, konto, ergebnis, tabelle), seite2: baueSeite2(konto, ergebnis), chart: chartPunkte(konto, ergebnis) };
   }
 

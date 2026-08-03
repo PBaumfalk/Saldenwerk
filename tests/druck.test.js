@@ -66,6 +66,21 @@ test('baueDruckmodell: Buchungszeilen chronologisch mit laufendem Saldo', () => 
   assert.ok(m.zeilen.every((z) => z.art === 'buchung'));
 });
 
+test('baueDruckmodell: Kopf reicht Akten-Metadaten durch', () => {
+  const konto = unverzinstesKonto();
+  konto.aktenzeichen = '12 C 345/26';
+  konto.glaeubiger = 'Müller GmbH';
+  konto.schuldner = 'Meier';
+  const m = Druck.baueDruckmodell(konto, Engine.berechneKonto(konto, '2024-12-31'));
+  assert.strictEqual(m.kopf.aktenzeichen, '12 C 345/26');
+  assert.strictEqual(m.kopf.glaeubiger, 'Müller GmbH');
+  assert.strictEqual(m.kopf.schuldner, 'Meier');
+
+  const ohne = unverzinstesKonto();
+  const m2 = Druck.baueDruckmodell(ohne, Engine.berechneKonto(ohne, '2024-12-31'));
+  assert.strictEqual(m2.kopf.aktenzeichen, null);
+});
+
 test('baueDruckmodell: Kopf enthält normalisierte Tilgungsreihenfolge', () => {
   const konto = unverzinstesKonto();
   const ergebnis = Engine.berechneKonto(konto, '2024-12-31');

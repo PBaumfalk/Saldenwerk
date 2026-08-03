@@ -38,6 +38,15 @@
         <button type="button" id="btnNeuesKonto" class="btn btn--primaer">Neues Konto</button>
       </div>
     </div>
+    <div class="konten-filter">
+      <input type="search" id="kontenSuche" placeholder="Suchen (Name, Az., Parteien)" aria-label="Konten durchsuchen">
+      <label for="kontenSortierung" class="hinweistext">Sortierung</label>
+      <select id="kontenSortierung" aria-label="Konten sortieren">
+        <option value="updatedAt">Zuletzt geändert</option>
+        <option value="name">Name</option>
+        <option value="aktenzeichen">Aktenzeichen</option>
+      </select>
+    </div>
     <div id="kontenListe" class="konten-liste"></div>
   </section>
 
@@ -48,6 +57,7 @@
         <input type="text" id="kontoName" maxlength="80" placeholder="z. B. Mandant Müller ./. Schuldner Meier">
       </div>
       <div class="werkzeugleiste">
+        <button type="button" id="btnKontoDaten" class="btn btn--sekundaer">Kontodaten</button>
         <button type="button" id="btnNeuHF" class="btn btn--sekundaer">+ Hauptforderung</button>
         <button type="button" id="btnNeuNF" class="btn btn--sekundaer">+ Nebenforderung</button>
         <button type="button" id="btnNeuZF" class="btn btn--sekundaer">+ Zinsforderung</button>
@@ -192,6 +202,41 @@
     <div class="dialog__fuss">
       <button type="button" id="btnBuchungAbbrechen" class="btn btn--sekundaer">Abbrechen</button>
       <button type="submit" value="speichern" class="btn btn--primaer">Speichern</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="kontoDialog" class="dialog dialog--schmal">
+  <form method="dialog" id="kontoForm">
+    <h2 class="dialog__titel">Kontodaten</h2>
+
+    <div class="feld">
+      <label for="kAktenzeichen">Aktenzeichen</label>
+      <input type="text" id="kAktenzeichen" maxlength="120" placeholder="z. B. 12 C 345/26">
+    </div>
+
+    <div class="feld">
+      <label for="kGlaeubiger">Gläubiger</label>
+      <input type="text" id="kGlaeubiger" maxlength="120" placeholder="z. B. Müller GmbH">
+    </div>
+
+    <div class="feld">
+      <label for="kSchuldner">Schuldner</label>
+      <input type="text" id="kSchuldner" maxlength="120" placeholder="z. B. Max Meier">
+    </div>
+
+    <div class="feld">
+      <label for="kTilgung">Tilgungsreihenfolge</label>
+      <select id="kTilgung">
+        <option value="367">§ 367 BGB (Kosten → Zinsen → Hauptforderung)</option>
+        <option value="497">§ 497 Abs. 3 BGB (Kosten → Hauptforderung → Zinsen)</option>
+      </select>
+      <p class="hinweistext">§ 497 Abs. 3 BGB gilt für Verbraucherdarlehensverträge.</p>
+    </div>
+
+    <div class="dialog__fuss">
+      <button type="button" id="btnKontoAbbrechen" class="btn btn--sekundaer">Abbrechen</button>
+      <button type="submit" class="btn btn--primaer">Speichern</button>
     </div>
   </form>
 </dialog>

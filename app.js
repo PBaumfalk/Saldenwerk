@@ -93,6 +93,11 @@
       if (konto.tilgungsreihenfolge != null && !['367', '497'].includes(konto.tilgungsreihenfolge)) {
         return { ok: false, fehler: `${bezeichnung} („${konto.name}"): unbekannte Tilgungsreihenfolge „${konto.tilgungsreihenfolge}".` };
       }
+      for (const feld of ['aktenzeichen', 'glaeubiger', 'schuldner']) {
+        if (konto[feld] != null && typeof konto[feld] !== 'string') {
+          return { ok: false, fehler: `${bezeichnung} („${konto.name}"): Feld „${feld}" muss Text sein.` };
+        }
+      }
       for (let j = 0; j < konto.buchungen.length; j++) {
         const b = konto.buchungen[j];
         const buchungsBezeichnung = `${bezeichnung} („${konto.name}"), Buchung ${j + 1}`;
@@ -304,6 +309,9 @@ if (typeof document !== 'undefined') {
           buchungen: neueBuchungenTiefkopie(konto.buchungen),
         };
         if (konto.tilgungsreihenfolge === '497') neu.tilgungsreihenfolge = '497';
+        for (const feld of ['aktenzeichen', 'glaeubiger', 'schuldner']) {
+          if (typeof konto[feld] === 'string' && konto[feld]) neu[feld] = konto[feld];
+        }
         return neu;
       });
       App.state.konten.push(...importierteKonten);
@@ -350,18 +358,63 @@ if (typeof document !== 'undefined') {
     });
   }
 
+  const kontenFilter = { suchtext: '', sortierung: 'updatedAt' };
+
+  function gefilterteKonten() {
+    const suchtext = kontenFilter.suchtext.trim().toLowerCase();
+    const passt = (konto) => !suchtext ||
+      [konto.name, konto.aktenzeichen, konto.glaeubiger, konto.schuldner]
+        .some((wert) => typeof wert === 'string' && wert.toLowerCase().includes(suchtext));
+    const fehltZuletzt = (a, b, feld) => {
+      if (!a[feld] && !b[feld]) return 0;
+      if (!a[feld]) return 1;
+      if (!b[feld]) return -1;
+      return a[feld].localeCompare(b[feld], 'de');
+    };
+    const vergleich = {
+      updatedAt: (a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0),
+      name: (a, b) => a.name.localeCompare(b.name, 'de'),
+      aktenzeichen: (a, b) => fehltZuletzt(a, b, 'aktenzeichen'),
+    }[kontenFilter.sortierung];
+    return App.state.konten.filter(passt).slice().sort(vergleich);
+  }
+
+  function kontoMetaZeile(konto) {
+    const teile = [];
+    if (konto.aktenzeichen) teile.push(`Az. ${konto.aktenzeichen}`);
+    if (konto.glaeubiger || konto.schuldner) {
+      teile.push(`${konto.glaeubiger || '–'} ./. ${konto.schuldner || '–'}`);
+    }
+    return teile.join(' · ');
+  }
+
   function renderKontenListe() {
     renderBasiszinsHinweis();
     const container = document.getElementById('kontenListe');
     container.innerHTML = '';
     renderLadeFehler(container);
-    App.state.konten.forEach((konto) => {
+    const konten = gefilterteKonten();
+    if (!konten.length && App.state.konten.length) {
+      const leer = document.createElement('p');
+      leer.className = 'hinweistext';
+      leer.textContent = 'Keine Konten gefunden.';
+      container.appendChild(leer);
+    }
+    konten.forEach((konto) => {
       const karte = document.createElement('div');
       karte.className = 'karte';
 
       const titel = document.createElement('h3');
       titel.textContent = konto.name;
       karte.appendChild(titel);
+
+      const metaZeile = kontoMetaZeile(konto);
+      if (metaZeile) {
+        const meta = document.createElement('p');
+        meta.className = 'hinweistext karte__meta';
+        meta.textContent = metaZeile;
+        karte.appendChild(meta);
+      }
 
       const info = document.createElement('p');
       info.className = 'hinweistext';
@@ -394,6 +447,9 @@ if (typeof document !== 'undefined') {
           buchungen: neueBuchungenTiefkopie(konto.buchungen),
         };
         if (konto.tilgungsreihenfolge === '497') kopie.tilgungsreihenfolge = '497';
+        for (const feld of ['aktenzeichen', 'glaeubiger', 'schuldner']) {
+          if (typeof konto[feld] === 'string' && konto[feld]) kopie[feld] = konto[feld];
+        }
         App.state.konten.push(kopie);
         App.speichern();
         renderKontenListe();
@@ -454,6 +510,52 @@ if (typeof document !== 'undefined') {
       const datei = importInput.files[0];
       importInput.value = '';
       if (datei) importiereDatei(datei);
+    });
+
+    document.getElementById('kontenSuche').addEventListener('input', (e) => {
+      kontenFilter.suchtext = e.target.value;
+      renderKontenListe();
+    });
+    document.getElementById('kontenSortierung').addEventListener('change', (e) => {
+      kontenFilter.sortierung = e.target.value;
+      renderKontenListe();
+    });
+  }
+
+  function initKontoDialog() {
+    const dialog = document.getElementById('kontoDialog');
+    const felder = () => ({
+      aktenzeichen: document.getElementById('kAktenzeichen'),
+      glaeubiger: document.getElementById('kGlaeubiger'),
+      schuldner: document.getElementById('kSchuldner'),
+      tilgung: document.getElementById('kTilgung'),
+    });
+
+    document.getElementById('btnKontoDaten').addEventListener('click', () => {
+      const konto = App.aktivesKonto();
+      if (!konto) return;
+      const f = felder();
+      f.aktenzeichen.value = konto.aktenzeichen || '';
+      f.glaeubiger.value = konto.glaeubiger || '';
+      f.schuldner.value = konto.schuldner || '';
+      f.tilgung.value = konto.tilgungsreihenfolge === '497' ? '497' : '367';
+      dialog.showModal();
+    });
+
+    document.getElementById('btnKontoAbbrechen').addEventListener('click', () => dialog.close());
+
+    document.getElementById('kontoForm').addEventListener('submit', () => {
+      const konto = App.aktivesKonto();
+      if (!konto) return;
+      const f = felder();
+      konto.aktenzeichen = f.aktenzeichen.value.trim().slice(0, 120);
+      konto.glaeubiger = f.glaeubiger.value.trim().slice(0, 120);
+      konto.schuldner = f.schuldner.value.trim().slice(0, 120);
+      if (f.tilgung.value === '497') konto.tilgungsreihenfolge = '497';
+      else delete konto.tilgungsreihenfolge;
+      konto.updatedAt = Engine.heute();
+      App.speichern();
+      App.renderBuchungen();
     });
   }
 
@@ -795,7 +897,15 @@ if (typeof document !== 'undefined') {
     const verrechnung = document.createElement('p');
     verrechnung.className = 'report-kopf__meta';
     verrechnung.textContent = verrechnungsText(konto.tilgungsreihenfolge);
-    kopf.append(eyebrow, h2, meta, verrechnung);
+    kopf.append(eyebrow, h2);
+    const aktenMeta = kontoMetaZeile(konto);
+    if (aktenMeta) {
+      const akten = document.createElement('p');
+      akten.className = 'report-kopf__meta';
+      akten.textContent = aktenMeta;
+      kopf.appendChild(akten);
+    }
+    kopf.append(meta, verrechnung);
     container.appendChild(kopf);
   }
 
@@ -1049,9 +1159,15 @@ if (typeof document !== 'undefined') {
     const h1 = druckZelle('h1', `Forderungsaufstellung per ${formatDatum(modell.kopf.stichtag)}`, 'druck-titel');
     const balken = document.createElement('div');
     balken.className = 'druck-balken';
-    balken.append(
-      druckZelle('span', `Forderungskonto: ${modell.kopf.kontoName}`, ''),
-      druckZelle('span', `Berechnungsstand: ${formatDatum(modell.kopf.stichtag)}`, ''));
+    balken.appendChild(druckZelle('span', `Forderungskonto: ${modell.kopf.kontoName}`, ''));
+    if (modell.kopf.aktenzeichen) {
+      balken.appendChild(druckZelle('span', `Az.: ${modell.kopf.aktenzeichen}`, ''));
+    }
+    if (modell.kopf.glaeubiger || modell.kopf.schuldner) {
+      balken.appendChild(druckZelle('span',
+        `${modell.kopf.glaeubiger || '–'} ./. ${modell.kopf.schuldner || '–'}`, ''));
+    }
+    balken.appendChild(druckZelle('span', `Berechnungsstand: ${formatDatum(modell.kopf.stichtag)}`, ''));
     seite.append(h1, balken);
 
     if (modell.warnungen.length) {
@@ -1431,6 +1547,7 @@ if (typeof document !== 'undefined') {
     initNavigation();
     initKontenAnsicht();
     initKontoName();
+    initKontoDialog();
     initBuchungenAnsicht();
     initReportAnsicht();
     initDruckansicht();
