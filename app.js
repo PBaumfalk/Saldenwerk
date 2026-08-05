@@ -1067,6 +1067,81 @@ if (typeof document !== 'undefined') {
 
   const REPORT_ROEMISCH = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 
+  function infoButton(text) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'info-btn';
+    btn.dataset.info = text;
+    btn.setAttribute('aria-label', 'Erläuterung');
+    btn.textContent = 'i';
+    return btn;
+  }
+
+  function initInfoButtons() {
+    let tooltip = null;
+    let aktuellerBtn = null;
+
+    function zeige(btn) {
+      if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.id = 'infoTooltip';
+        tooltip.setAttribute('role', 'tooltip');
+        document.body.appendChild(tooltip);
+      }
+      tooltip.textContent = btn.dataset.info || '';
+      tooltip.hidden = false;
+      aktuellerBtn = btn;
+      tooltip.style.left = '0px';
+      tooltip.style.top = '0px';
+      const r = btn.getBoundingClientRect();
+      const b = tooltip.getBoundingClientRect();
+      const links = Math.min(Math.max(8, r.left + r.width / 2 - b.width / 2),
+        window.innerWidth - b.width - 8);
+      let oben = r.bottom + 8;
+      if (oben + b.height > window.innerHeight - 8) oben = r.top - b.height - 8;
+      tooltip.style.left = `${links}px`;
+      tooltip.style.top = `${oben}px`;
+    }
+
+    function verstecke() {
+      if (tooltip) tooltip.hidden = true;
+      aktuellerBtn = null;
+    }
+
+    document.addEventListener('mouseover', (e) => {
+      const btn = e.target.closest ? e.target.closest('.info-btn') : null;
+      if (btn) zeige(btn);
+      else if (aktuellerBtn) verstecke();
+    });
+    document.addEventListener('focusin', (e) => {
+      const btn = e.target.closest ? e.target.closest('.info-btn') : null;
+      if (btn) zeige(btn);
+      else if (aktuellerBtn) verstecke();
+    });
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest ? e.target.closest('.info-btn') : null;
+      if (btn) {
+        // Verhindert, dass ein ⓘ innerhalb eines <label> die Checkbox schaltet
+        e.preventDefault();
+        if (aktuellerBtn === btn && tooltip && !tooltip.hidden) verstecke();
+        else zeige(btn);
+      } else if (aktuellerBtn) {
+        verstecke();
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') verstecke();
+    });
+    window.addEventListener('scroll', verstecke, true);
+  }
+
+  const REPORT_ABSCHNITT_INFO = {
+    Forderungsaufstellung: 'Alle Forderungen des Kontos mit ursprünglichem Betrag und offenem Rest zum Stichtag, gruppiert nach Haupt-, Neben- und Zinsforderungen.',
+    Zinsstaffel: 'Herleitung der laufenden Zinsen: je Forderung in Segmente geteilt (Basiszins-Halbjahre, Jahreswechsel, Zahlungen); jedes Segment wird einzeln kaufmännisch gerundet.',
+    'Zahlungen & Verrechnung': 'Jede Zahlung wird in gesetzlicher Reihenfolge verrechnet — nach § 367 BGB zuerst Kosten, dann Zinsen, dann Hauptforderung; nach § 497 Abs. 3 BGB (Verbraucherdarlehen) Kosten, Hauptforderung, zuletzt Zinsen.',
+    Endsaldo: 'Offener Gesamtbetrag zum Stichtag; der Tageszins zeigt, um wie viel die Forderung ab dem Folgetag pro Tag wächst.',
+  };
+
   function reportAbschnittsUeberschrift(titel, zaehler) {
     zaehler.n += 1;
     const h2 = document.createElement('h2');
@@ -1077,6 +1152,7 @@ if (typeof document !== 'undefined') {
     const titelSpan = document.createElement('span');
     titelSpan.textContent = titel;
     h2.append(nummer, titelSpan);
+    if (REPORT_ABSCHNITT_INFO[titel]) h2.appendChild(infoButton(REPORT_ABSCHNITT_INFO[titel]));
     return h2;
   }
 
@@ -1805,6 +1881,7 @@ if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {
     App.laden();
     initNavigation();
+    initInfoButtons();
     initKontenAnsicht();
     initKontoName();
     initKontoDialog();
@@ -1824,6 +1901,17 @@ if (typeof document !== 'undefined') {
   function wendeBrandingAn(oeffentlich) {
     const branding = window.Konfig && Konfig.branding;
     if (!branding) return;
+    if (branding.logo) {
+      const logoBox = document.querySelector('.appbar__logo');
+      if (logoBox) {
+        logoBox.classList.add('appbar__logo--bild');
+        logoBox.textContent = '';
+        const img = document.createElement('img');
+        img.src = branding.logo;
+        img.alt = branding.name || '';
+        logoBox.appendChild(img);
+      }
+    }
     if (branding.name) {
       document.title = branding.claim ? `${branding.name} – ${branding.claim}` : branding.name;
       const titel = document.querySelector('.appbar__titel strong');

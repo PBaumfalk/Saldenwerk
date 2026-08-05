@@ -13,6 +13,7 @@
 // Optionales branding (siehe konfig.baumfalk.js als fertiges Beispiel):
 //   branding: {
 //     name: 'Anzeigename der App',          // Titel + App-Leiste
+//     logo: 'branding/logo.png',            // ersetzt das §-Icon oben links
 //     claim: 'Untertitel in der App-Leiste',
 //     beschreibung: 'Meta-Description für Suchmaschinen',
 //     farben: { '--farbe-akzent': '#1e7034', ... },   // CSS-Variablen
