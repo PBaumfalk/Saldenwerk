@@ -38,6 +38,7 @@
           <input type="file" id="importDatei" accept=".json" hidden>
         </label>
         <button type="button" id="btnExportAlle" class="btn btn--sekundaer">Alle exportieren</button>
+        <button type="button" id="btnJlawyer" class="btn btn--sekundaer">j-lawyer…</button>
         <span id="dateiWerkzeuge" class="datei-werkzeuge"></span>
         <button type="button" id="btnNeuesKonto" class="btn btn--primaer">Neues Konto</button>
       </div>
@@ -102,6 +103,7 @@
         <button type="button" id="btnPdfExport" class="btn btn--primaer">PDF exportieren</button>
         <button type="button" id="btnDrucken" class="btn btn--sekundaer">Drucken</button>
         <button type="button" id="btnAntragstext" class="btn btn--sekundaer">Antragstext kopieren</button>
+        <button type="button" id="btnJlawyerUpload" class="btn btn--sekundaer">An j-lawyer senden</button>
       </div>
     </div>
     <div id="reportInhalt" class="report-inhalt"></div>
@@ -219,7 +221,10 @@
     <div class="feld">
       <label for="kAktenzeichen">Aktenzeichen</label>
       <input type="text" id="kAktenzeichen" maxlength="120" placeholder="z. B. 12 C 345/26">
+      <button type="button" id="btnKontoLookup" class="btn btn--sekundaer">Aus j-lawyer übernehmen</button>
     </div>
+
+    <div id="kFehler" class="fehlerbereich" role="status"></div>
 
     <div class="feld">
       <label for="kGlaeubiger">Gläubiger</label>
@@ -245,6 +250,49 @@
       <button type="submit" class="btn btn--primaer">Speichern</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="jlawyerDialog" class="dialog dialog--schmal">
+  <form method="dialog" id="jlawyerForm">
+    <h2 class="dialog__titel">j-lawyer-Verbindung</h2>
+
+    <div class="feld">
+      <label for="jServer">Server-URL</label>
+      <input type="url" id="jServer" placeholder="https://server:8080">
+    </div>
+    <div class="feld">
+      <label for="jBenutzer">Benutzername</label>
+      <input type="text" id="jBenutzer" autocomplete="off">
+    </div>
+    <div class="feld">
+      <label for="jPasswort">Passwort</label>
+      <input type="password" id="jPasswort" autocomplete="off">
+    </div>
+
+    <p class="hinweistext">
+      Das Passwort wird unverschlüsselt im Browser (localStorage) gespeichert und
+      verlässt den Rechner nur Richtung j-lawyer-Server. Der Zugriff aus dem
+      Browser erfordert in der Regel einen Reverse-Proxy mit CORS-Headern —
+      siehe README, Abschnitt „j-lawyer-Anbindung".
+    </p>
+
+    <div id="jFehler" class="fehlerbereich" role="status"></div>
+
+    <div class="dialog__fuss">
+      <button type="button" id="btnJlawyerTest" class="btn btn--sekundaer">Verbindung testen</button>
+      <button type="button" id="btnJlawyerAbbrechen" class="btn btn--sekundaer">Abbrechen</button>
+      <button type="submit" class="btn btn--primaer">Speichern</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="jlawyerAuswahl" class="dialog dialog--schmal">
+  <h2 class="dialog__titel">Akte auswählen</h2>
+  <p class="hinweistext">Mehrere Akten passen zum Aktenzeichen — bitte auswählen:</p>
+  <div id="jlawyerAuswahlListe" class="jlawyer-auswahl"></div>
+  <div class="dialog__fuss">
+    <button type="button" class="btn btn--sekundaer" onclick="this.closest('dialog').close()">Abbrechen</button>
+  </div>
 </dialog>
 
 <dialog id="rvgDialog" class="dialog">
@@ -324,5 +372,6 @@
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="vendor/jspdf.plugin.autotable.min.js"></script>
 <script src="pdfexport.js"></script>
+<script src="jlawyer.js"></script>
 </body>
 </html>

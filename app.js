@@ -1308,6 +1308,7 @@ if (typeof document !== 'undefined') {
     el.textContent = text;
     el.classList.toggle('fehlerbereich--erfolg', !istFehler);
   }
+  App.zeigeReportMeldung = zeigeReportMeldung;
 
   async function kopiereAntragstext() {
     const konto = App.aktivesKonto();
@@ -1351,6 +1352,16 @@ if (typeof document !== 'undefined') {
       btnTenor.title = btnTenor.disabled
         ? 'Für den Antragstext müssen zuerst Buchungen erfasst werden.'
         : '';
+    }
+    const btnUpload = document.getElementById('btnJlawyerUpload');
+    if (btnUpload) {
+      const konfiguriert = window.Jlawyer && Jlawyer.konfiguriert();
+      btnUpload.disabled = !konto || !konto.buchungen.length || !konfiguriert || !konto.aktenzeichen;
+      btnUpload.title = !konfiguriert
+        ? 'j-lawyer ist nicht eingerichtet (Konten-Ansicht → „j-lawyer…").'
+        : (konto && !konto.aktenzeichen)
+          ? 'Dieses Konto hat kein Aktenzeichen (Buchungen-Ansicht → „Kontodaten").'
+          : (btnUpload.disabled ? 'Für den Upload müssen zuerst Buchungen erfasst werden.' : '');
     }
     const meldung = document.getElementById('reportMeldung');
     if (meldung) meldung.textContent = '';
@@ -1804,6 +1815,7 @@ if (typeof document !== 'undefined') {
     initBasiszinsAnsicht();
     App.zeigeAnsicht('konten');
     if (window.Dateispeicher) Dateispeicher.init(App);
+    if (window.Jlawyer) Jlawyer.init(App);
   });
 
   window.App = App;

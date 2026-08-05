@@ -59,6 +59,18 @@ Export).
   Hauptforderungen und Nebenforderungen können optional laufend verzinst
   werden: entweder mit einem festen Zinssatz oder mit dem Basiszins
   zuzüglich Prozentpunkten, jeweils nach Kalender- oder Bankmethode.
+- **RVG-Rechner**: Der Dialog „RVG-Rechner" in der Buchungen-Ansicht berechnet
+  vorgerichtliche Kosten (Geschäftsgebühr Nr. 2300 VV RVG mit wählbarem
+  Faktor, Auslagenpauschale Nr. 7002, USt Nr. 7008) und gerichtliche Kosten
+  (Verfahrensgebühr Nr. 3100, Terminsgebühr Nr. 3104, Gerichtskosten KV 1100
+  für das Mahnverfahren bzw. KV 1210 für die Klage), auf Wunsch mit Anrechnung
+  der Geschäftsgebühr nach Vorbem. 3 Abs. 4 VV RVG und Verzugspauschale nach
+  § 288 Abs. 5 BGB. Die Beträge werden als Nebenforderungs-Buchungen
+  eingefügt. **Gebührenstand: KostRÄG 2025 (ab 01.06.2025) — Angaben ohne
+  Gewähr**; bei Gesetzesänderungen sind die Tabellen in `rvg.js` zu pflegen.
+- **Antragstext**: „Antragstext kopieren" im Report erzeugt einen Tenor-Text
+  für Mahnbescheid oder Klageantrag (nummerierte Forderungen, Zinsklauseln,
+  Abzugsklauseln für Teilzahlungen) und legt ihn in die Zwischenablage.
 - **Report**: Saldenreport zu einem wählbaren Stichtag mit
   Forderungsaufstellung, Zinsstaffel (Herleitung jedes Zinssegments) und
   Verrechnungsübersicht je Zahlung, druckbar über die Browser-Druckfunktion.
@@ -71,6 +83,46 @@ Export).
   diese wieder zurückzusetzen.
 - **Export/Import**: Konten als JSON sichern und wieder einlesen (siehe
   unten).
+
+## j-lawyer-Anbindung
+
+Die App kann sich mit einem [j-lawyer.org](https://www.j-lawyer.org)-Server
+verbinden (Konten-Ansicht → „j-lawyer…": Server-URL, Benutzername, Passwort;
+der Benutzer braucht die Rollen `readArchiveFileRole` und
+`writeArchiveFileRole`):
+
+- **Stammdaten übernehmen**: Im Dialog „Kontodaten" sucht „Aus j-lawyer
+  übernehmen" die Akte zum Aktenzeichen und füllt Gläubiger und Schuldner
+  (Annahme: Mandant = Gläubiger, Gegner = Schuldner — bitte prüfen, die
+  Felder bleiben editierbar).
+- **Forderungsaufstellung hochladen**: „An j-lawyer senden" im Report lädt
+  drei Dokumente in die Akte: PDF (Kontoblatt + Summenseite), eigenständige
+  HTML-Datei und die JSON-Sicherung des Kontos (reimportierbar).
+
+**Wichtig — CORS**: Der j-lawyer-Server sendet keine CORS-Header. Browser
+blockieren deshalb direkte Anfragen aus dieser App. Für den Produktivbetrieb
+muss ein Reverse-Proxy vor den j-lawyer-Server geschaltet werden, der die
+nötigen Header ergänzt, z. B. mit nginx:
+
+```nginx
+location /j-lawyer-io/ {
+    proxy_pass http://JLAWYER-SERVER:8080/j-lawyer-io/;
+    add_header Access-Control-Allow-Origin * always;
+    add_header Access-Control-Allow-Methods "GET, PUT, OPTIONS" always;
+    add_header Access-Control-Allow-Headers "authorization, content-type" always;
+    if ($request_method = OPTIONS) { return 204; }
+}
+```
+
+(`*` ist hier nötig, weil die App unter `file://` den Origin `null` sendet;
+sie nutzt kein `credentials: 'include'`, der Authorization-Header wird
+explizit gesetzt.) In den Einstellungen dann die Proxy-URL eintragen und
+„Verbindung testen" nutzen — Fehler werden verständlich klassifiziert
+(Anmeldung, Berechtigung, CORS/Netzwerk, Zeitüberschreitung).
+
+**Hinweis Zugangsdaten**: Das Passwort liegt unverschlüsselt im localStorage
+des Browsers (eigener Schlüssel, es landet nicht in Exporten oder der
+Datei-Speicherung). Auf geteilten Rechnern bewusst entscheiden.
 
 ## Rechenkonventionen
 
