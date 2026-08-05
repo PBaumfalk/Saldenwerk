@@ -66,6 +66,53 @@ test('baueDruckmodell: Buchungszeilen chronologisch mit laufendem Saldo', () => 
   assert.ok(m.zeilen.every((z) => z.art === 'buchung'));
 });
 
+test('druckHtml: eigenständige HTML-Datei mit eingebettetem CSS', () => {
+  const konto = unverzinstesKonto();
+  konto.aktenzeichen = '12 C 345/26';
+  konto.glaeubiger = 'Müller GmbH';
+  konto.schuldner = 'Meier';
+  const m = Druck.baueDruckmodell(konto, Engine.berechneKonto(konto, '2024-12-31'));
+  const html = Druck.druckHtml(m);
+  assert.ok(html.startsWith('<!DOCTYPE html>'));
+  assert.ok(html.includes('<meta charset="UTF-8">'));
+  assert.ok(html.includes('.druck-tabelle'));
+  assert.ok(html.includes('@page'));
+  assert.ok(html.includes('Az.: 12 C 345/26'));
+  assert.ok(html.includes('Müller GmbH ./. Meier'));
+  assert.ok(html.includes('druck-zeile--buchung'));
+  assert.ok(html.includes('druck-saldozeile'));
+  assert.ok(html.includes('Salden-Entwicklung'));
+  assert.ok(html.includes('<polyline'));
+});
+
+test('druckHtml: escapet Nutzertexte', () => {
+  const konto = unverzinstesKonto();
+  konto.buchungen[0].text = 'Rechnung <script>alert(1)</script> & "Anlage"';
+  const m = Druck.baueDruckmodell(konto, Engine.berechneKonto(konto, '2024-12-31'));
+  const html = Druck.druckHtml(m);
+  assert.ok(!html.includes('<script>alert'));
+  assert.ok(html.includes('&lt;script&gt;'));
+  assert.ok(html.includes('&amp; &quot;Anlage&quot;'));
+});
+
+test('chartGeometrie: liefert Plotrahmen, Rasterlinien und Punkte', () => {
+  const g = Druck.chartGeometrie([
+    { datum: '2024-01-01', saldo: 0 },
+    { datum: '2024-07-01', saldo: 500 },
+    { datum: '2025-01-01', saldo: 1000 },
+  ]);
+  assert.strictEqual(g.leer, false);
+  assert.strictEqual(g.punkte.length, 3);
+  assert.ok(g.punkte.every((p) => p.x >= g.plot.x && p.x <= g.plot.x + g.breiteInnen));
+  assert.ok(g.yLinien.length >= 2);
+  assert.ok(g.yLinien.some((l) => l.label === '1.000'));
+  assert.ok(g.xLinien.some((l) => l.label === '2025'));
+});
+
+test('chartGeometrie: unter zwei Punkten leer', () => {
+  assert.strictEqual(Druck.chartGeometrie([{ datum: '2024-01-01', saldo: 5 }]).leer, true);
+});
+
 test('baueDruckmodell: Kopf reicht Akten-Metadaten durch', () => {
   const konto = unverzinstesKonto();
   konto.aktenzeichen = '12 C 345/26';
