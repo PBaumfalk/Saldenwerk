@@ -1295,6 +1295,47 @@ if (typeof document !== 'undefined') {
     container.appendChild(section);
   }
 
+  function zeigeReportMeldung(text, istFehler) {
+    let el = document.getElementById('reportMeldung');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'reportMeldung';
+      el.className = 'fehlerbereich';
+      el.setAttribute('role', 'status');
+      const inhalt = document.getElementById('reportInhalt');
+      inhalt.insertAdjacentElement('beforebegin', el);
+    }
+    el.textContent = text;
+    el.classList.toggle('fehlerbereich--erfolg', !istFehler);
+  }
+
+  async function kopiereAntragstext() {
+    const konto = App.aktivesKonto();
+    if (!konto) return;
+    const stichtag = parseDatum(document.getElementById('reportStichtag').value) || Engine.heute();
+    const ergebnis = Engine.berechneKonto(konto, stichtag, App.aktuelleTabelle());
+    const text = Tenor.tenorText(konto, ergebnis);
+    if (!text) {
+      zeigeReportMeldung('Keine offenen Forderungen — kein Antragstext erzeugt.', true);
+      return;
+    }
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const feld = document.createElement('textarea');
+        feld.value = text;
+        document.body.appendChild(feld);
+        feld.select();
+        document.execCommand('copy');
+        feld.remove();
+      }
+      zeigeReportMeldung('Antragstext in die Zwischenablage kopiert.', false);
+    } catch (e) {
+      zeigeReportMeldung('Kopieren fehlgeschlagen — Zwischenablage nicht verfügbar.', true);
+    }
+  }
+
   App.renderReport = function () {
     const konto = App.aktivesKonto();
     const btnPdf = document.getElementById('btnPdfExport');
@@ -1304,6 +1345,15 @@ if (typeof document !== 'undefined') {
         ? 'Für den Export müssen zuerst Buchungen erfasst werden.'
         : '';
     }
+    const btnTenor = document.getElementById('btnAntragstext');
+    if (btnTenor) {
+      btnTenor.disabled = !konto || !konto.buchungen.length;
+      btnTenor.title = btnTenor.disabled
+        ? 'Für den Antragstext müssen zuerst Buchungen erfasst werden.'
+        : '';
+    }
+    const meldung = document.getElementById('reportMeldung');
+    if (meldung) meldung.textContent = '';
     const container = document.getElementById('reportInhalt');
     container.innerHTML = '';
     if (!konto) return;
@@ -1337,6 +1387,7 @@ if (typeof document !== 'undefined') {
     input.value = Engine.heute();
     input.addEventListener('change', () => App.renderReport());
     document.getElementById('btnDrucken').addEventListener('click', () => window.print());
+    document.getElementById('btnAntragstext').addEventListener('click', kopiereAntragstext);
   }
 
   const DRUCK_SPALTEN = ['zahlung', 'hauptforderung', 'hfZinsen', 'verzinslKosten', 'kostenzinsen', 'unverzinslKosten'];

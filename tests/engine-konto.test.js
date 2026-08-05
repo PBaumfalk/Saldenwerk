@@ -86,6 +86,45 @@ test('§ 497: Rest nach Kosten und Hauptforderung geht auf Zinsen', () => {
   assert.strictEqual(r.summen.ueberzahlung, 0);
 });
 
+test('verrechnungen enthalten Verteilung je Forderung (§ 367)', () => {
+  const konto = { buchungen: [
+    hf(1000, '2024-01-01', { art: 'keine' }),
+    { id: 'hf2', typ: 'hauptforderung', datum: '2024-02-01', betrag: 500, text: 'HF2',
+      verzinsung: { art: 'keine' } },
+    { id: 'nf', typ: 'nebenforderung', datum: '2024-01-01', betrag: 50, text: 'Kosten',
+      verzinsung: { art: 'keine' } },
+    { id: 'z1', typ: 'zahlung', datum: '2024-06-01', betrag: 1200, text: 'Zahlung' },
+  ] };
+  const r = Engine.berechneKonto(konto, '2024-12-31', T);
+  // 1200 → 50 Kosten, 1000 auf HF1 (ältere zuerst), 150 auf HF2
+  assert.deepStrictEqual(r.verrechnungen[0].verteilung, [
+    { forderungId: 'nf', betrag: 50, feld: 'rest' },
+    { forderungId: 'hf-2024-01-01', betrag: 1000, feld: 'rest' },
+    { forderungId: 'hf2', betrag: 150, feld: 'rest' },
+  ]);
+});
+
+test('verteilung bildet § 497-Reihenfolge ab (Hauptforderung vor Zinsen)', () => {
+  const r = Engine.berechneKonto(konto497Fixture(), '2024-12-31', T);
+  const verteilung = r.verrechnungen[0].verteilung;
+  assert.deepStrictEqual(verteilung.map((v) => [v.forderungId, v.betrag]), [
+    ['nf', 50], ['hf-2024-01-01', 150],
+  ]);
+});
+
+test('verteilung erfasst Zahlungen auf laufende Zinsen mit feld zinsOffen', () => {
+  const konto = { buchungen: [
+    hf(1000, '2024-01-01', fest5('2024-01-01')),
+    { id: 'z1', typ: 'zahlung', datum: '2024-07-01', betrag: 524.93, text: 'Zahlung' },
+  ] };
+  const r = Engine.berechneKonto(konto, '2024-12-31', T);
+  // 24,86 Zinsen + 500,07 HF (siehe Test „nach Teiltilgung")
+  assert.deepStrictEqual(r.verrechnungen[0].verteilung, [
+    { forderungId: 'hf-2024-01-01', betrag: 24.86, feld: 'zinsOffen' },
+    { forderungId: 'hf-2024-01-01', betrag: 500.07, feld: 'rest' },
+  ]);
+});
+
 test('nach Teiltilgung läuft Zins nur auf Restbetrag', () => {
   const konto = { buchungen: [
     hf(1000, '2024-01-01', fest5('2024-01-01')),

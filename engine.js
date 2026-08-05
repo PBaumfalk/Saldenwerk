@@ -136,6 +136,7 @@
     for (const z of zahlungen.sort((a, b) => (a.datum < b.datum ? -1 : a.datum > b.datum ? 1 : 0))) {
       accrueBis(addTage(z.datum, -1));
       let rest = round2(z.betrag);
+      const verteilung = [];
       const stufe = (liste, feld) => {
         let sum = 0;
         for (const p of liste) {
@@ -146,6 +147,7 @@
           p[feld] = round2(offen - t);
           rest = round2(rest - t);
           sum = round2(sum + t);
+          verteilung.push({ forderungId: p.buchung.id, betrag: t, feld });
         }
         return sum;
       };
@@ -168,7 +170,7 @@
         }
       }
       verrechnungen.push({ zahlungId: z.id, datum: z.datum, betrag: round2(z.betrag),
-        aufKosten, aufZinsen, aufHauptforderung, ueberschuss: rest > 0 ? rest : 0 });
+        aufKosten, aufZinsen, aufHauptforderung, ueberschuss: rest > 0 ? rest : 0, verteilung });
     }
     accrueBis(stichtag);
 
