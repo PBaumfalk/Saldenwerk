@@ -6,6 +6,15 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    # App-Dateien immer revalidieren (verhindert Alt/Neu-Mischstaende nach
+    # Updates); die grossen vendor-Bibliotheken duerfen lange cachen.
+    location ~* \.(html|css|js)$ {
+        add_header Cache-Control "no-cache";
+    }
+    location ^~ /vendor/ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
     # Der Zielhost wird über eine Variable erst zur Laufzeit aufgelöst —
     # so startet der Container auch, wenn der j-lawyer-Server gerade aus ist
     # (Anfragen liefern dann 502 statt eines nginx-Absturzes beim Start).

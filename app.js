@@ -1067,33 +1067,25 @@ if (typeof document !== 'undefined') {
 
   const REPORT_ROEMISCH = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 
-  function infoButton(text) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'info-btn';
-    btn.dataset.info = text;
-    btn.setAttribute('aria-label', 'Erläuterung');
-    btn.textContent = 'i';
-    return btn;
-  }
-
+  // Erklärtexte erscheinen als reiner Hovertext auf Elementen mit data-info —
+  // ohne sichtbares Icon (Nutzerwunsch), mit kurzer Verzögerung.
   function initInfoButtons() {
     let tooltip = null;
-    let aktuellerBtn = null;
+    let merkElement = null;
+    let timer = null;
 
-    function zeige(btn) {
+    function zeige(el) {
       if (!tooltip) {
         tooltip = document.createElement('div');
         tooltip.id = 'infoTooltip';
         tooltip.setAttribute('role', 'tooltip');
         document.body.appendChild(tooltip);
       }
-      tooltip.textContent = btn.dataset.info || '';
+      tooltip.textContent = el.dataset.info || '';
       tooltip.hidden = false;
-      aktuellerBtn = btn;
       tooltip.style.left = '0px';
       tooltip.style.top = '0px';
-      const r = btn.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
       const b = tooltip.getBoundingClientRect();
       const links = Math.min(Math.max(8, r.left + r.width / 2 - b.width / 2),
         window.innerWidth - b.width - 8);
@@ -1104,30 +1096,27 @@ if (typeof document !== 'undefined') {
     }
 
     function verstecke() {
+      clearTimeout(timer);
+      timer = null;
       if (tooltip) tooltip.hidden = true;
-      aktuellerBtn = null;
+      merkElement = null;
     }
 
     document.addEventListener('mouseover', (e) => {
-      const btn = e.target.closest ? e.target.closest('.info-btn') : null;
-      if (btn) zeige(btn);
-      else if (aktuellerBtn) verstecke();
+      const el = e.target.closest ? e.target.closest('[data-info]') : null;
+      if (el === merkElement) return;
+      clearTimeout(timer);
+      if (tooltip) tooltip.hidden = true;
+      merkElement = el;
+      if (el) timer = setTimeout(() => zeige(el), 350);
     });
     document.addEventListener('focusin', (e) => {
-      const btn = e.target.closest ? e.target.closest('.info-btn') : null;
-      if (btn) zeige(btn);
-      else if (aktuellerBtn) verstecke();
-    });
-    document.addEventListener('click', (e) => {
-      const btn = e.target.closest ? e.target.closest('.info-btn') : null;
-      if (btn) {
-        // Verhindert, dass ein ⓘ innerhalb eines <label> die Checkbox schaltet
-        e.preventDefault();
-        if (aktuellerBtn === btn && tooltip && !tooltip.hidden) verstecke();
-        else zeige(btn);
-      } else if (aktuellerBtn) {
-        verstecke();
-      }
+      const el = e.target.closest ? e.target.closest('[data-info]') : null;
+      if (el === merkElement) return;
+      clearTimeout(timer);
+      if (tooltip) tooltip.hidden = true;
+      merkElement = el;
+      if (el) zeige(el);
     });
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') verstecke();
@@ -1152,7 +1141,7 @@ if (typeof document !== 'undefined') {
     const titelSpan = document.createElement('span');
     titelSpan.textContent = titel;
     h2.append(nummer, titelSpan);
-    if (REPORT_ABSCHNITT_INFO[titel]) h2.appendChild(infoButton(REPORT_ABSCHNITT_INFO[titel]));
+    if (REPORT_ABSCHNITT_INFO[titel]) h2.dataset.info = REPORT_ABSCHNITT_INFO[titel];
     return h2;
   }
 

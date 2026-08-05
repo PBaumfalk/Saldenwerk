@@ -117,15 +117,10 @@
       btn('Jetzt speichern', () => schreibeDatei());
       btn('Trennen', trennen);
     }
-    const info = document.createElement('button');
-    info.type = 'button';
-    info.className = 'info-btn';
-    info.dataset.info = handle
+    const infoText = handle
       ? `Verbunden mit „${handle.name}": Änderungen werden automatisch in die Datei gespeichert. „Trennen" löst die Verbindung, die Daten bleiben lokal erhalten.`
       : 'Datei-Speicherung: hält alle Konten automatisch in einer JSON-Datei — z. B. auf einem Netzlaufwerk der Kanzlei. „Datei öffnen…" verbindet mit einer bestehenden Datei, „In Datei speichern…" legt eine neue an. Verfügbar in Chrome und Edge.';
-    info.setAttribute('aria-label', 'Erläuterung zur Datei-Speicherung');
-    info.textContent = 'i';
-    container.appendChild(info);
+    container.querySelectorAll('button').forEach((b) => { b.dataset.info = infoText; });
   }
 
   function zeigeFehler(text) {

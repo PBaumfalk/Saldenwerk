@@ -37,13 +37,11 @@
           Importieren
           <input type="file" id="importDatei" accept=".json" hidden>
         </label>
-        <button type="button" id="btnExportAlle" class="btn btn--sekundaer">Alle exportieren</button>
-        <button type="button" class="info-btn" data-info="Sichern und Übertragen: „Alle exportieren“ lädt sämtliche Konten als JSON-Datei herunter, „Importieren“ liest eine solche Datei wieder ein — bestehende Konten bleiben dabei erhalten." aria-label="Erläuterung zu Import und Export">i</button>
+        <button type="button" id="btnExportAlle" class="btn btn--sekundaer" data-info="Sichern und Übertragen: „Alle exportieren“ lädt sämtliche Konten als JSON-Datei herunter, „Importieren“ liest eine solche Datei wieder ein — bestehende Konten bleiben dabei erhalten.">Alle exportieren</button>
         <span class="werkzeugleiste__trenner" aria-hidden="true"></span>
         <span id="dateiWerkzeuge" class="datei-werkzeuge"></span>
         <span class="werkzeugleiste__trenner nur-kanzlei" aria-hidden="true"></span>
-        <button type="button" id="btnJlawyer" class="btn btn--sekundaer nur-kanzlei">j-lawyer…</button>
-        <button type="button" class="info-btn nur-kanzlei" data-info="Verbindung zur Kanzleisoftware j-lawyer: Stammdaten aus der Akte übernehmen (Kontodaten-Dialog) und Forderungsaufstellungen als PDF/HTML/JSON in die Akte hochladen (Report)." aria-label="Erläuterung zur j-lawyer-Anbindung">i</button>
+        <button type="button" id="btnJlawyer" class="btn btn--sekundaer nur-kanzlei" data-info="Verbindung zur Kanzleisoftware j-lawyer: Stammdaten aus der Akte übernehmen (Kontodaten-Dialog) und Forderungsaufstellungen als PDF/HTML/JSON in die Akte hochladen (Report).">j-lawyer…</button>
         <button type="button" id="btnNeuesKonto" class="btn btn--primaer">Neues Konto</button>
       </div>
     </div>
@@ -166,9 +164,8 @@
 
 <dialog id="buchungDialog" class="dialog">
   <form method="dialog" id="buchungForm">
-    <h2 class="dialog__titel">Buchung erfassen
-      <button type="button" class="info-btn" data-info="Hauptforderung: die Grundforderung (z. B. Rechnungsbetrag). Nebenforderung: Kosten wie Mahn- oder Anwaltskosten — werden bei Zahlungen nach § 367 BGB zuerst getilgt. Zinsforderung: bereits bezifferte Zinsen (z. B. aus einem Titel). Zahlung: tilgt in gesetzlicher Reihenfolge." aria-label="Erläuterung der Buchungstypen">i</button>
-    </h2>
+    <h2 class="dialog__titel" data-info="Hauptforderung: die Grundforderung (z. B. Rechnungsbetrag). Nebenforderung: Kosten wie Mahn- oder Anwaltskosten — werden bei Zahlungen nach § 367 BGB zuerst getilgt. Zinsforderung: bereits bezifferte Zinsen (z. B. aus einem Titel). Zahlung: tilgt in gesetzlicher Reihenfolge.">Buchung erfassen
+      </h2>
 
     <div class="feld">
       <label for="fDatum">Datum</label>
@@ -189,9 +186,8 @@
       <legend>Verzinsung</legend>
 
       <div class="feld">
-        <label for="fArt">Art
-          <button type="button" class="info-btn" data-info="Fester Zinssatz: unveränderlich, z. B. 4 % p. a. Basiszinssatz + Aufschlag: variabler Basiszins nach § 247 BGB (ändert sich halbjährlich) zuzüglich Prozentpunkten — bei Verzug z. B. + 5 Punkte (§ 288 Abs. 1 BGB) bzw. + 9 Punkte ohne Verbraucherbeteiligung (§ 288 Abs. 2 BGB)." aria-label="Erläuterung der Verzinsungsarten">i</button>
-        </label>
+        <label for="fArt" data-info="Fester Zinssatz: unveränderlich, z. B. 4 % p. a. Basiszinssatz + Aufschlag: variabler Basiszins nach § 247 BGB (ändert sich halbjährlich) zuzüglich Prozentpunkten — bei Verzug z. B. + 5 Punkte (§ 288 Abs. 1 BGB) bzw. + 9 Punkte ohne Verbraucherbeteiligung (§ 288 Abs. 2 BGB).">Art
+      </label>
         <select id="fArt">
           <option value="keine">Keine</option>
           <option value="fest">Fester Zinssatz</option>
@@ -206,23 +202,20 @@
 
       <div class="feld-gruppe">
         <div class="feld">
-          <label for="fBeginn">Beginn
-            <button type="button" class="info-btn" data-info="Erster Zinstag — wird mitgezählt (inklusive). Bei Verzug typischerweise der Tag nach Fälligkeit bzw. nach Zugang der Mahnung." aria-label="Erläuterung zum Zinsbeginn">i</button>
-          </label>
+          <label for="fBeginn" data-info="Erster Zinstag — wird mitgezählt (inklusive). Bei Verzug typischerweise der Tag nach Fälligkeit bzw. nach Zugang der Mahnung.">Beginn
+      </label>
           <input type="date" id="fBeginn">
         </div>
         <div class="feld">
-          <label for="fEnde">Ende (optional)
-            <button type="button" class="info-btn" data-info="Letzter Zinstag (inklusive). Leer lassen, wenn die Verzinsung bis zum jeweiligen Report-Stichtag weiterläuft." aria-label="Erläuterung zum Zinsende">i</button>
-          </label>
+          <label for="fEnde" data-info="Letzter Zinstag (inklusive). Leer lassen, wenn die Verzinsung bis zum jeweiligen Report-Stichtag weiterläuft.">Ende (optional)
+      </label>
           <input type="date" id="fEnde">
         </div>
       </div>
 
       <div class="feld">
-        <label for="fMethode">Zinsmethode
-          <button type="button" class="info-btn" data-info="Kalender: tatsächliche Tage, Jahr mit 365 bzw. 366 Tagen — üblich für gesetzliche Verzugszinsen. Bankmethode 30/360: jeder Monat 30 Tage, Jahr 360 Tage — nur wenn vertraglich vereinbart." aria-label="Erläuterung der Zinsmethoden">i</button>
-        </label>
+        <label for="fMethode" data-info="Kalender: tatsächliche Tage, Jahr mit 365 bzw. 366 Tagen — üblich für gesetzliche Verzugszinsen. Bankmethode 30/360: jeder Monat 30 Tage, Jahr 360 Tage — nur wenn vertraglich vereinbart.">Zinsmethode
+      </label>
         <select id="fMethode">
           <option value="kalender">Kalendertage / 365 (§ 187 BGB)</option>
           <option value="bank360">Bankmethode 30/360</option>
@@ -262,8 +255,7 @@
     </div>
 
     <div class="feld">
-      <label for="kTilgung">Tilgungsreihenfolge
-        <button type="button" class="info-btn" data-info="§ 367 BGB (Standard): Zahlungen tilgen zuerst Kosten, dann Zinsen, zuletzt die Hauptforderung. § 497 Abs. 3 BGB gilt für Verbraucherdarlehen: Kosten, dann Hauptforderung, zuletzt Zinsen. Ob § 497 einschlägig ist, ist rechtlich zu prüfen." aria-label="Erläuterung zur Tilgungsreihenfolge">i</button>
+      <label for="kTilgung" data-info="§ 367 BGB (Standard): Zahlungen tilgen zuerst Kosten, dann Zinsen, zuletzt die Hauptforderung. § 497 Abs. 3 BGB gilt für Verbraucherdarlehen: Kosten, dann Hauptforderung, zuletzt Zinsen. Ob § 497 einschlägig ist, ist rechtlich zu prüfen.">Tilgungsreihenfolge
       </label>
       <select id="kTilgung">
         <option value="367">§ 367 BGB (Kosten → Zinsen → Hauptforderung)</option>
@@ -339,50 +331,40 @@
     <fieldset class="verzinsungsblock">
       <legend><label><input type="checkbox" id="rVorAktiv" checked> Vorgerichtlich</label></legend>
       <div class="feld feld--inline">
-        <label for="rFaktor">Faktor Geschäftsgebühr Nr. 2300
-          <button type="button" class="info-btn" data-info="Rahmengebühr 0,5 bis 2,5 für die vorgerichtliche Vertretung. Regelsatz ist 1,3 — mehr nur bei umfangreicher oder schwieriger Tätigkeit (Anm. zu Nr. 2300 VV RVG)." aria-label="Erläuterung zur Geschäftsgebühr">i</button>
-        </label>
+        <label for="rFaktor" data-info="Rahmengebühr 0,5 bis 2,5 für die vorgerichtliche Vertretung. Regelsatz ist 1,3 — mehr nur bei umfangreicher oder schwieriger Tätigkeit (Anm. zu Nr. 2300 VV RVG).">Faktor Geschäftsgebühr Nr. 2300
+      </label>
         <input type="text" id="rFaktor" inputmode="decimal" value="1,3">
       </div>
-      <label><input type="checkbox" id="rVorPauschale" checked> Auslagenpauschale Nr. 7002
-        <button type="button" class="info-btn" data-info="Pauschale für Post und Telekommunikation: 20 % der Gebühren, höchstens 20 € (Nr. 7002 VV RVG)." aria-label="Erläuterung zur Auslagenpauschale">i</button>
+      <label data-info="Pauschale für Post und Telekommunikation: 20 % der Gebühren, höchstens 20 € (Nr. 7002 VV RVG)."><input type="checkbox" id="rVorPauschale" checked> Auslagenpauschale Nr. 7002
       </label>
     </fieldset>
 
     <fieldset class="verzinsungsblock">
       <legend><label><input type="checkbox" id="rGerAktiv"> Gerichtlich</label></legend>
       <div class="feld feld--inline">
-        <label for="rVerfahrensart">Verfahrensart
-          <button type="button" class="info-btn" data-info="Mahnverfahren: Gerichtskosten nach KV 1100 GKG (0,5-Gebühr, mindestens 38 €). Klageverfahren: KV 1210 GKG (3,0-Gebühr). Gerichtskosten fallen ohne Umsatzsteuer an." aria-label="Erläuterung zur Verfahrensart">i</button>
-        </label>
+        <label for="rVerfahrensart" data-info="Mahnverfahren: Gerichtskosten nach KV 1100 GKG (0,5-Gebühr, mindestens 38 €). Klageverfahren: KV 1210 GKG (3,0-Gebühr). Gerichtskosten fallen ohne Umsatzsteuer an.">Verfahrensart
+      </label>
         <select id="rVerfahrensart">
           <option value="mahnverfahren">Mahnverfahren (KV 1100)</option>
           <option value="klage">Klageverfahren (KV 1210)</option>
         </select>
       </div>
-      <label><input type="checkbox" id="rVerfahrensgebuehr" checked> Verfahrensgebühr Nr. 3100 (1,3)
-        <button type="button" class="info-btn" data-info="1,3-Gebühr für das Betreiben des gerichtlichen Verfahrens (Nr. 3100 VV RVG)." aria-label="Erläuterung zur Verfahrensgebühr">i</button>
+      <label data-info="1,3-Gebühr für das Betreiben des gerichtlichen Verfahrens (Nr. 3100 VV RVG)."><input type="checkbox" id="rVerfahrensgebuehr" checked> Verfahrensgebühr Nr. 3100 (1,3)
       </label>
-      <label><input type="checkbox" id="rTerminsgebuehr" checked> Terminsgebühr Nr. 3104 (1,2)
-        <button type="button" class="info-btn" data-info="1,2-Gebühr, entsteht mit der Wahrnehmung eines gerichtlichen Termins (Nr. 3104 VV RVG) — im Mahnverfahren gibt es keine Termine." aria-label="Erläuterung zur Terminsgebühr">i</button>
+      <label data-info="1,2-Gebühr, entsteht mit der Wahrnehmung eines gerichtlichen Termins (Nr. 3104 VV RVG) — im Mahnverfahren gibt es keine Termine."><input type="checkbox" id="rTerminsgebuehr" checked> Terminsgebühr Nr. 3104 (1,2)
       </label>
-      <label><input type="checkbox" id="rAnrechnung" checked> Anrechnung Geschäftsgebühr (Vorbem. 3 Abs. 4)
-        <button type="button" class="info-btn" data-info="Die vorgerichtliche Geschäftsgebühr wird zur Hälfte — höchstens mit 0,75 — auf die Verfahrensgebühr angerechnet (Vorbem. 3 Abs. 4 VV RVG). Die Verfahrensgebühr wird hier direkt gekürzt gebucht." aria-label="Erläuterung zur Anrechnung">i</button>
+      <label data-info="Die vorgerichtliche Geschäftsgebühr wird zur Hälfte — höchstens mit 0,75 — auf die Verfahrensgebühr angerechnet (Vorbem. 3 Abs. 4 VV RVG). Die Verfahrensgebühr wird hier direkt gekürzt gebucht."><input type="checkbox" id="rAnrechnung" checked> Anrechnung Geschäftsgebühr (Vorbem. 3 Abs. 4)
       </label>
-      <label><input type="checkbox" id="rGerPauschale" checked> Auslagenpauschale Nr. 7002
-        <button type="button" class="info-btn" data-info="Pauschale für Post und Telekommunikation: 20 % der Gebühren, höchstens 20 € — fällt je Angelegenheit an, daher auch im gerichtlichen Verfahren erneut." aria-label="Erläuterung zur Auslagenpauschale">i</button>
+      <label data-info="Pauschale für Post und Telekommunikation: 20 % der Gebühren, höchstens 20 € — fällt je Angelegenheit an, daher auch im gerichtlichen Verfahren erneut."><input type="checkbox" id="rGerPauschale" checked> Auslagenpauschale Nr. 7002
       </label>
-      <label><input type="checkbox" id="rGerichtskosten" checked> Gerichtskosten
-        <button type="button" class="info-btn" data-info="Gerichtsgebühren nach GKG entsprechend der gewählten Verfahrensart — durchlaufender Posten ohne Umsatzsteuer." aria-label="Erläuterung zu den Gerichtskosten">i</button>
+      <label data-info="Gerichtsgebühren nach GKG entsprechend der gewählten Verfahrensart — durchlaufender Posten ohne Umsatzsteuer."><input type="checkbox" id="rGerichtskosten" checked> Gerichtskosten
       </label>
     </fieldset>
 
-    <label><input type="checkbox" id="rUst" checked> 19 % USt Nr. 7008 (beide Phasen)
-      <button type="button" class="info-btn" data-info="Umsatzsteuer auf die Anwaltsvergütung (Nr. 7008 VV RVG) — nicht auf Gerichtskosten. Abwählen, wenn die Mandantschaft vorsteuerabzugsberechtigt ist und die USt nicht als Schaden geltend gemacht wird." aria-label="Erläuterung zur Umsatzsteuer">i</button>
-    </label>
-    <label><input type="checkbox" id="rVerzugspauschale"> Verzugspauschale 40 € (§ 288 Abs. 5 BGB, nur B2B)
-      <button type="button" class="info-btn" data-info="Pauschale von 40 € bei Zahlungsverzug — nur wenn der Schuldner kein Verbraucher ist. Auf später geltend gemachte Rechtsverfolgungskosten anzurechnen (§ 288 Abs. 5 S. 3 BGB)." aria-label="Erläuterung zur Verzugspauschale">i</button>
-    </label>
+    <label data-info="Umsatzsteuer auf die Anwaltsvergütung (Nr. 7008 VV RVG) — nicht auf Gerichtskosten. Abwählen, wenn die Mandantschaft vorsteuerabzugsberechtigt ist und die USt nicht als Schaden geltend gemacht wird."><input type="checkbox" id="rUst" checked> 19 % USt Nr. 7008 (beide Phasen)
+      </label>
+    <label data-info="Pauschale von 40 € bei Zahlungsverzug — nur wenn der Schuldner kein Verbraucher ist. Auf später geltend gemachte Rechtsverfolgungskosten anzurechnen (§ 288 Abs. 5 S. 3 BGB)."><input type="checkbox" id="rVerzugspauschale"> Verzugspauschale 40 € (§ 288 Abs. 5 BGB, nur B2B)
+      </label>
 
     <div class="tabellen-wrapper">
       <table class="tabelle">

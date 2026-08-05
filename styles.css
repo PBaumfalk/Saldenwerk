@@ -1418,7 +1418,10 @@ dialog.dialog::backdrop {
   }
 
   .btn--primaer {
-    background: linear-gradient(180deg,
+    /* Solider Fallback zuerst: schlägt die color-mix-Auswertung fehl,
+       bleibt der Button satt in Akzentfarbe statt transparent. */
+    background: var(--farbe-akzent);
+    background-image: linear-gradient(180deg,
       color-mix(in srgb, var(--farbe-akzent) 88%, #ffffff),
       var(--farbe-akzent));
     box-shadow: 0 3px 12px rgba(15, 23, 42, 0.16),
@@ -1430,7 +1433,8 @@ dialog.dialog::backdrop {
      aufblitzen (die Basis-Regel oben macht genau das — hier neutralisiert).
      Stattdessen denselben Verlauf behalten und per filter abdunkeln. */
   .btn--primaer:hover {
-    background: linear-gradient(180deg,
+    background: var(--farbe-akzent);
+    background-image: linear-gradient(180deg,
       color-mix(in srgb, var(--farbe-akzent) 88%, #ffffff),
       var(--farbe-akzent));
     filter: brightness(0.9);
@@ -1527,36 +1531,7 @@ dialog.dialog::backdrop {
     width: auto;
   }
 
-  /* --- Info-Buttons (ⓘ) mit globalem Glas-Tooltip --- */
-  .info-btn {
-    appearance: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 17px;
-    height: 17px;
-    padding: 0;
-    margin-left: 6px;
-    flex: 0 0 auto;
-    border: 1px solid rgba(15, 23, 42, 0.3);
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.7);
-    color: var(--farbe-text-schwach);
-    font-family: Georgia, "Times New Roman", serif;
-    font-style: italic;
-    font-weight: 700;
-    font-size: 0.7rem;
-    line-height: 1;
-    cursor: help;
-    vertical-align: middle;
-  }
-
-  .info-btn:hover,
-  .info-btn:focus-visible {
-    border-color: var(--farbe-akzent);
-    color: var(--farbe-akzent);
-    background: #ffffff;
-  }
+  /* --- Globaler Glas-Tooltip für data-info-Hovertexte --- */
 
   #infoTooltip {
     position: fixed;
