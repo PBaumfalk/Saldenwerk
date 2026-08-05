@@ -1,4 +1,4 @@
-# Forderungskonto
+# J-Forderungsrechner
 
 Eine kleine, lokal laufende Web-App zur Führung von Forderungskonten mit
 Zinsberechnung – z. B. für die Abrechnung von Hauptforderungen, Kosten und

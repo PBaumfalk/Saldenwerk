@@ -1,7 +1,7 @@
-# Debicare als Kanzlei-Deployment: eine URL für alle Arbeitsplätze,
+# J-Forderungsrechner als Kanzlei-Deployment: eine URL für alle Arbeitsplätze,
 # j-lawyer-API wird unter demselben Origin durchgereicht (kein CORS).
 services:
-  debicare:
+  j-forderungsrechner:
     build: .
     ports:
       - "8090:80"
