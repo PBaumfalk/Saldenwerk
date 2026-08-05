@@ -1816,9 +1816,74 @@ if (typeof document !== 'undefined') {
     App.zeigeAnsicht('konten');
     const oeffentlich = !!(window.Konfig && Konfig.oeffentlich);
     document.body.classList.toggle('modus-oeffentlich', oeffentlich);
+    wendeBrandingAn(oeffentlich);
     if (window.Dateispeicher) Dateispeicher.init(App);
     if (window.Jlawyer && !oeffentlich) Jlawyer.init(App);
   });
+
+  function wendeBrandingAn(oeffentlich) {
+    const branding = window.Konfig && Konfig.branding;
+    if (!branding) return;
+    if (branding.name) {
+      document.title = branding.claim ? `${branding.name} – ${branding.claim}` : branding.name;
+      const titel = document.querySelector('.appbar__titel strong');
+      if (titel) titel.textContent = branding.name;
+    }
+    if (branding.claim) {
+      const eyebrow = document.querySelector('.appbar__eyebrow');
+      if (eyebrow) eyebrow.textContent = branding.claim;
+    }
+    if (branding.beschreibung) {
+      let meta = document.querySelector('meta[name="description"]');
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.name = 'description';
+        document.head.appendChild(meta);
+      }
+      meta.content = branding.beschreibung;
+    }
+    Object.entries(branding.farben || {}).forEach(([variable, wert]) => {
+      document.documentElement.style.setProperty(variable, wert);
+    });
+    if (oeffentlich && branding.kanzlei) {
+      const fusszeile = document.querySelector('.app-fusszeile');
+      if (!fusszeile) return;
+      const box = document.createElement('div');
+      box.className = 'kanzlei-box';
+      if (branding.kanzlei.logo) {
+        const logo = document.createElement('img');
+        logo.src = branding.kanzlei.logo;
+        logo.alt = branding.kanzlei.name || '';
+        logo.className = 'kanzlei-box__logo';
+        box.appendChild(logo);
+      }
+      const inhalt = document.createElement('div');
+      const text = document.createElement('p');
+      text.textContent = branding.kanzlei.text || '';
+      inhalt.appendChild(text);
+      const aktionen = document.createElement('p');
+      aktionen.className = 'kanzlei-box__aktionen';
+      if (branding.kanzlei.url) {
+        const link = document.createElement('a');
+        link.href = branding.kanzlei.url;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.className = 'btn btn--primaer';
+        link.textContent = `Zur Website: ${branding.kanzlei.name || branding.kanzlei.url}`;
+        aktionen.appendChild(link);
+      }
+      if (branding.kanzlei.telefon) {
+        const tel = document.createElement('a');
+        tel.href = 'tel:' + branding.kanzlei.telefon.replace(/[^+\d]/g, '');
+        tel.className = 'btn btn--sekundaer';
+        tel.textContent = branding.kanzlei.telefon;
+        aktionen.appendChild(tel);
+      }
+      inhalt.appendChild(aktionen);
+      box.appendChild(inhalt);
+      fusszeile.insertAdjacentElement('afterbegin', box);
+    }
+  }
 
   window.App = App;
 })();

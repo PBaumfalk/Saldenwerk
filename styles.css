@@ -197,6 +197,42 @@ body.modus-oeffentlich .nur-kanzlei {
   display: none !important;
 }
 
+.kanzlei-box {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  background: var(--farbe-flaeche);
+  border: 1px solid var(--farbe-rand);
+  border-left: 3px solid var(--farbe-akzent);
+  border-radius: var(--radius);
+  box-shadow: var(--schatten-karte);
+  padding: 18px 22px;
+  margin-bottom: 20px;
+  color: var(--farbe-text);
+  font-size: 0.95rem;
+}
+
+.kanzlei-box__logo {
+  max-width: 180px;
+  height: auto;
+  flex: 0 0 auto;
+}
+
+.kanzlei-box > div {
+  flex: 1 1 320px;
+}
+
+.kanzlei-box p {
+  margin: 0 0 10px;
+}
+
+.kanzlei-box__aktionen {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .app-fusszeile {
   max-width: 1180px;
   margin: 0 auto;

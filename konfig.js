@@ -9,6 +9,17 @@
 // Für ein öffentliches Deployment diese Datei mit oeffentlich: true
 // ausliefern (z. B. im Docker-Volume überschreiben) und die Platzhalter in
 // impressum.html und datenschutz.html ausfüllen.
+//
+// Optionales branding (siehe konfig.baumfalk.js als fertiges Beispiel):
+//   branding: {
+//     name: 'Anzeigename der App',          // Titel + App-Leiste
+//     claim: 'Untertitel in der App-Leiste',
+//     beschreibung: 'Meta-Description für Suchmaschinen',
+//     farben: { '--farbe-akzent': '#1e7034', ... },   // CSS-Variablen
+//     kanzlei: {                            // Werbe-Box (nur öffentlicher Modus)
+//       name, text, url, telefon, logo,     // logo = Pfad zur Bilddatei
+//     },
+//   }
 window.Konfig = {
   oeffentlich: false,
 };

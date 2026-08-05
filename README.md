@@ -148,6 +148,23 @@ Hinweis zur Vermarktung: unter eigenem Namen anbieten
 („J-Forderungsrechner — kostenloses Forderungskonto im Browser"), nicht
 unter Anlehnung an fremde Produktnamen.
 
+### Gebrandete Variante („Baumfalk-Forderungsrechner")
+
+`konfig.baumfalk.js` ist eine fertige Deployment-Konfiguration mit
+Kanzlei-Branding: eigener App-Name und Claim in Titel und App-Leiste,
+Meta-Description für Suchmaschinen, Kanzlei-Farbschema (CSS-Variablen)
+und eine Werbe-Box in der Fußzeile (Logo aus `branding/`, Werbetext,
+Website-Link, Telefon). Aktivierung beim Docker-Deployment:
+
+```yaml
+volumes:
+  - ./konfig.baumfalk.js:/usr/share/nginx/html/konfig.js:ro
+```
+
+Eigenes Branding: `konfig.baumfalk.js` kopieren und die Felder unter
+`branding` anpassen (alle optional; ohne `branding`-Block bleibt das
+neutrale Erscheinungsbild).
+
 ## j-lawyer-Anbindung
 
 Die App kann sich mit einem [j-lawyer.org](https://www.j-lawyer.org)-Server
