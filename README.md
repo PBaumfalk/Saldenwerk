@@ -119,6 +119,35 @@ Der Container speichert selbst keine Daten — Konten liegen weiterhin im
 Browser bzw. in der verbundenen JSON-Datei; gemeinsames Arbeiten läuft über
 die Datei auf dem Netzlaufwerk oder Export/Import.
 
+## Öffentliche Gratis-Variante
+
+Die App kann als kostenloses, öffentliches Angebot gehostet werden — sie
+speichert prinzipbedingt keine Nutzerdaten auf dem Server (alles bleibt im
+localStorage des Besuchers; kein Konto, keine Cookies, kein Tracking).
+Dazu in `konfig.js` den Schalter umstellen:
+
+```js
+window.Konfig = { oeffentlich: true };
+```
+
+Im öffentlichen Modus sind die j-lawyer-Funktionen ausgeblendet und eine
+Fußzeile mit Haftungshinweis sowie Links auf `impressum.html` und
+`datenschutz.html` eingeblendet. **Vor der Veröffentlichung müssen die
+`[PLATZHALTER]` in beiden Seiten mit den echten Kanzleiangaben gefüllt und
+die Texte fachlich geprüft werden** (Impressumspflicht nach § 5 DDG,
+DSGVO-Informationen, Logdaten-Abschnitt an das tatsächliche Hosting
+anpassen). Beim Docker-Deployment lässt sich die Konfiguration ohne
+Neu-Build überschreiben:
+
+```yaml
+volumes:
+  - ./konfig.oeffentlich.js:/usr/share/nginx/html/konfig.js:ro
+```
+
+Hinweis zur Vermarktung: unter eigenem Namen anbieten
+(„J-Forderungsrechner — kostenloses Forderungskonto im Browser"), nicht
+unter Anlehnung an fremde Produktnamen.
+
 ## j-lawyer-Anbindung
 
 Die App kann sich mit einem [j-lawyer.org](https://www.j-lawyer.org)-Server

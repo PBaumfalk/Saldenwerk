@@ -1814,8 +1814,10 @@ if (typeof document !== 'undefined') {
     initDruckansicht();
     initBasiszinsAnsicht();
     App.zeigeAnsicht('konten');
+    const oeffentlich = !!(window.Konfig && Konfig.oeffentlich);
+    document.body.classList.toggle('modus-oeffentlich', oeffentlich);
     if (window.Dateispeicher) Dateispeicher.init(App);
-    if (window.Jlawyer) Jlawyer.init(App);
+    if (window.Jlawyer && !oeffentlich) Jlawyer.init(App);
   });
 
   window.App = App;

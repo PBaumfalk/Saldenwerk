@@ -38,7 +38,7 @@
           <input type="file" id="importDatei" accept=".json" hidden>
         </label>
         <button type="button" id="btnExportAlle" class="btn btn--sekundaer">Alle exportieren</button>
-        <button type="button" id="btnJlawyer" class="btn btn--sekundaer">j-lawyer…</button>
+        <button type="button" id="btnJlawyer" class="btn btn--sekundaer nur-kanzlei">j-lawyer…</button>
         <span id="dateiWerkzeuge" class="datei-werkzeuge"></span>
         <button type="button" id="btnNeuesKonto" class="btn btn--primaer">Neues Konto</button>
       </div>
@@ -103,7 +103,7 @@
         <button type="button" id="btnPdfExport" class="btn btn--primaer">PDF exportieren</button>
         <button type="button" id="btnDrucken" class="btn btn--sekundaer">Drucken</button>
         <button type="button" id="btnAntragstext" class="btn btn--sekundaer">Antragstext kopieren</button>
-        <button type="button" id="btnJlawyerUpload" class="btn btn--sekundaer">An j-lawyer senden</button>
+        <button type="button" id="btnJlawyerUpload" class="btn btn--sekundaer nur-kanzlei">An j-lawyer senden</button>
       </div>
     </div>
     <div id="reportInhalt" class="report-inhalt"></div>
@@ -146,6 +146,18 @@
   </section>
 
 </main>
+
+<footer class="app-fusszeile nur-oeffentlich">
+  <p>
+    Kostenloses Rechenwerkzeug ohne Gewähr — ersetzt keine Rechtsberatung.
+    Alle Daten bleiben ausschließlich in Ihrem Browser (localStorage);
+    es werden keine Daten an den Server übertragen.
+  </p>
+  <p>
+    <a href="impressum.html">Impressum</a> ·
+    <a href="datenschutz.html">Datenschutz</a>
+  </p>
+</footer>
 
 <div id="druckansicht" class="druckansicht" aria-hidden="true"></div>
 
@@ -221,7 +233,7 @@
     <div class="feld">
       <label for="kAktenzeichen">Aktenzeichen</label>
       <input type="text" id="kAktenzeichen" maxlength="120" placeholder="z. B. 12 C 345/26">
-      <button type="button" id="btnKontoLookup" class="btn btn--sekundaer">Aus j-lawyer übernehmen</button>
+      <button type="button" id="btnKontoLookup" class="btn btn--sekundaer nur-kanzlei">Aus j-lawyer übernehmen</button>
     </div>
 
     <div id="kFehler" class="fehlerbereich" role="status"></div>
@@ -364,6 +376,7 @@
   </div>
 </dialog>
 
+<script src="konfig.js"></script>
 <script src="basiszins.js"></script>
 <script src="engine.js"></script>
 <script src="rvg.js"></script>
