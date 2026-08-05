@@ -1206,3 +1206,274 @@ dialog.dialog::backdrop {
     break-inside: avoid;
   }
 }
+
+/* ==========================================================================
+   Glass-Design-Schicht (nur Bildschirm — Druckstile bleiben unberührt).
+   Vier Blur-Stufen analog zum Kanzlei-Designsystem: Eingaben 8px,
+   Karten 16px, Panels 24px, Dialoge 40px. Mesh-Hintergrund wird per
+   color-mix aus der Akzentfarbe abgeleitet und folgt damit automatisch
+   dem Branding (blau neutral, grün bei Baumfalk).
+   ========================================================================== */
+@media screen {
+  :root {
+    --glas-eingabe: rgba(255, 255, 255, 0.5);
+    --glas-karte: rgba(255, 255, 255, 0.62);
+    --glas-panel: rgba(255, 255, 255, 0.72);
+    --glas-erhoeht: rgba(255, 255, 255, 0.84);
+    --glas-rand: rgba(255, 255, 255, 0.55);
+    --glas-rand-innen: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+    --glas-schatten: 0 4px 24px rgba(15, 23, 42, 0.06);
+    --glas-schatten-gross: 0 8px 48px rgba(15, 23, 42, 0.12);
+    --mesh-1: color-mix(in srgb, var(--farbe-akzent) 13%, transparent);
+    --mesh-2: color-mix(in srgb, var(--farbe-akzent) 7%, transparent);
+    --mesh-3: rgba(148, 163, 184, 0.14);
+    --radius: 14px;
+    --radius-klein: 9px;
+    --schatten-karte: var(--glas-schatten);
+    --schatten-erhoeht: var(--glas-schatten-gross);
+  }
+
+  body {
+    background:
+      radial-gradient(ellipse 80% 60% at 12% 8%, var(--mesh-1), transparent 60%),
+      radial-gradient(ellipse 60% 80% at 88% 12%, var(--mesh-3), transparent 55%),
+      radial-gradient(ellipse 70% 50% at 50% 95%, var(--mesh-2), transparent 50%),
+      var(--farbe-hintergrund);
+    background-attachment: fixed;
+  }
+
+  /* --- App-Leiste: schwebendes Glas mit Akzent-Lichtkante --- */
+  .appbar {
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(24px) saturate(1.5);
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
+    border-bottom: 1px solid var(--glas-rand);
+    box-shadow: var(--glas-schatten),
+      0 1px 0 color-mix(in srgb, var(--farbe-akzent) 25%, transparent);
+  }
+
+  .appbar__logo {
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--farbe-akzent) 40%, transparent);
+  }
+
+  /* Navigation: Reiter werden auf Glas zu Pills */
+  .appnav {
+    align-items: center;
+    gap: 6px;
+  }
+
+  .appnav__btn {
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 8px 18px;
+    margin-bottom: 0;
+  }
+
+  .appnav__btn:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
+
+  .appnav__btn.active {
+    background: rgba(255, 255, 255, 0.78);
+    border-color: var(--glas-rand);
+    color: var(--farbe-akzent);
+    box-shadow: var(--glas-schatten), var(--glas-rand-innen);
+  }
+
+  /* --- Flächen: Karten, Tabellen, Report --- */
+  .karte,
+  .tabellen-wrapper,
+  .kanzlei-box {
+    background: var(--glas-karte);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    border: 1px solid var(--glas-rand);
+    box-shadow: var(--glas-schatten), var(--glas-rand-innen);
+  }
+
+  .karte {
+    border-left: 3px solid var(--farbe-akzent);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .karte:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--glas-schatten-gross), var(--glas-rand-innen);
+  }
+
+  /* Ledger bleibt Ledger: Tabellen-Inhalte fast opak für klare Zahlen */
+  .tabelle thead th {
+    background: rgba(255, 255, 255, 0.6);
+  }
+
+  .tabelle tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.38);
+  }
+
+  .tabelle tbody tr:hover {
+    background: color-mix(in srgb, var(--farbe-akzent) 7%, rgba(255, 255, 255, 0.5));
+  }
+
+  /* --- Eingaben: Glas Stufe 1 --- */
+  input[type="text"],
+  input[type="date"],
+  input[type="search"],
+  input[type="url"],
+  input[type="password"],
+  select {
+    background: var(--glas-eingabe);
+    backdrop-filter: blur(8px) saturate(1.3);
+    -webkit-backdrop-filter: blur(8px) saturate(1.3);
+    border-color: var(--glas-rand);
+    box-shadow: var(--glas-schatten);
+  }
+
+  input[type="text"]:focus,
+  input[type="date"]:focus,
+  input[type="search"]:focus,
+  input[type="url"]:focus,
+  input[type="password"]:focus,
+  select:focus {
+    background: rgba(255, 255, 255, 0.75);
+    border-color: color-mix(in srgb, var(--farbe-akzent) 55%, transparent);
+  }
+
+  .verzinsungsblock {
+    background: rgba(255, 255, 255, 0.35);
+    border: 1px solid var(--glas-rand);
+    border-radius: var(--radius-klein);
+  }
+
+  /* --- Buttons --- */
+  .btn {
+    border-radius: 999px;
+    text-decoration: none;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+  }
+
+  a.btn--primaer {
+    color: #fff;
+  }
+
+  a.btn--sekundaer {
+    color: var(--farbe-text);
+  }
+
+  .btn:active {
+    transform: translateY(1px);
+  }
+
+  .btn--primaer {
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--farbe-akzent) 88%, #ffffff),
+      var(--farbe-akzent));
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--farbe-akzent) 35%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  }
+
+  .btn--primaer:hover {
+    background: var(--farbe-akzent-dunkel);
+  }
+
+  .btn--sekundaer {
+    background: var(--glas-eingabe);
+    backdrop-filter: blur(8px) saturate(1.3);
+    -webkit-backdrop-filter: blur(8px) saturate(1.3);
+    border: 1px solid var(--glas-rand);
+    box-shadow: var(--glas-schatten);
+  }
+
+  .btn--sekundaer:hover {
+    background: rgba(255, 255, 255, 0.8);
+  }
+
+  /* --- Dialoge: Glas Stufe 4 mit abgedunkeltem, verschwommenem Hintergrund --- */
+  dialog.dialog {
+    background: var(--glas-erhoeht);
+    backdrop-filter: blur(40px) saturate(1.6);
+    -webkit-backdrop-filter: blur(40px) saturate(1.6);
+    border: 1px solid var(--glas-rand);
+    box-shadow: var(--glas-schatten-gross), var(--glas-rand-innen);
+  }
+
+  dialog.dialog::backdrop {
+    background: rgba(15, 23, 42, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+
+  /* --- Banner, Meldungen, Fußzeile --- */
+  .app-hinweisbanner,
+  .report-hinweisbox {
+    background: color-mix(in srgb, #f4b942 16%, rgba(255, 255, 255, 0.6));
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  }
+
+  .fehlerbereich:not(:empty) {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .app-fusszeile {
+    border-top: 1px solid var(--glas-rand);
+  }
+
+  /* --- macOS-Scrollbalken --- */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.35);
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(71, 85, 105, 0.5);
+  }
+
+  /* --- Dezente Bewegung, respektiert reduzierte Animation --- */
+  @media (prefers-reduced-motion: no-preference) {
+    .view.active {
+      animation: ansicht-einblenden 0.22s ease-out;
+    }
+
+    dialog.dialog[open] {
+      animation: dialog-einblenden 0.18s ease-out;
+    }
+  }
+
+  @keyframes ansicht-einblenden {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes dialog-einblenden {
+    from { opacity: 0; transform: translateY(10px) scale(0.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+}
+
+/* RVG-Vorschau: lange Gebührentexte umbrechen statt die Betragsspalte
+   aus dem Dialog zu schieben. Die mobile Mindestbreite der großen
+   Tabellen gilt im schmalen Dialog nicht. */
+#rvgForm .tabelle {
+  table-layout: fixed;
+  min-width: 0;
+}
+
+#rvgForm .tabelle th:last-child,
+#rvgForm .tabelle td.num {
+  width: 110px;
+}
+
+#rvgForm .tabelle td:first-child,
+#rvgForm .tabelle th:first-child {
+  overflow-wrap: break-word;
+}
