@@ -600,6 +600,126 @@ if (typeof document !== 'undefined') {
     });
   }
 
+  function initRvgDialog() {
+    const dialog = document.getElementById('rvgDialog');
+    const felder = () => ({
+      datum: document.getElementById('rDatum'),
+      wert: document.getElementById('rWert'),
+      vorAktiv: document.getElementById('rVorAktiv'),
+      faktor: document.getElementById('rFaktor'),
+      vorPauschale: document.getElementById('rVorPauschale'),
+      gerAktiv: document.getElementById('rGerAktiv'),
+      verfahrensart: document.getElementById('rVerfahrensart'),
+      verfahrensgebuehr: document.getElementById('rVerfahrensgebuehr'),
+      terminsgebuehr: document.getElementById('rTerminsgebuehr'),
+      anrechnung: document.getElementById('rAnrechnung'),
+      gerPauschale: document.getElementById('rGerPauschale'),
+      gerichtskosten: document.getElementById('rGerichtskosten'),
+      ust: document.getElementById('rUst'),
+      verzugspauschale: document.getElementById('rVerzugspauschale'),
+      fehler: document.getElementById('rFehler'),
+    });
+    let vorschauBuchungen = [];
+
+    function leseEingaben() {
+      const f = felder();
+      const wert = parseBetrag(f.wert.value);
+      const faktor = parseBetrag(f.faktor.value);
+      if (wert === null || wert <= 0) return { fehler: 'Bitte einen Gegenstandswert größer als 0 angeben.' };
+      if (f.vorAktiv.checked && (faktor === null || faktor <= 0)) {
+        return { fehler: 'Bitte einen gültigen Gebührenfaktor angeben (z. B. 1,3).' };
+      }
+      const datum = parseDatum(f.datum.value) || Engine.heute();
+      return { eingaben: {
+        gegenstandswert: wert, datum,
+        vorgerichtlich: { aktiv: f.vorAktiv.checked, faktor,
+          auslagenpauschale: f.vorPauschale.checked, umsatzsteuer: f.ust.checked },
+        gerichtlich: { aktiv: f.gerAktiv.checked, verfahrensart: f.verfahrensart.value,
+          verfahrensgebuehr: f.verfahrensgebuehr.checked, terminsgebuehr: f.terminsgebuehr.checked,
+          gerichtskosten: f.gerichtskosten.checked,
+          anrechnung: f.vorAktiv.checked && f.anrechnung.checked, anrechnungsFaktor: faktor,
+          auslagenpauschale: f.gerPauschale.checked, umsatzsteuer: f.ust.checked },
+        verzugspauschale: f.verzugspauschale.checked,
+      } };
+    }
+
+    function aktualisiereVorschau() {
+      const f = felder();
+      f.terminsgebuehr.disabled = f.verfahrensart.value === 'mahnverfahren';
+      const vorschau = document.getElementById('rvgVorschau');
+      const summeZeile = document.getElementById('rvgSumme');
+      const hinweisListe = document.getElementById('rvgHinweise');
+      vorschau.innerHTML = '';
+      summeZeile.innerHTML = '';
+      hinweisListe.innerHTML = '';
+      vorschauBuchungen = [];
+      const gelesen = leseEingaben();
+      if (gelesen.fehler) {
+        f.fehler.textContent = gelesen.fehler;
+        return;
+      }
+      f.fehler.textContent = '';
+      const ergebnis = Rvg.baueNebenforderungen(gelesen.eingaben);
+      vorschauBuchungen = ergebnis.buchungen;
+      let summe = 0;
+      ergebnis.buchungen.forEach((b) => {
+        const tr = document.createElement('tr');
+        const tdText = document.createElement('td');
+        tdText.textContent = b.text;
+        const tdBetrag = document.createElement('td');
+        tdBetrag.className = 'num';
+        tdBetrag.textContent = formatEUR(b.betrag);
+        tr.append(tdText, tdBetrag);
+        vorschau.appendChild(tr);
+        summe = Engine.round2(summe + b.betrag);
+      });
+      const thSumme = document.createElement('th');
+      thSumme.textContent = 'Summe';
+      const tdSumme = document.createElement('td');
+      tdSumme.className = 'num';
+      tdSumme.textContent = formatEUR(summe);
+      summeZeile.append(thSumme, tdSumme);
+      ergebnis.hinweise.forEach((h) => {
+        const li = document.createElement('li');
+        li.textContent = h;
+        hinweisListe.appendChild(li);
+      });
+    }
+
+    document.getElementById('btnRvg').addEventListener('click', () => {
+      const konto = App.aktivesKonto();
+      if (!konto) return;
+      const f = felder();
+      f.datum.value = Engine.heute();
+      const ergebnis = Engine.berechneKonto(konto, Engine.heute(), App.aktuelleTabelle());
+      const offen = ergebnis.summen.hauptforderung.offen;
+      if (offen > 0 && !f.wert.value) {
+        f.wert.value = offen.toLocaleString('de-DE', { minimumFractionDigits: 2 });
+      }
+      aktualisiereVorschau();
+      dialog.showModal();
+    });
+
+    document.getElementById('rvgForm').addEventListener('input', aktualisiereVorschau);
+    document.getElementById('rvgForm').addEventListener('change', aktualisiereVorschau);
+    document.getElementById('btnRvgAbbrechen').addEventListener('click', () => dialog.close());
+
+    document.getElementById('rvgForm').addEventListener('submit', (e) => {
+      const konto = App.aktivesKonto();
+      if (!konto || !vorschauBuchungen.length) {
+        e.preventDefault();
+        felder().fehler.textContent = 'Keine Buchungen zum Einfügen — bitte Eingaben prüfen.';
+        return;
+      }
+      vorschauBuchungen.forEach((b) => {
+        konto.buchungen.push({ id: crypto.randomUUID(), ...b });
+      });
+      konto.updatedAt = Engine.heute();
+      App.speichern();
+      App.renderBuchungen();
+    });
+  }
+
   function initKontoDialog() {
     const dialog = document.getElementById('kontoDialog');
     const felder = () => ({
@@ -1626,6 +1746,7 @@ if (typeof document !== 'undefined') {
     initKontenAnsicht();
     initKontoName();
     initKontoDialog();
+    initRvgDialog();
     initBuchungenAnsicht();
     initReportAnsicht();
     initDruckansicht();
