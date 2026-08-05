@@ -84,6 +84,41 @@ Export).
 - **Export/Import**: Konten als JSON sichern und wieder einlesen (siehe
   unten).
 
+## Docker-Deployment (empfohlen für die Kanzlei)
+
+Statt `index.html` auf jedem Rechner zu öffnen, kann die App als
+Docker-Container ausgeliefert werden — eine URL für alle Arbeitsplätze, und
+die j-lawyer-API wird unter **demselben Origin** durchgereicht, sodass das
+CORS-Problem (siehe unten) gar nicht erst entsteht:
+
+```
+docker compose up -d --build
+```
+
+Vorher die Adresse des j-lawyer-Servers in einer `.env`-Datei neben der
+`docker-compose.yml` hinterlegen (ohne Pfad, ohne abschließenden Slash):
+
+```
+JLAWYER_URL=http://192.168.1.10:8080
+```
+
+Die App ist dann unter `http://SERVER:8090` erreichbar; im
+j-lawyer-Einstellungsdialog bleibt die Server-URL einfach **leer**
+(= gleiche Adresse wie die App). Ist der j-lawyer-Server gerade nicht
+erreichbar, startet der Container trotzdem — die API-Anfragen melden dann
+einen Verbindungsfehler.
+
+**HTTPS**: Die Datei-Speicherung (File System Access API) funktioniert nur
+in sicheren Kontexten (HTTPS oder localhost). Ohne HTTPS läuft die App im
+LAN trotzdem — die Daten liegen dann im localStorage des jeweiligen
+Browsers, mit Backup-Erinnerung. Für HTTPS: Zertifikate nach
+`certs/tls.crt`/`tls.key` legen und in `docker-compose.yml` die
+auskommentierten Zeilen (Port 8443 + Volumes) aktivieren.
+
+Der Container speichert selbst keine Daten — Konten liegen weiterhin im
+Browser bzw. in der verbundenen JSON-Datei; gemeinsames Arbeiten läuft über
+die Datei auf dem Netzlaufwerk oder Export/Import.
+
 ## j-lawyer-Anbindung
 
 Die App kann sich mit einem [j-lawyer.org](https://www.j-lawyer.org)-Server
@@ -100,9 +135,11 @@ der Benutzer braucht die Rollen `readArchiveFileRole` und
   HTML-Datei und die JSON-Sicherung des Kontos (reimportierbar).
 
 **Wichtig — CORS**: Der j-lawyer-Server sendet keine CORS-Header. Browser
-blockieren deshalb direkte Anfragen aus dieser App. Für den Produktivbetrieb
-muss ein Reverse-Proxy vor den j-lawyer-Server geschaltet werden, der die
-nötigen Header ergänzt, z. B. mit nginx:
+blockieren deshalb direkte Anfragen aus dieser App. **Empfohlene Lösung ist
+das Docker-Deployment (siehe oben)** — dort läuft die j-lawyer-API unter
+demselben Origin und CORS spielt keine Rolle. Wer die App ohne Docker
+direkt vom Dateisystem nutzt, braucht stattdessen einen Reverse-Proxy vor
+dem j-lawyer-Server, der die nötigen Header ergänzt, z. B. mit nginx:
 
 ```nginx
 location /j-lawyer-io/ {

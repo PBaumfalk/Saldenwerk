@@ -1,0 +1,23 @@
+# Debicare als Kanzlei-Deployment: eine URL für alle Arbeitsplätze,
+# j-lawyer-API wird unter demselben Origin durchgereicht (kein CORS).
+services:
+  debicare:
+    build: .
+    ports:
+      - "8090:80"
+    environment:
+      # Adresse des j-lawyer-Servers (ohne Pfad, ohne Slash am Ende).
+      # Setzen über eine .env-Datei neben dieser docker-compose.yml:
+      #   JLAWYER_URL=http://192.168.1.10:8080
+      JLAWYER_URL: "${JLAWYER_URL:-http://jlawyer-server:8080}"
+    restart: unless-stopped
+
+    # HTTPS aktivieren (nötig für die Datei-Speicherung im LAN):
+    # 1. Zertifikate nach ./certs/tls.crt und ./certs/tls.key legen,
+    # 2. die folgenden Zeilen einkommentieren:
+    # ports:
+    #   - "8090:80"
+    #   - "8443:443"
+    # volumes:
+    #   - ./docker/ssl.conf.template:/etc/nginx/templates/ssl.conf.template:ro
+    #   - ./certs:/etc/nginx/certs:ro

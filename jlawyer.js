@@ -125,9 +125,12 @@ if (typeof document !== 'undefined') {
     } catch (e) { /* Einstellungen sind verzichtbar */ }
   }
 
+  // Leere Server-URL ist gültig: baueUrl liefert dann relative Pfade, d. h.
+  // die App spricht den j-lawyer-Proxy unter dem eigenen Origin an
+  // (Docker-Deployment mit same-origin Proxy, siehe README).
   function konfiguriert() {
     const s = ladeEinstellungen();
-    return !!(s && s.serverUrl && s.benutzer && s.passwort);
+    return !!(s && s.benutzer && s.passwort);
   }
 
   async function api(pfad, optionen) {
@@ -253,7 +256,7 @@ if (typeof document !== 'undefined') {
         passwort: f.passwort.value });
       fehler.classList.remove('fehlerbereich--erfolg');
       if (!konfiguriert()) {
-        fehler.textContent = 'Bitte Server-URL, Benutzername und Passwort angeben.';
+        fehler.textContent = 'Bitte Benutzername und Passwort angeben (Server-URL nur nötig, wenn die App nicht vom Docker-Container ausgeliefert wird).';
         return;
       }
       fehler.textContent = 'Verbindung wird getestet…';

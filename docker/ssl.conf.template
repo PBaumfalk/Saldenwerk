@@ -1,0 +1,21 @@
+# Optionaler HTTPS-Server-Block. Aktivierung über docker-compose.yml:
+# diese Datei nach /etc/nginx/templates/ mounten und Zertifikate nach
+# /etc/nginx/certs/ (tls.crt + tls.key). HTTPS ist Voraussetzung dafür,
+# dass die Datei-Speicherung (File System Access API) im LAN funktioniert.
+server {
+    listen 443 ssl;
+    ssl_certificate /etc/nginx/certs/tls.crt;
+    ssl_certificate_key /etc/nginx/certs/tls.key;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location ~ ^/j-lawyer-io/(.*)$ {
+        resolver 127.0.0.11 ipv6=off valid=30s;
+        set $jlawyer ${JLAWYER_URL};
+        proxy_pass $jlawyer/j-lawyer-io/$1$is_args$args;
+        proxy_set_header Host $host;
+        client_max_body_size 50m;
+        proxy_read_timeout 60s;
+    }
+}

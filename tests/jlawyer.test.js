@@ -11,6 +11,14 @@ test('baueUrl: normalisiert Slashes und ergänzt REST-Basis', () => {
     'https://server:8080/j-lawyer-io/rest/v1/security/metadata');
 });
 
+test('baueUrl: leere Server-URL ergibt relativen Pfad (gleicher Origin)', () => {
+  assert.strictEqual(Core.baueUrl('', '/v1/security/metadata'),
+    '/j-lawyer-io/rest/v1/security/metadata');
+  assert.strictEqual(Core.baueUrl(undefined, 'v1/cases/list'),
+    '/j-lawyer-io/rest/v1/cases/list');
+  assert.strictEqual(Core.baueUrl('   ', '/v1/x'), '/j-lawyer-io/rest/v1/x');
+});
+
 test('authHeader: Basic mit UTF-8-sicherer Kodierung', () => {
   assert.strictEqual(Core.authHeader('admin', 'a'), 'Basic ' + Buffer.from('admin:a').toString('base64'));
   assert.strictEqual(Core.authHeader('jürgen', 'paßwort€'),
