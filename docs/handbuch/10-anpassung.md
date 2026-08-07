@@ -8,6 +8,10 @@ manuell um; die Wahl wird im Browser gespeichert und gilt auch nach dem
 Neustart. Druck und PDF sind davon unabhängig — sie sind immer schwarz auf
 weiß.
 
+![Der Hell/Dunkel-Umschalter in der App-Leiste](../screenshots/theme-umschalter.png)
+
+![Report im Dunkelmodus](../screenshots/report-dunkel.png)
+
 ## Öffentliche Variante (für Betreiber / IT)
 
 Saldenwerk kann als kostenloses öffentliches Angebot gehostet werden — es

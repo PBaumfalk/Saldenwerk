@@ -28,6 +28,11 @@ Tag ermitteln — etwa den Tag der Antragstellung.
    Report-Kopf).
 4. **Endsaldo** — der offene Gesamtbetrag zum Stichtag.
 
+So sehen Zinsstaffel und Verrechnungsübersicht aus — jedes Segment mit
+Zeitraum, Tagen, Basis, Satz und Zinsbetrag:
+
+![Zinsstaffel und Verrechnung der Zahlungen](../screenshots/zinsstaffel.png)
+
 ## PDF herunterladen
 
 **PDF herunterladen** erzeugt sofort eine PDF-Datei im Download-Ordner —

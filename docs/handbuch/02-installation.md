@@ -12,7 +12,10 @@ der Export als Sicherung).
 ## Auf dem Mac
 
 1. Auf der [GitHub-Seite](https://github.com/PBaumfalk/Saldenwerk) den
-   grünen Knopf **Code** anklicken und **Download ZIP** wählen.
+   grünen Knopf **Code** anklicken und **Download ZIP** wählen:
+
+   ![Code → Download ZIP auf GitHub](../screenshots/download-zip.png)
+
 2. Die heruntergeladene ZIP-Datei im Ordner „Downloads" doppelklicken —
    macOS entpackt sie zu einem Ordner „Saldenwerk-main".
 3. Den Ordner an einen dauerhaften Ort verschieben (z. B. in „Dokumente").
@@ -25,7 +28,8 @@ Lesezeichenleiste, dann ist Saldenwerk künftig einen Klick entfernt.
 ## Auf dem Windows-PC
 
 1. Auf der [GitHub-Seite](https://github.com/PBaumfalk/Saldenwerk) den
-   grünen Knopf **Code** anklicken und **Download ZIP** wählen.
+   grünen Knopf **Code** anklicken und **Download ZIP** wählen (Bild siehe
+   oben beim Mac — der Knopf ist derselbe).
 2. Die ZIP-Datei im Download-Ordner mit rechts anklicken →
    **Alle extrahieren…** → Zielordner wählen (z. B. „Dokumente").
 3. Im entpackten Ordner die Datei **`index.html`** doppelklicken —

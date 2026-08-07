@@ -9,6 +9,8 @@ die j-lawyer-Knöpfe schlicht funktionslos bzw. ausgeblendet.
 
 Konten-Ansicht → **j-lawyer…** öffnet den Verbindungsdialog:
 
+![j-lawyer-Verbindungsdialog](../screenshots/jlawyer-dialog.png)
+
 - **Server-URL** — die Adresse des j-lawyer-Servers. Läuft Saldenwerk als
   Docker-Container mit j-lawyer-Proxy (siehe
   [Installation auf einem Server](02-installation.md)), bleibt das Feld

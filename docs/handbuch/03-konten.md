@@ -28,6 +28,8 @@ Forderungskonten als Karten.
 
 In der Buchungen-Ansicht öffnet **Kontodaten** einen Dialog mit:
 
+![Kontodaten-Dialog](../screenshots/kontodaten-dialog.png)
+
 - **Aktenzeichen** — erscheint auf Kontokarte, Report und PDF. Mit
   j-lawyer-Anbindung holt **Aus j-lawyer übernehmen** die Parteien direkt
   aus der Akte (siehe [Kapitel 9](09-j-lawyer.md)).

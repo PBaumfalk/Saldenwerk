@@ -4,6 +4,8 @@ Die Ansicht **Basiszins** zeigt die eingebaute Tabelle der Basiszinssätze
 nach § 247 BGB — halbjährlich ab dem 1. Januar 2002. Auf ihr beruhen alle
 Verzinsungen der Art „Basiszinssatz + Aufschlag".
 
+![Basiszins-Ansicht mit eingebauter Tabelle](../screenshots/basiszins.png)
+
 ## Werte prüfen
 
 Verbindliche Werte veröffentlicht die

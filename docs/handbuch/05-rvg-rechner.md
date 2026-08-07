@@ -4,6 +4,8 @@ Der **RVG-/Mahnkosten-Rechner** (Knopf „RVG-Rechner" in der
 Buchungen-Ansicht) berechnet die Kosten der Rechtsverfolgung und fügt sie
 mit einem Klick als Nebenforderungs-Buchungen ins Konto ein.
 
+![RVG-/Mahnkosten-Rechner mit Live-Vorschau](../screenshots/rvg-dialog.png)
+
 ## Bedienung
 
 1. **Buchungsdatum** und **Gegenstandswert** eingeben — der

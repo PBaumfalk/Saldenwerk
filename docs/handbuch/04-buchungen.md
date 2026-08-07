@@ -24,7 +24,11 @@ verrechnet; ein Überschuss wird als Überzahlung ausgewiesen.
 ## Buchung erfassen
 
 Die Knöpfe **+ Hauptforderung**, **+ Nebenforderung**, **+ Zinsforderung**
-und **+ Zahlung** öffnen den Buchungsdialog mit:
+und **+ Zahlung** öffnen den Buchungsdialog:
+
+![Buchungsdialog mit Verzinsung „Basiszinssatz + Aufschlag"](../screenshots/buchung-dialog.png)
+
+Die Felder im Einzelnen:
 
 - **Datum** — bei Forderungen das Entstehungsdatum, bei Zahlungen der
   Zahltag.

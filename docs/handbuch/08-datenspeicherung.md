@@ -19,7 +19,10 @@ erinnert an fällige Sicherungen per „Alle exportieren" (nach 14 Tagen oder
 
 In Chrome und Edge kann Saldenwerk seinen gesamten Datenbestand in einer
 **JSON-Datei** führen, die Sie selbst verwalten — z. B. auf dem
-Netzlaufwerk der Kanzlei. In der Konten-Ansicht:
+Netzlaufwerk der Kanzlei. Die Knöpfe dafür sitzen in der Werkzeugleiste
+der Konten-Ansicht:
+
+![Werkzeugleiste mit Import/Export und Datei-Speicherung](../screenshots/datei-werkzeuge.png)
 
 - **In Datei speichern…** legt eine neue Datei an und verbindet die App
   damit.
