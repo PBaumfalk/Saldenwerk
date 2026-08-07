@@ -475,7 +475,8 @@ select:focus {
 
 .konten-liste {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  /* Mindestbreite so, dass die vier Kartenaktionen sicher in eine Zeile passen */
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 14px;
 }
 
@@ -1634,6 +1635,61 @@ dialog.dialog::backdrop {
     min-height: 36px;
     padding: 0;
     border-radius: var(--radius);
+  }
+
+  /* Zeilen-Aktionen (Tabelle, Kontokarte): stille Ghost-Buttons */
+  .btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--sw-text-muted);
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease;
+  }
+
+  .btn-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .btn-icon:hover {
+    background: var(--sw-surface-muted);
+    color: var(--sw-text);
+  }
+
+  .btn-icon:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 1px var(--farbe-akzent), var(--sw-focus);
+  }
+
+  .btn-icon--gefahr:hover {
+    background: color-mix(in srgb, var(--sw-danger) 10%, transparent);
+    color: var(--sw-danger);
+  }
+
+  /* Kartenaktionen bleiben in einer Zeile; Löschen rechts abgesetzt */
+  .karte .werkzeugleiste {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .karte .werkzeugleiste .btn {
+    min-height: 32px;
+    padding: 6px 11px;
+    font-size: 0.84rem;
+    white-space: nowrap;
+  }
+
+  .karte .werkzeugleiste .btn-icon {
+    margin-left: auto;
+    flex: none;
   }
 
   .btn--icon svg {

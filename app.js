@@ -465,6 +465,29 @@ if (typeof document !== 'undefined') {
     banner.appendChild(btn);
   }
 
+  // Outline-Icons im Lucide-Stil; die Pfade stammen aus „pencil" und „trash-2".
+  const ICON_BEARBEITEN = ['M12 20h9', 'M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z'];
+  const ICON_LOESCHEN = ['M3 6h18', 'M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2',
+    'M19 6v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6', 'M10 11v6', 'M14 11v6'];
+
+  function iconSvg(pfade) {
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '1.75');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    svg.setAttribute('aria-hidden', 'true');
+    pfade.forEach((d) => {
+      const p = document.createElementNS(NS, 'path');
+      p.setAttribute('d', d);
+      svg.appendChild(p);
+    });
+    return svg;
+  }
+
   function renderKontenListe() {
     renderBasiszinsHinweis();
     renderBackupErinnerung();
@@ -535,8 +558,10 @@ if (typeof document !== 'undefined') {
 
       const btnLoeschen = document.createElement('button');
       btnLoeschen.type = 'button';
-      btnLoeschen.className = 'btn btn--gefahr';
-      btnLoeschen.textContent = 'Löschen';
+      btnLoeschen.className = 'btn-icon btn-icon--gefahr';
+      btnLoeschen.appendChild(iconSvg(ICON_LOESCHEN));
+      btnLoeschen.setAttribute('aria-label', 'Konto löschen');
+      btnLoeschen.title = 'Konto löschen';
       btnLoeschen.addEventListener('click', () => {
         App.bestaetige(`Konto „${konto.name}" wirklich löschen?`, () => {
           App.state.konten = App.state.konten.filter((k) => k.id !== konto.id);
@@ -984,14 +1009,16 @@ if (typeof document !== 'undefined') {
       const btnBearbeiten = document.createElement('button');
       btnBearbeiten.type = 'button';
       btnBearbeiten.className = 'btn-icon';
-      btnBearbeiten.textContent = '✎';
+      btnBearbeiten.appendChild(iconSvg(ICON_BEARBEITEN));
       btnBearbeiten.setAttribute('aria-label', 'Buchung bearbeiten');
+      btnBearbeiten.title = 'Buchung bearbeiten';
       btnBearbeiten.addEventListener('click', () => App.oeffneBuchungDialog(b.typ, b.id));
       const btnLoeschen = document.createElement('button');
       btnLoeschen.type = 'button';
-      btnLoeschen.className = 'btn-icon';
-      btnLoeschen.textContent = '🗑';
+      btnLoeschen.className = 'btn-icon btn-icon--gefahr';
+      btnLoeschen.appendChild(iconSvg(ICON_LOESCHEN));
       btnLoeschen.setAttribute('aria-label', 'Buchung löschen');
+      btnLoeschen.title = 'Buchung löschen';
       btnLoeschen.addEventListener('click', () => {
         App.bestaetige(`Buchung „${b.text}" wirklich löschen?`, () => {
           konto.buchungen = konto.buchungen.filter((x) => x.id !== b.id);
