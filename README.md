@@ -19,9 +19,8 @@ keine Cloud, keine Datenübertragung.
 > practice: manage receivables ledgers, compute default interest
 > (§ 288 BGB, base-rate coupled), statutory attorney fees (RVG) and
 > payment allocation (§ 367 / § 497 BGB). Runs entirely client-side
-> (vanilla JS, no build step); ships as a static site or Docker image
-> with optional j-lawyer.org case-management integration. UI and
-> documentation are in German.
+> (vanilla JS, no build step); ships as a static site or Docker image.
+> UI and documentation are in German.
 
 ![Report mit Forderungsaufstellung und Zinsstaffel](docs/screenshots/report.png)
 
@@ -75,18 +74,16 @@ Fertiges Image:
 docker run -d -p 8090:80 --restart unless-stopped ghcr.io/pbaumfalk/saldenwerk:latest
 ```
 
-Mit j-lawyer-Anbindung (same-origin Proxy, kein CORS-Problem):
+Alternativ selbst bauen:
 
 ```
 git clone https://github.com/PBaumfalk/Saldenwerk.git
 cd Saldenwerk
-echo "JLAWYER_URL=http://192.168.1.10:8080" > .env
 docker compose up -d --build
 ```
 
 HTTPS, Updates und Details:
-[Handbuch, Kapitel 2](docs/handbuch/02-installation.md) und
-[Kapitel 9 (j-lawyer)](docs/handbuch/09-j-lawyer.md).
+[Handbuch, Kapitel 2](docs/handbuch/02-installation.md).
 </details>
 
 Zum Ausprobieren: [`docs/beispiel-konto.json`](docs/beispiel-konto.json)
@@ -118,9 +115,6 @@ herunterladen und in der Konten-Ansicht über „Importieren" laden.
 - **Datenhoheit**: alles lokal; optionale Speicherdatei auf dem
   Kanzlei-Netzlaufwerk, Export/Import als JSON —
   [Kapitel 8](docs/handbuch/08-datenspeicherung.md)
-- **j-lawyer.org-Anbindung**: Stammdaten aus der Akte übernehmen,
-  Forderungsaufstellung als PDF/HTML/JSON in die Akte laden —
-  [Kapitel 9](docs/handbuch/09-j-lawyer.md)
 - **Hell & Dunkel**: folgt der Systemeinstellung, Umschalter in der
   App-Leiste; Druck/PDF bleiben immer schwarz auf weiß —
   [Kapitel 10](docs/handbuch/10-anpassung.md)

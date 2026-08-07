@@ -30,9 +30,7 @@ In der Buchungen-Ansicht öffnet **Kontodaten** einen Dialog mit:
 
 ![Kontodaten-Dialog](../screenshots/kontodaten-dialog.png)
 
-- **Aktenzeichen** — erscheint auf Kontokarte, Report und PDF. Mit
-  j-lawyer-Anbindung holt **Aus j-lawyer übernehmen** die Parteien direkt
-  aus der Akte (siehe [Kapitel 9](09-j-lawyer.md)).
+- **Aktenzeichen** — erscheint auf Kontokarte, Report und PDF.
 - **Gläubiger** und **Schuldner** — erscheinen als Rubrum
   („Gläubiger ./. Schuldner") auf Karte, Report und PDF.
 - **Tilgungsreihenfolge**:
@@ -57,7 +55,6 @@ In der Buchungen-Ansicht öffnet **Kontodaten** einen Dialog mit:
 - **Alle exportieren** sichert sämtliche Konten in eine Datei.
 - **Datei öffnen… / In Datei speichern…** verbinden Saldenwerk mit einer
   dauerhaften Speicherdatei — Details in [Kapitel 8](08-datenspeicherung.md).
-- **j-lawyer…** öffnet die Verbindungseinstellungen ([Kapitel 9](09-j-lawyer.md)).
 
 ---
 

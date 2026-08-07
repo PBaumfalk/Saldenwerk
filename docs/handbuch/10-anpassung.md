@@ -22,9 +22,8 @@ speichert prinzipbedingt keine Nutzerdaten auf dem Server. Dazu in
 window.Konfig = { oeffentlich: true };
 ```
 
-Im öffentlichen Modus sind die j-lawyer-Funktionen ausgeblendet; eine
-Fußzeile mit Haftungshinweis und Links auf `impressum.html` und
-`datenschutz.html` erscheint. **Vor der Veröffentlichung** die
+Im öffentlichen Modus erscheint eine Fußzeile mit Haftungshinweis und
+Links auf `impressum.html` und `datenschutz.html`. **Vor der Veröffentlichung** die
 `[PLATZHALTER]` in beiden Rechtsseiten mit den echten Betreiberangaben
 füllen und fachlich prüfen (Impressumspflicht nach § 5 DDG,
 DSGVO-Informationen, Logdaten-Abschnitt ans Hosting anpassen).

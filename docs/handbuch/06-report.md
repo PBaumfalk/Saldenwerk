@@ -57,12 +57,6 @@ seit …") und Abzugsklauseln für Teilzahlungen. Den Text fügen Sie direkt
 in Ihr Schriftsatz-Dokument oder das Mahnbescheids-Formular ein — bitte
 vor Verwendung fachlich prüfen.
 
-## An j-lawyer senden
-
-Mit eingerichteter [j-lawyer-Anbindung](09-j-lawyer.md) lädt **An j-lawyer
-senden** drei Dokumente direkt in die passende Akte: die PDF, eine
-eigenständige HTML-Fassung und die JSON-Sicherung des Kontos.
-
 ---
 
 Weiter: [7 — Basiszinssatz](07-basiszins.md) · [Zur Übersicht](README.md)

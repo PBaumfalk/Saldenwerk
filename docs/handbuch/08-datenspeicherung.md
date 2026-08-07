@@ -73,4 +73,4 @@ dort bleibt es bei localStorage plus Export.
 
 ---
 
-Weiter: [9 — j-lawyer-Anbindung](09-j-lawyer.md) · [Zur Übersicht](README.md)
+Weiter: [10 — Anpassung & Betrieb](10-anpassung.md) · [Zur Übersicht](README.md)

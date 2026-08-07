@@ -1,15 +1,9 @@
-# Saldenwerk als Kanzlei-Deployment: eine URL für alle Arbeitsplätze,
-# j-lawyer-API wird unter demselben Origin durchgereicht (kein CORS).
+# Saldenwerk als Kanzlei-Deployment: eine URL für alle Arbeitsplätze.
 services:
   saldenwerk:
     build: .
     ports:
       - "8090:80"
-    environment:
-      # Adresse des j-lawyer-Servers (ohne Pfad, ohne Slash am Ende).
-      # Setzen über eine .env-Datei neben dieser docker-compose.yml:
-      #   JLAWYER_URL=http://192.168.1.10:8080
-      JLAWYER_URL: "${JLAWYER_URL:-http://jlawyer-server:8080}"
     restart: unless-stopped
 
     # HTTPS aktivieren (nötig für die Datei-Speicherung im LAN):

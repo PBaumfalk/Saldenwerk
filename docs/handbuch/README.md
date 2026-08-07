@@ -18,7 +18,6 @@ sind entsprechend gekennzeichnet.
 | [6 — Report, PDF & Antragstext](06-report.md) | Forderungsaufstellung erzeugen, drucken, herunterladen |
 | [7 — Basiszinssatz](07-basiszins.md) | Eingebaute Tabelle, eigene Werte pflegen |
 | [8 — Daten speichern & sichern](08-datenspeicherung.md) | Wo die Daten liegen, Datei-Speicherung, Export/Import |
-| [9 — j-lawyer-Anbindung](09-j-lawyer.md) | Stammdaten übernehmen, Dokumente in die Akte laden |
 | [10 — Anpassung & Betrieb](10-anpassung.md) | Dunkelmodus, öffentliche Variante, eigenes Branding (IT) |
 | [11 — Rechenkonventionen](11-rechenkonventionen.md) | Wie Saldenwerk rechnet — im Detail |
 

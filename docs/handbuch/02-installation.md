@@ -44,8 +44,7 @@ trotzdem nie, siehe [Kapitel 8](08-datenspeicherung.md)).
 ## Auf einem Server (für IT / Administratoren)
 
 Für Kanzleien mit mehreren Arbeitsplätzen empfiehlt sich der Betrieb als
-Docker-Container: eine URL für alle, zentrale Updates, und die
-j-lawyer-API wird unter demselben Origin durchgereicht (kein CORS-Problem).
+Docker-Container: eine URL für alle, zentrale Updates.
 
 **Schnellstart mit dem fertigen Image:**
 
@@ -55,19 +54,13 @@ docker run -d -p 8090:80 --restart unless-stopped ghcr.io/pbaumfalk/saldenwerk:l
 
 Die App ist dann unter `http://SERVER:8090` erreichbar.
 
-**Mit j-lawyer-Anbindung (empfohlen)** per Docker Compose:
+**Alternativ selbst bauen** per Docker Compose:
 
 ```
 git clone https://github.com/PBaumfalk/Saldenwerk.git
 cd Saldenwerk
-echo "JLAWYER_URL=http://192.168.1.10:8080" > .env   # Adresse des j-lawyer-Servers
 docker compose up -d --build
 ```
-
-Im j-lawyer-Einstellungsdialog der App bleibt die Server-URL dann **leer**
-(= gleiche Adresse wie die App). Ist der j-lawyer-Server nicht erreichbar,
-startet der Container trotzdem; die API-Anfragen melden dann einen
-Verbindungsfehler.
 
 **HTTPS:** Die Datei-Speicherung (File System Access API) funktioniert nur
 in sicheren Kontexten (HTTPS oder `localhost`). Ohne HTTPS läuft die App

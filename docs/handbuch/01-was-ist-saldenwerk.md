@@ -51,9 +51,6 @@ Saldenwerk ist bewusst **ohne Server-Datenhaltung** gebaut:
   nur die App aus; Ihre Daten bleiben im Browser des jeweiligen
   Arbeitsplatzes.
 
-Die einzige optionale Verbindung nach außen ist die
-[j-lawyer-Anbindung](09-j-lawyer.md) zu Ihrem eigenen Kanzleisoftware-Server.
-
 ---
 
 Weiter: [2 — Installation](02-installation.md) · [Zur Übersicht](README.md)

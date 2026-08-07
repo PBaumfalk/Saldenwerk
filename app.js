@@ -1425,16 +1425,6 @@ if (typeof document !== 'undefined') {
         ? 'Für den Antragstext müssen zuerst Buchungen erfasst werden.'
         : '';
     }
-    const btnUpload = document.getElementById('btnJlawyerUpload');
-    if (btnUpload) {
-      const konfiguriert = window.Jlawyer && Jlawyer.konfiguriert();
-      btnUpload.disabled = !konto || !konto.buchungen.length || !konfiguriert || !konto.aktenzeichen;
-      btnUpload.title = !konfiguriert
-        ? 'j-lawyer ist nicht eingerichtet (Konten-Ansicht → „j-lawyer…").'
-        : (konto && !konto.aktenzeichen)
-          ? 'Dieses Konto hat kein Aktenzeichen (Buchungen-Ansicht → „Kontodaten").'
-          : (btnUpload.disabled ? 'Für den Upload müssen zuerst Buchungen erfasst werden.' : '');
-    }
     const meldung = document.getElementById('reportMeldung');
     if (meldung) meldung.textContent = '';
     const container = document.getElementById('reportInhalt');
@@ -1925,7 +1915,6 @@ if (typeof document !== 'undefined') {
     document.body.classList.toggle('modus-oeffentlich', oeffentlich);
     wendeBrandingAn(oeffentlich);
     if (window.Dateispeicher) Dateispeicher.init(App);
-    if (window.Jlawyer && !oeffentlich) Jlawyer.init(App);
   });
 
   function wendeBrandingAn(oeffentlich) {

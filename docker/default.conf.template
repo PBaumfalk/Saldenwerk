@@ -1,6 +1,4 @@
-# Saldenwerk: statische App + same-origin Proxy zur j-lawyer-REST-API.
-# JLAWYER_URL beim Deployen setzen (z. B. in einer .env-Datei):
-#   JLAWYER_URL=http://192.168.1.10:8080   (ohne Pfad, ohne Slash am Ende)
+# Saldenwerk: statische Auslieferung der App.
 server {
     listen 80;
     root /usr/share/nginx/html;
@@ -13,17 +11,5 @@ server {
     }
     location ^~ /vendor/ {
         add_header Cache-Control "public, max-age=31536000, immutable";
-    }
-
-    # Der Zielhost wird über eine Variable erst zur Laufzeit aufgelöst —
-    # so startet der Container auch, wenn der j-lawyer-Server gerade aus ist
-    # (Anfragen liefern dann 502 statt eines nginx-Absturzes beim Start).
-    location ~ ^/j-lawyer-io/(.*)$ {
-        resolver 127.0.0.11 ipv6=off valid=30s;
-        set $jlawyer ${JLAWYER_URL};
-        proxy_pass $jlawyer/j-lawyer-io/$1$is_args$args;
-        proxy_set_header Host $host;
-        client_max_body_size 50m;
-        proxy_read_timeout 60s;
     }
 }

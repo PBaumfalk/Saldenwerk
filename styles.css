@@ -194,17 +194,13 @@ a:focus-visible {
   padding: 32px 28px 64px;
 }
 
-/* Betriebsmodus (konfig.js): öffentlich-only bzw. Kanzlei-only Elemente */
+/* Betriebsmodus (konfig.js): Elemente nur der öffentlichen Variante */
 .nur-oeffentlich {
   display: none;
 }
 
 body.modus-oeffentlich .nur-oeffentlich {
   display: block;
-}
-
-body.modus-oeffentlich .nur-kanzlei {
-  display: none !important;
 }
 
 .kanzlei-box {
@@ -262,23 +258,6 @@ body.modus-oeffentlich .nur-kanzlei {
 
 body.druckmodus .app-fusszeile {
   display: none !important;
-}
-
-.jlawyer-auswahl {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin: 10px 0;
-  max-height: 260px;
-  overflow-y: auto;
-}
-
-.jlawyer-auswahl__eintrag {
-  text-align: left;
-}
-
-#btnKontoLookup {
-  margin-top: 6px;
 }
 
 #rvgForm > label,
