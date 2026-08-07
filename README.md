@@ -1,46 +1,56 @@
 # J-Forderungsrechner
 
-Eine kleine, lokal laufende Web-App zur Führung von Forderungskonten mit
-Zinsberechnung – z. B. für die Abrechnung von Hauptforderungen, Kosten und
-Verzugszinsen gegenüber einem Schuldner. Die App läuft vollständig im
-Browser, es gibt keinen Server und keine externen Abhängigkeiten. Alle
-Daten werden ausschließlich lokal im `localStorage` des Browsers gespeichert.
+[![Tests & Docker-Image](https://github.com/PBaumfalk/J-Forderungsrechner/actions/workflows/docker.yml/badge.svg)](https://github.com/PBaumfalk/J-Forderungsrechner/actions/workflows/docker.yml)
+[![Lizenz: MIT](https://img.shields.io/badge/Lizenz-MIT-blue.svg)](LICENSE)
+[![Docker-Image](https://img.shields.io/badge/ghcr.io-pbaumfalk%2Fj--forderungsrechner-blue?logo=docker)](https://ghcr.io/pbaumfalk/j-forderungsrechner)
 
-## Start
+Forderungskonten führen, Verzugszinsen nach § 288 BGB und RVG-Kosten
+berechnen — direkt im Browser, ohne Server, ohne Registrierung, ohne
+Datenübertragung. Mit Zinsstaffel-Report, PDF-Export, Antragstext-Generator
+und optionaler [j-lawyer.org](https://www.j-lawyer.org)-Anbindung.
 
-`index.html` im Browser öffnen (Doppelklick genügt, kein Build-Schritt, kein
-Server erforderlich). Die Daten bleiben im `localStorage` des jeweiligen
-Browsers erhalten – bei einem anderen Browser, Gerät oder nach dem Leeren
-der Browserdaten sind sie nicht mehr da. Empfohlen ist deshalb die
-**Datei-Speicherung** (siehe unten) oder regelmäßiger Export/Import.
+> **English abstract** — Claims-account calculator for German legal
+> practice: manage receivables ledgers, compute default interest
+> (§ 288 BGB, base-rate coupled), statutory attorney fees (RVG) and
+> payment allocation (§ 367 / § 497 BGB). Runs entirely client-side
+> (vanilla JS, no build step); ships as a static site or Docker image
+> with optional j-lawyer.org case-management integration. UI and
+> documentation are in German.
 
-## Datei-Speicherung
+![Report mit Forderungsaufstellung und Zinsstaffel](docs/screenshots/report.png)
 
-In Chrome und Edge kann die App ihren gesamten Datenbestand in einer
-JSON-Datei führen (File System Access API). In der Konten-Ansicht:
+## Schnellstart
 
-- **„In Datei speichern…"** legt eine neue Datei an (z. B. auf einem
-  Netzlaufwerk der Kanzlei) und verbindet die App damit.
-- **„Datei öffnen…"** verbindet die App mit einer bestehenden Datei; deren
-  Inhalt ersetzt dann den lokalen Stand.
-- Verbunden speichert die App Änderungen automatisch (kurz verzögert) in die
-  Datei; der Status oben rechts zeigt Dateiname und Speicherzustand.
-  „Jetzt speichern" schreibt sofort, „Trennen" löst die Verbindung.
-- Nach einem Neustart des Browsers fragt ein Banner, ob wieder mit der
-  Datei verbunden werden soll (der Browser verlangt dafür einen Klick).
-- Wird die Datei zwischenzeitlich an einem anderen Arbeitsplatz geändert,
-  warnt die App vor dem Überschreiben („Datei neu laden" oder „Trotzdem
-  überschreiben"). Die Datei ist für **nacheinander** arbeitende Nutzer
-  gedacht, nicht für gleichzeitiges Arbeiten.
-- Die Datei hat dasselbe Format wie der Export (inklusive
-  Basiszins-Overrides) und kann daher auch importiert werden.
+**Als Docker-Container** (empfohlen — eine URL für alle Arbeitsplätze):
 
-In Browsern ohne File System Access API (Firefox, Safari) bleibt es beim
-`localStorage`; ein Banner erinnert an fällige Sicherungen per
-„Alle exportieren" (nach 14 Tagen oder 50 Änderungen seit dem letzten
-Export).
+```
+docker run -d -p 8090:80 ghcr.io/pbaumfalk/j-forderungsrechner:latest
+```
+
+Die App läuft dann unter `http://localhost:8090`. Alternativ mit
+j-lawyer-Anbindung per Compose (siehe [Docker-Deployment](#docker-deployment)):
+
+```
+git clone https://github.com/PBaumfalk/J-Forderungsrechner.git
+cd J-Forderungsrechner
+docker compose up -d --build
+```
+
+**Ohne Docker**: Repository herunterladen und `index.html` im Browser
+öffnen — Doppelklick genügt, kein Build-Schritt, kein Server erforderlich.
+
+Die Daten bleiben im `localStorage` des jeweiligen Browsers erhalten — bei
+einem anderen Browser, Gerät oder nach dem Leeren der Browserdaten sind sie
+nicht mehr da. Empfohlen ist deshalb die **Datei-Speicherung** (siehe unten)
+oder regelmäßiger Export/Import. Zum Ausprobieren:
+[`docs/beispiel-konto.json`](docs/beispiel-konto.json) über „Importieren"
+laden.
 
 ## Funktionsüberblick
+
+| Konten | Buchungen |
+| --- | --- |
+| ![Kontenübersicht](docs/screenshots/konten.png) | ![Buchungen mit Saldo](docs/screenshots/buchungen.png) |
 
 - **Konten**: Beliebig viele Forderungskonten anlegen, öffnen, duplizieren,
   löschen sowie einzeln oder alle zusammen exportieren. Über den Dialog
@@ -73,10 +83,12 @@ Export).
   Abzugsklauseln für Teilzahlungen) und legt ihn in die Zwischenablage.
 - **Report**: Saldenreport zu einem wählbaren Stichtag mit
   Forderungsaufstellung, Zinsstaffel (Herleitung jedes Zinssegments) und
-  Verrechnungsübersicht je Zahlung, druckbar über die Browser-Druckfunktion.
-- **PDF-Export:** „PDF exportieren" im Report erzeugt eine Forderungsaufstellung im
-  Kanzlei-Stil (Querformat-Kontoblatt mit Zinsstaffel-Details, Summenseite mit
-  Salden-Chart) über den Browser-Druckdialog („Als PDF sichern").
+  Verrechnungsübersicht je Zahlung.
+- **PDF & Druck**: „PDF herunterladen" im Report erzeugt eine
+  Forderungsaufstellung als PDF-Datei (Querformat-Kontoblatt mit
+  Zinsstaffel-Details, Summenseite mit Salden-Chart) — ganz ohne
+  Druckdialog. „Drucken" öffnet dieselbe Aufstellung im Druckdialog des
+  Browsers.
 - **Basiszins-Pflege**: Ansicht der eingebauten Basiszinssatz-Tabelle
   (halbjährlich ab 1. Januar 2002) mit der Möglichkeit, einzelne
   Halbjahreswerte durch eigene Werte zu überschreiben (Overrides) oder
@@ -84,7 +96,33 @@ Export).
 - **Export/Import**: Konten als JSON sichern und wieder einlesen (siehe
   unten).
 
-## Docker-Deployment (empfohlen für die Kanzlei)
+## Datei-Speicherung
+
+In Chrome und Edge kann die App ihren gesamten Datenbestand in einer
+JSON-Datei führen (File System Access API). In der Konten-Ansicht:
+
+- **„In Datei speichern…"** legt eine neue Datei an (z. B. auf einem
+  Netzlaufwerk der Kanzlei) und verbindet die App damit.
+- **„Datei öffnen…"** verbindet die App mit einer bestehenden Datei; deren
+  Inhalt ersetzt dann den lokalen Stand.
+- Verbunden speichert die App Änderungen automatisch (kurz verzögert) in die
+  Datei; der Status oben rechts zeigt Dateiname und Speicherzustand.
+  „Jetzt speichern" schreibt sofort, „Trennen" löst die Verbindung.
+- Nach einem Neustart des Browsers fragt ein Banner, ob wieder mit der
+  Datei verbunden werden soll (der Browser verlangt dafür einen Klick).
+- Wird die Datei zwischenzeitlich an einem anderen Arbeitsplatz geändert,
+  warnt die App vor dem Überschreiben („Datei neu laden" oder „Trotzdem
+  überschreiben"). Die Datei ist für **nacheinander** arbeitende Nutzer
+  gedacht, nicht für gleichzeitiges Arbeiten.
+- Die Datei hat dasselbe Format wie der Export (inklusive
+  Basiszins-Overrides) und kann daher auch importiert werden.
+
+In Browsern ohne File System Access API (Firefox, Safari) bleibt es beim
+`localStorage`; ein Banner erinnert an fällige Sicherungen per
+„Alle exportieren" (nach 14 Tagen oder 50 Änderungen seit dem letzten
+Export).
+
+## Docker-Deployment
 
 Statt `index.html` auf jedem Rechner zu öffnen, kann die App als
 Docker-Container ausgeliefert werden — eine URL für alle Arbeitsplätze, und
@@ -119,7 +157,7 @@ Der Container speichert selbst keine Daten — Konten liegen weiterhin im
 Browser bzw. in der verbundenen JSON-Datei; gemeinsames Arbeiten läuft über
 die Datei auf dem Netzlaufwerk oder Export/Import.
 
-## Öffentliche Gratis-Variante
+## Öffentliche Variante & eigenes Branding
 
 Die App kann als kostenloses, öffentliches Angebot gehostet werden — sie
 speichert prinzipbedingt keine Nutzerdaten auf dem Server (alles bleibt im
@@ -133,37 +171,36 @@ window.Konfig = { oeffentlich: true };
 Im öffentlichen Modus sind die j-lawyer-Funktionen ausgeblendet und eine
 Fußzeile mit Haftungshinweis sowie Links auf `impressum.html` und
 `datenschutz.html` eingeblendet. **Vor der Veröffentlichung müssen die
-`[PLATZHALTER]` in beiden Seiten mit den echten Kanzleiangaben gefüllt und
+`[PLATZHALTER]` in beiden Seiten mit den echten Betreiberangaben gefüllt und
 die Texte fachlich geprüft werden** (Impressumspflicht nach § 5 DDG,
 DSGVO-Informationen, Logdaten-Abschnitt an das tatsächliche Hosting
-anpassen). Beim Docker-Deployment lässt sich die Konfiguration ohne
-Neu-Build überschreiben:
+anpassen).
+
+Optional lässt sich die App branden — eigener Name, Logo, Claim,
+Farbschema und (im öffentlichen Modus) eine Kontakt-Box in der Fußzeile.
+Das komplette Schema ist in `konfig.js` dokumentiert:
+
+```js
+window.Konfig = {
+  oeffentlich: true,
+  branding: {
+    name: 'Mein Forderungsrechner',
+    logo: 'branding/logo.png',
+    claim: 'Forderungen & Zinsen berechnen',
+    farben: { '--farbe-akzent': '#1e7034' },
+    kanzlei: { name: '…', text: '…', url: '…', telefon: '…', logo: '…' },
+  },
+};
+```
+
+Beim Docker-Deployment werden Konfiguration und Logo ohne Neu-Build per
+Volume eingebunden:
 
 ```yaml
 volumes:
-  - ./konfig.oeffentlich.js:/usr/share/nginx/html/konfig.js:ro
+  - ./meine-konfig.js:/usr/share/nginx/html/konfig.js:ro
+  - ./mein-branding:/usr/share/nginx/html/branding:ro
 ```
-
-Hinweis zur Vermarktung: unter eigenem Namen anbieten
-(„J-Forderungsrechner — kostenloses Forderungskonto im Browser"), nicht
-unter Anlehnung an fremde Produktnamen.
-
-### Gebrandete Variante („Baumfalk-Forderungsrechner")
-
-`konfig.baumfalk.js` ist eine fertige Deployment-Konfiguration mit
-Kanzlei-Branding: eigener App-Name und Claim in Titel und App-Leiste,
-Meta-Description für Suchmaschinen, Kanzlei-Farbschema (CSS-Variablen)
-und eine Werbe-Box in der Fußzeile (Logo aus `branding/`, Werbetext,
-Website-Link, Telefon). Aktivierung beim Docker-Deployment:
-
-```yaml
-volumes:
-  - ./konfig.baumfalk.js:/usr/share/nginx/html/konfig.js:ro
-```
-
-Eigenes Branding: `konfig.baumfalk.js` kopieren und die Felder unter
-`branding` anpassen (alle optional; ohne `branding`-Block bleibt das
-neutrale Erscheinungsbild).
 
 ## j-lawyer-Anbindung
 
@@ -270,12 +307,14 @@ weitergerechnet wird.
   exportieren“ ergänzt zusätzlich die Basiszins-Overrides
   (`"basiszinsOverrides": [...]`).
 - **Import**: Über „Importieren“ kann eine zuvor exportierte JSON-Datei
-  ausgewählt werden. Die Datei wird vollständig geprüft (Version, Struktur
-  der Konten und Buchungen); ist auch nur eine Angabe ungültig, wird
-  nichts importiert und eine verständliche Fehlermeldung angezeigt. Bei
-  erfolgreicher Prüfung werden alle enthaltenen Konten mit neuen,
-  kollisionsfreien IDs zu den bestehenden Konten hinzugefügt (bestehende
-  Konten werden nicht überschrieben oder verändert).
+  ausgewählt werden (Beispieldatei:
+  [`docs/beispiel-konto.json`](docs/beispiel-konto.json)). Die Datei wird
+  vollständig geprüft (Version, Struktur der Konten und Buchungen); ist
+  auch nur eine Angabe ungültig, wird nichts importiert und eine
+  verständliche Fehlermeldung angezeigt. Bei erfolgreicher Prüfung werden
+  alle enthaltenen Konten mit neuen, kollisionsfreien IDs zu den
+  bestehenden Konten hinzugefügt (bestehende Konten werden nicht
+  überschrieben oder verändert).
 
 ## Tests
 
@@ -285,6 +324,16 @@ node --test tests/*.test.js
 
 Die Tests decken die Datums-/Betragsformatierung, die Basiszins-Tabelle,
 die Zinssegment- und Kontoberechnung sowie die Export/Import-Validierung ab.
+
+## Lizenz
+
+[MIT](LICENSE) — © 2026 Patrick Baumfalk.
+
+Gebündelte Bibliotheken in `vendor/`:
+[jsPDF](https://github.com/parallax/jsPDF) und
+[jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable),
+beide MIT-lizenziert (siehe `vendor/LICENSE-jspdf.txt` und
+`vendor/LICENSE-jspdf-autotable.txt`).
 
 ## Haftungsausschluss
 

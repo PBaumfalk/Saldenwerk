@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "konten": [
+    {
+      "id": "demo-muster-gmbh",
+      "name": "Muster GmbH ./. Beispiel",
+      "createdAt": "2024-04-16",
+      "updatedAt": "2025-02-15",
+      "aktenzeichen": "12 C 345/24",
+      "glaeubiger": "Muster GmbH",
+      "schuldner": "Max Beispiel",
+      "tilgungsreihenfolge": "367",
+      "buchungen": [
+        {
+          "id": "hf-1",
+          "typ": "hauptforderung",
+          "datum": "2024-03-15",
+          "betrag": 5000,
+          "text": "Kaufpreis Rechnung 2024-1017",
+          "verzinsung": { "art": "basiszins", "satz": 5, "beginn": "2024-04-16", "ende": null, "methode": "kalender" }
+        },
+        {
+          "id": "nf-1",
+          "typ": "nebenforderung",
+          "datum": "2024-04-16",
+          "betrag": 7.5,
+          "text": "Mahnkosten",
+          "verzinsung": { "art": "keine" }
+        },
+        {
+          "id": "nf-2",
+          "typ": "nebenforderung",
+          "datum": "2024-05-02",
+          "betrag": 540.5,
+          "text": "Vorgerichtliche Rechtsanwaltskosten (1,3 Geschäftsgebühr)",
+          "verzinsung": { "art": "basiszins", "satz": 5, "beginn": "2024-05-02", "ende": null, "methode": "kalender" }
+        },
+        {
+          "id": "z-1",
+          "typ": "zahlung",
+          "datum": "2024-09-01",
+          "betrag": 1500,
+          "text": "Teilzahlung"
+        },
+        {
+          "id": "z-2",
+          "typ": "zahlung",
+          "datum": "2025-02-15",
+          "betrag": 1000,
+          "text": "Teilzahlung nach Mahnung"
+        }
+      ]
+    }
+  ]
+}

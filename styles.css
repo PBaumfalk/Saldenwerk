@@ -1212,7 +1212,7 @@ dialog.dialog::backdrop {
    Vier Blur-Stufen analog zum Kanzlei-Designsystem: Eingaben 8px,
    Karten 16px, Panels 24px, Dialoge 40px. Mesh-Hintergrund wird per
    color-mix aus der Akzentfarbe abgeleitet und folgt damit automatisch
-   dem Branding (blau neutral, grün bei Baumfalk).
+   dem Branding (Standard: blau).
    ========================================================================== */
 @media screen {
   :root {

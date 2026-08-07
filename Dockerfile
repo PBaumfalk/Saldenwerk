@@ -5,8 +5,6 @@ COPY index.html impressum.html datenschutz.html styles.css konfig.js app.js \
      engine.js basiszins.js rvg.js tenor.js druck.js pdfexport.js \
      dateispeicher.js jlawyer.js /usr/share/nginx/html/
 COPY vendor/ /usr/share/nginx/html/vendor/
-COPY branding/ /usr/share/nginx/html/branding/
-COPY konfig.baumfalk.js /usr/share/nginx/html/konfig.baumfalk.js
 
 # nginx-Konfiguration: liefert die App aus und reicht die j-lawyer-API
 # unter demselben Origin durch (JLAWYER_URL wird beim Start per envsubst

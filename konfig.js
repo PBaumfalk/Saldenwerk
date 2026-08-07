@@ -10,7 +10,7 @@
 // ausliefern (z. B. im Docker-Volume überschreiben) und die Platzhalter in
 // impressum.html und datenschutz.html ausfüllen.
 //
-// Optionales branding (siehe konfig.baumfalk.js als fertiges Beispiel):
+// Optionales branding:
 //   branding: {
 //     name: 'Anzeigename der App',          // Titel + App-Leiste
 //     logo: 'branding/logo.png',            // ersetzt das §-Icon oben links
