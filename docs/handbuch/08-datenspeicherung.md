@@ -73,4 +73,4 @@ dort bleibt es bei localStorage plus Export.
 
 ---
 
-Weiter: [10 — Anpassung & Betrieb](10-anpassung.md) · [Zur Übersicht](README.md)
+Weiter: [9 — Integrationen](09-integrationen.md) · [Zur Übersicht](README.md)
