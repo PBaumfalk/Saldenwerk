@@ -1411,6 +1411,13 @@ if (typeof document !== 'undefined') {
         ? 'Für den Export müssen zuerst Buchungen erfasst werden.'
         : '';
     }
+    const btnDrucken = document.getElementById('btnDrucken');
+    if (btnDrucken) {
+      btnDrucken.disabled = !konto || !konto.buchungen.length;
+      btnDrucken.title = btnDrucken.disabled
+        ? 'Für den Druck müssen zuerst Buchungen erfasst werden.'
+        : '';
+    }
     const btnTenor = document.getElementById('btnAntragstext');
     if (btnTenor) {
       btnTenor.disabled = !konto || !konto.buchungen.length;
@@ -1462,7 +1469,6 @@ if (typeof document !== 'undefined') {
     const input = document.getElementById('reportStichtag');
     input.value = Engine.heute();
     input.addEventListener('change', () => App.renderReport());
-    document.getElementById('btnDrucken').addEventListener('click', () => window.print());
     document.getElementById('btnAntragstext').addEventListener('click', kopiereAntragstext);
   }
 
@@ -1710,16 +1716,21 @@ if (typeof document !== 'undefined') {
     if (stil) stil.remove();
   }
 
-  function druckeForderungsaufstellung() {
-    raeumeDruckmodusAuf();
+  function baueAktuellesDruckmodell() {
     const konto = App.aktivesKonto();
-    if (!konto || !konto.buchungen.length) return;
+    if (!konto || !konto.buchungen.length) return null;
     const stichtagInput = document.getElementById('reportStichtag');
     const stichtag = parseDatum(stichtagInput.value) || Engine.heute();
     const tabelle = App.aktuelleTabelle();
     const ergebnis = Engine.berechneKonto(konto, stichtag, tabelle);
-    const modell = Druck.baueDruckmodell(konto, ergebnis, tabelle);
-    renderDruckansicht(modell);
+    return { konto, stichtag, modell: Druck.baueDruckmodell(konto, ergebnis, tabelle) };
+  }
+
+  function druckeForderungsaufstellung() {
+    raeumeDruckmodusAuf();
+    const daten = baueAktuellesDruckmodell();
+    if (!daten) return;
+    renderDruckansicht(daten.modell);
     document.body.classList.add('druckmodus');
     const stil = document.createElement('style');
     stil.id = 'druckQuerformat';
@@ -1729,8 +1740,21 @@ if (typeof document !== 'undefined') {
     window.print();
   }
 
+  function ladePdfHerunter() {
+    const daten = baueAktuellesDruckmodell();
+    if (!daten) return;
+    const blob = new Blob([Pdfexport.erzeugePdf(daten.modell)], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Forderungsaufstellung_${daten.konto.aktenzeichen || daten.konto.name}_${daten.stichtag}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   function initDruckansicht() {
-    document.getElementById('btnPdfExport').addEventListener('click', druckeForderungsaufstellung);
+    document.getElementById('btnPdfExport').addEventListener('click', ladePdfHerunter);
+    document.getElementById('btnDrucken').addEventListener('click', druckeForderungsaufstellung);
     window.addEventListener('afterprint', raeumeDruckmodusAuf);
   }
 
