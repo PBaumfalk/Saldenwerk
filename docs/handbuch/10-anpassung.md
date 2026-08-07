@@ -64,9 +64,6 @@ volumes:
   - ./mein-branding:/usr/share/nginx/html/branding:ro
 ```
 
-Das vollständige Corporate Design (Logos, Farbtokens, Gestaltungsregeln)
-liegt im Ordner `saldenwerk-ci/` des Repositorys.
-
 ## Tests (für Entwickler)
 
 ```
