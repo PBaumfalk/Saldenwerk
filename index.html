@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Saldenwerk</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#F6F8FB" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0A1020" media="(prefers-color-scheme: dark)">
 <link rel="stylesheet" href="styles.css">
 <script>
 // Theme vor dem ersten Paint setzen (verhindert Hell/Dunkel-Aufblitzen).
@@ -19,7 +24,12 @@
 
 <header class="appbar">
   <div class="appbar__marke">
-    <span class="appbar__logo" aria-hidden="true">§</span>
+    <span class="appbar__logo" aria-hidden="true">
+      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path class="logo-kreis" d="M44.9 53.1A24 24 0 1 1 46.7 12.4" stroke-width="5" stroke-linecap="round"/>
+        <path class="logo-linie" d="M17.8 39.7L29.2 28.2L36 35L50.2 20.8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </span>
     <div class="appbar__titel">
       <strong>Saldenwerk</strong>
       <span class="appbar__eyebrow">Zins- &amp; Kontoführung</span>

@@ -1949,7 +1949,19 @@ if (typeof document !== 'undefined') {
       }
       meta.content = branding.beschreibung;
     }
-    Object.entries(branding.farben || {}).forEach(([variable, wert]) => {
+    // Akzentfarbe läuft über --branding-akzent statt direkt über
+    // --farbe-akzent: nur so kann der Screen-Layer im Dunkelmodus einen
+    // aufgehellten Wert einsetzen (Inline-Styles würden ihn sonst schlagen).
+    const farben = { ...(branding.farben || {}) };
+    const akzent = farben['--farbe-akzent'];
+    if (akzent) {
+      delete farben['--farbe-akzent'];
+      farben['--branding-akzent'] = akzent;
+      if (!farben['--branding-akzent-dunkel']) {
+        farben['--branding-akzent-dunkel'] = `color-mix(in oklab, ${akzent} 72%, white)`;
+      }
+    }
+    Object.entries(farben).forEach(([variable, wert]) => {
       document.documentElement.style.setProperty(variable, wert);
     });
     if (oeffentlich && branding.kanzlei) {

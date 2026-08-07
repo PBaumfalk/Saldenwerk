@@ -48,9 +48,12 @@ window.Konfig = {
 };
 ```
 
-Die Akzentfarbe färbt Buttons, aktive Navigation und den
-Hintergrund-Verlauf — im hellen wie im dunklen Modus. Bitte eine Farbe mit
-ausreichend Kontrast zu weißer Schrift wählen (WCAG AA).
+Die Akzentfarbe färbt die aktive Navigation, Links, den Fokusrahmen und die
+Akzentkante der Konto-Karten — im hellen wie im dunklen Modus (für den
+Dunkelmodus wird der Wert automatisch aufgehellt). Die Primär-Buttons
+bleiben bewusst im neutralen Markenschema (dunkles Navy bzw. Hell im
+Dunkelmodus), damit sie zu jeder Akzentfarbe kontrastreich bleiben. Bitte
+eine Farbe mit ausreichend Kontrast wählen (WCAG AA).
 
 Beim Docker-Deployment werden Konfiguration und Logo ohne Neu-Build per
 Volume eingebunden:
@@ -60,6 +63,9 @@ volumes:
   - ./meine-konfig.js:/usr/share/nginx/html/konfig.js:ro
   - ./mein-branding:/usr/share/nginx/html/branding:ro
 ```
+
+Das vollständige Corporate Design (Logos, Farbtokens, Gestaltungsregeln)
+liegt im Ordner `saldenwerk-ci/` des Repositorys.
 
 ## Tests (für Entwickler)
 

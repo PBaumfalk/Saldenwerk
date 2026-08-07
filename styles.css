@@ -1,8 +1,9 @@
 /*
-  Forderungskonto — eigenständiges Design ohne Framework.
-  Leitidee: Aktenregister einer Kanzlei. Die Navigation ist als Reiter
-  gestaltet, Tabellen folgen der Ledger-Logik (Zebra, tabellarische Ziffern,
-  rechtsbündige Beträge). Nüchtern, präzise, vertrauenswürdig.
+  Saldenwerk — eigenständiges Design ohne Framework.
+  Zwei Schichten: eine neutrale Basis (Struktur, Abstände, Druck) und der
+  Bildschirm-Layer am Dateiende, der das Saldenwerk-CI setzt (Token, Farben,
+  Komponenten — siehe saldenwerk-ci/). Tabellen folgen der Ledger-Logik
+  (tabellarische Ziffern, rechtsbündige Beträge). Präzise statt verspielt.
 */
 
 /* Inter als Variable Font (vendor/fonts/, SIL OFL 1.1) — einheitliches
@@ -109,17 +110,27 @@ button {
   flex-shrink: 0;
 }
 
+/* Signet: Inline-SVG (offener Kreis + steigende Linie), Strokes über Tokens
+   damit der Kreis im Dunkelmodus hell wird (wie saldenwerk-horizontal-dark). */
 .appbar__logo {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-klein);
-  background: var(--farbe-akzent);
-  color: #fff;
-  font-size: 1.05rem;
-  font-weight: 700;
+  width: 28px;
+  height: 28px;
+}
+
+.appbar__logo svg {
+  width: 100%;
+  height: 100%;
+}
+
+.appbar__logo .logo-kreis {
+  stroke: var(--sw-brand, #0B1F3A);
+}
+
+.appbar__logo .logo-linie {
+  stroke: var(--sw-accent, #2F8178);
 }
 
 .appbar__titel {
@@ -873,8 +884,7 @@ dialog.dialog--schmal {
 }
 
 dialog.dialog::backdrop {
-  background: rgba(17, 22, 38, 0.45);
-  backdrop-filter: blur(1px);
+  background: rgba(10, 16, 32, 0.45);
 }
 
 .dialog__titel {
@@ -1234,235 +1244,270 @@ dialog.dialog::backdrop {
 }
 
 /* ==========================================================================
-   Liquid-Glass-Designsystem (nur Bildschirm — Druckstile bleiben unberührt).
-   Portiert aus dem Kanzlei-Designsystem: oklch-Token in hell und dunkel,
-   vier Glas-Stufen (8/16/24/40px Blur mit steigender Sättigung 1.3–1.6,
-   weiße Glanzkante, weiche Schatten), Mesh-Gradient-Bühne mit
-   background-attachment: fixed. Flächen sind Glas, Buttons sind solide.
-   Akzent-Töne werden per color-mix aus --farbe-akzent abgeleitet und folgen
-   damit dem Laufzeit-Branding (konfig.js) — in beiden Themes.
+   Saldenwerk-CI-Designsystem (nur Bildschirm — Druckstile bleiben unberührt).
+   Quelle: saldenwerk-ci/ (BRAND.md, UI-SYSTEM.md, styles/saldenwerk.css).
+   Flaches, präzises B2B-Design: 1px-Borders, ruhige Flächen, Radius 8/12/16,
+   keine Verläufe, kein Glas, kein Zebra. Zwei Markenkanäle:
+   --sw-brand (Navy hell / fast-weiß dunkel) trägt Primär-Buttons und ist
+   bewusst NICHT brandbar; --farbe-akzent (Teal) trägt aktive Navigation,
+   Links, Fokus und Kartenakzente und bleibt der Einstiegspunkt für das
+   Laufzeit-Branding (konfig.js setzt --branding-akzent, siehe app.js).
    ========================================================================== */
 @media screen {
   :root {
     color-scheme: light;
 
-    /* oklch-Kern-Token (hell) */
-    --background: oklch(97% 0.005 250);
-    --foreground: oklch(15% 0.01 250);
-    --text-primary: oklch(15% 0.01 250);
-    --text-secondary: oklch(40% 0.015 250);
-    --text-tertiary: oklch(60% 0.01 250);
-    --border: oklch(88% 0.01 250 / 0.6);
-    --input-border: oklch(88% 0.01 250 / 0.4);
-    --secondary: oklch(94% 0.01 250);
-    --secondary-foreground: oklch(20% 0.01 250);
-    --destructive: oklch(55% 0.22 25);
-    --destructive-foreground: oklch(98% 0 0);
-    --primary: var(--farbe-akzent);
-    --primary-foreground: oklch(98% 0 0);
+    /* CI-Token (hell) */
+    --sw-brand: #0B1F3A;
+    --sw-brand-hover: #102A43;
+    --sw-brand-kontrast: #FFFFFF;
+    --sw-accent: #2F8178;
+    --sw-accent-hover: #256D65;
+    --sw-bg: #F6F8FB;
+    --sw-surface: #FFFFFF;
+    --sw-surface-raised: #FFFFFF;
+    --sw-surface-muted: #F0F3F7;
+    --sw-text: #101828;
+    --sw-text-muted: #667085;
+    --sw-text-subtle: #98A2B3;
+    --sw-border: #E4E7EC;
+    --sw-border-strong: #D0D5DD;
+    --sw-success: #16825D;
+    --sw-warning: #B7791F;
+    --sw-danger: #C9362B;
+    --sw-shadow-sm: 0 1px 2px rgba(16, 24, 40, .06);
+    --sw-shadow-md: 0 8px 24px rgba(16, 24, 40, .08);
 
-    /* Glas-Stufen (hell) */
-    --glass-input-bg: oklch(100% 0 0 / 0.5);
-    --glass-card-bg: oklch(100% 0 0 / 0.6);
-    --glass-panel-bg: oklch(100% 0 0 / 0.72);
-    --glass-elevated-bg: oklch(100% 0 0 / 0.82);
-    --glass-border-color: oklch(100% 0 0 / 0.5);
-    --glass-shadow: 0 4px 24px oklch(0% 0 0 / 0.06);
-    --glass-shadow-lg: 0 8px 48px oklch(0% 0 0 / 0.10);
+    /* Akzentkanal: Branding-Override vor CI-Teal */
+    --farbe-akzent: var(--branding-akzent, var(--sw-accent));
+    --sw-focus: 0 0 0 3px color-mix(in srgb, var(--farbe-akzent) 18%, transparent);
 
-    /* Mesh-Bühne aus der Akzentfarbe */
-    --mesh-grund: oklch(97% 0.005 250);
-    --mesh-1: color-mix(in oklab, var(--farbe-akzent) 16%, transparent);
-    --mesh-2: color-mix(in oklab, var(--farbe-akzent) 10%, transparent);
-    --mesh-3: color-mix(in oklab, var(--farbe-akzent) 6%, transparent);
-
-    /* Bridge: Legacy-Variablen der Basis-Schicht auf die neuen Token —
+    /* Bridge: Legacy-Variablen der Basis-Schicht auf die CI-Token —
        alle Basis-Regeln bekommen hell/dunkel, ohne Einzeledits. */
-    --farbe-hintergrund: var(--background);
-    --farbe-flaeche: var(--glass-card-bg);
-    --farbe-flaeche-erhoeht: var(--glass-elevated-bg);
-    --farbe-text: var(--text-primary);
-    --farbe-text-schwach: var(--text-secondary);
-    --farbe-text-dezent: var(--text-tertiary);
-    --farbe-rand: var(--border);
-    --farbe-rand-stark: oklch(80% 0.01 250 / 0.7);
-    --schatten-karte: var(--glass-shadow);
-    --schatten-erhoeht: var(--glass-shadow-lg);
-    --radius: 0.625rem;
-    --radius-klein: 0.4rem;
+    --farbe-hintergrund: var(--sw-bg);
+    --farbe-flaeche: var(--sw-surface);
+    --farbe-flaeche-erhoeht: var(--sw-surface-muted);
+    --farbe-text: var(--sw-text);
+    --farbe-text-schwach: var(--sw-text-muted);
+    --farbe-text-dezent: var(--sw-text-subtle);
+    --farbe-rand: var(--sw-border);
+    --farbe-rand-stark: var(--sw-border-strong);
+    --farbe-akzent-dunkel: color-mix(in srgb, var(--farbe-akzent) 82%, black);
+    --farbe-akzent-hell: color-mix(in srgb, var(--farbe-akzent) 10%, transparent);
+    --farbe-erfolg: var(--sw-success);
+    --farbe-erfolg-hell: color-mix(in srgb, var(--sw-success) 10%, transparent);
+    --farbe-gefahr: var(--sw-danger);
+    --farbe-gefahr-hell: color-mix(in srgb, var(--sw-danger) 10%, transparent);
+    --farbe-warnung-text: var(--sw-warning);
+    --farbe-warnung-hell: color-mix(in srgb, var(--sw-warning) 12%, transparent);
+    --schatten-karte: var(--sw-shadow-sm);
+    --schatten-erhoeht: var(--sw-shadow-md);
+    --radius: 8px;
+    --radius-klein: 6px;
+    --appbar-hoehe: 56px;
   }
 
   html.dark {
     color-scheme: dark;
 
-    /* oklch-Kern-Token (dunkel — Tiefnavy, kein Schwarz) */
-    --background: oklch(12% 0.02 250);
-    --foreground: oklch(92% 0.005 250);
-    --text-primary: oklch(92% 0.005 250);
-    --text-secondary: oklch(65% 0.01 250);
-    --text-tertiary: oklch(50% 0.01 250);
-    --border: oklch(30% 0.03 250 / 0.5);
-    --input-border: oklch(30% 0.03 250 / 0.4);
-    --secondary: oklch(24% 0.03 250);
-    --secondary-foreground: oklch(88% 0.005 250);
-    --destructive: oklch(45% 0.2 25);
-    /* Akzent im Dunkeln aufhellen, sonst säuft er auf Navy ab */
-    --primary: color-mix(in oklab, var(--farbe-akzent) 72%, white);
-    --primary-foreground: oklch(15% 0.02 260);
+    /* CI-Token (dunkel) */
+    --sw-brand: #F4F7FB;
+    --sw-brand-hover: #FFFFFF;
+    --sw-brand-kontrast: #0A1020;
+    --sw-accent: #49A99E;
+    --sw-accent-hover: #61B8AF;
+    --sw-bg: #0A1020;
+    --sw-surface: #111A2B;
+    --sw-surface-raised: #172235;
+    --sw-surface-muted: #0E1728;
+    --sw-text: #F4F7FB;
+    --sw-text-muted: #A7B0C0;
+    --sw-text-subtle: #778196;
+    --sw-border: #263247;
+    --sw-border-strong: #35445E;
+    --sw-success: #52B788;
+    --sw-warning: #E2A84A;
+    --sw-danger: #F06A61;
+    --sw-shadow-sm: 0 1px 2px rgba(0, 0, 0, .28);
+    --sw-shadow-md: 0 12px 28px rgba(0, 0, 0, .30);
 
-    /* Glas-Stufen (dunkel) */
-    --glass-input-bg: oklch(20% 0.03 250 / 0.5);
-    --glass-card-bg: oklch(18% 0.03 250 / 0.55);
-    --glass-panel-bg: oklch(16% 0.03 250 / 0.68);
-    --glass-elevated-bg: oklch(14% 0.03 250 / 0.78);
-    --glass-border-color: oklch(50% 0.02 250 / 0.3);
-    --glass-shadow: 0 4px 24px oklch(0% 0 0 / 0.25);
-    --glass-shadow-lg: 0 8px 48px oklch(0% 0 0 / 0.35);
+    /* Branding-Akzent im Dunkeln: expliziter Dunkelwert vor Rohwert vor CI */
+    --farbe-akzent: var(--branding-akzent-dunkel, var(--branding-akzent, var(--sw-accent)));
+    --sw-focus: 0 0 0 3px color-mix(in srgb, var(--farbe-akzent) 22%, transparent);
 
-    --mesh-grund: oklch(12% 0.02 250);
-    --mesh-1: color-mix(in oklab, var(--farbe-akzent) 24%, transparent);
-    --mesh-2: color-mix(in oklab, var(--farbe-akzent) 15%, transparent);
-    --mesh-3: color-mix(in oklab, var(--farbe-akzent) 9%, transparent);
-
-    /* Bridge-Token mit Literalwerten brauchen eigene Dunkel-Werte
-       (die var()-Bridges oben ziehen automatisch nach) */
-    --farbe-rand-stark: oklch(38% 0.03 250 / 0.7);
-    --farbe-erfolg: oklch(72% 0.14 155);
-    --farbe-erfolg-hell: oklch(72% 0.14 155 / 0.16);
-    --farbe-gefahr: oklch(68% 0.19 25);
-    --farbe-gefahr-hell: oklch(68% 0.19 25 / 0.16);
-    --farbe-warnung-hell: oklch(75% 0.14 75 / 0.16);
-    --farbe-warnung-text: oklch(82% 0.12 75);
+    --farbe-akzent-dunkel: color-mix(in srgb, var(--farbe-akzent) 80%, white);
+    --farbe-akzent-hell: color-mix(in srgb, var(--farbe-akzent) 16%, transparent);
+    --farbe-erfolg-hell: color-mix(in srgb, var(--sw-success) 16%, transparent);
+    --farbe-gefahr-hell: color-mix(in srgb, var(--sw-danger) 16%, transparent);
+    --farbe-warnung-hell: color-mix(in srgb, var(--sw-warning) 16%, transparent);
   }
 
-  /* --- Bühne: Mesh-Gradient, steht beim Scrollen fest --- */
+  /* --- Bühne: ruhige, flache Fläche --- */
   body {
-    color: var(--foreground);
+    background: var(--sw-bg);
+    color: var(--sw-text);
     -webkit-font-smoothing: antialiased;
-    background:
-      radial-gradient(80% 50% at 20% 20%, var(--mesh-1), transparent),
-      radial-gradient(60% 60% at 80% 30%, var(--mesh-2), transparent),
-      radial-gradient(70% 40% at 50% 80%, var(--mesh-3), transparent),
-      var(--mesh-grund);
-    background-attachment: fixed;
   }
 
-  /* Sanfter Theme-Wechsel; Regeln mit eigener transition gewinnen per
-     Spezifität und behalten ihre Hover-Dynamik */
+  /* Sanfter Theme-Wechsel; Regeln mit eigener transition gewinnen */
   @media (prefers-reduced-motion: no-preference) {
     *, *::before, *::after {
-      transition: background-color 200ms ease, color 200ms ease,
-        border-color 200ms ease;
+      transition: background-color 160ms ease, color 160ms ease,
+        border-color 160ms ease;
     }
   }
 
   h1 {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     font-weight: 650;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
   }
 
-  /* --- App-Leiste: höchste Glas-Stufe als feststehende Topbar --- */
+  /* --- App-Leiste: flache Topbar --- */
   .appbar {
-    background: var(--glass-elevated-bg);
-    backdrop-filter: blur(40px) saturate(1.6);
-    -webkit-backdrop-filter: blur(40px) saturate(1.6);
-    border-bottom: 1px solid var(--glass-border-color);
-    box-shadow: var(--glass-shadow);
+    background: var(--sw-surface);
+    border-bottom: 1px solid var(--sw-border);
+    box-shadow: none;
   }
 
-  /* Navigation: Pills; aktiver Reiter solide in Akzentfarbe */
+  /* Navigation: dezente Akzent-Tint-Fläche für den aktiven Reiter */
   .appnav {
     align-items: center;
-    gap: 6px;
+    gap: 4px;
   }
 
   .appnav__btn {
     border: 1px solid transparent;
-    border-radius: 999px;
-    padding: 8px 18px;
+    border-radius: var(--radius);
+    padding: 8px 14px;
     margin-bottom: 0;
-    color: var(--text-secondary);
+    color: var(--sw-text-muted);
+    box-shadow: none;
   }
 
   .appnav__btn:hover {
-    background: color-mix(in oklab, var(--farbe-akzent) 12%, transparent);
-    color: var(--primary);
+    background: var(--sw-surface-muted);
+    color: var(--sw-text);
+    box-shadow: none;
   }
 
   .appnav__btn.active {
-    background: var(--primary);
+    background: color-mix(in srgb, var(--farbe-akzent) 12%, transparent);
     border-color: transparent;
-    color: var(--primary-foreground);
+    color: var(--farbe-akzent);
+    box-shadow: none;
   }
 
-  /* --- Flächen: Glas Stufe 2 (Karten) --- */
+  /* --- Karten und Flächen: Surface + 1px Border --- */
   .karte,
   .kanzlei-box,
   .basiszins-form {
-    background: var(--glass-card-bg);
-    backdrop-filter: blur(16px) saturate(1.4);
-    -webkit-backdrop-filter: blur(16px) saturate(1.4);
-    border: 1px solid var(--glass-border-color);
-    box-shadow: var(--glass-shadow);
+    background: var(--sw-surface);
+    border: 1px solid var(--sw-border);
+    border-radius: 12px;
+    box-shadow: var(--sw-shadow-sm);
   }
 
   .karte {
     border-left: 3px solid var(--farbe-akzent);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
   }
 
   .karte:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--glass-shadow-lg);
+    border-color: var(--sw-border-strong);
+    border-left-color: var(--farbe-akzent);
+    box-shadow: var(--sw-shadow-md);
   }
 
-  /* Report: großes Panel, Glas Stufe 3 */
+  .kanzlei-box {
+    border-left: 3px solid var(--farbe-akzent);
+  }
+
+  /* Report: Dokumentfläche */
   .report-inhalt {
-    background: var(--glass-panel-bg);
-    backdrop-filter: blur(24px) saturate(1.5);
-    -webkit-backdrop-filter: blur(24px) saturate(1.5);
-    border: 1px solid var(--glass-border-color);
-    box-shadow: var(--glass-shadow-lg);
+    background: var(--sw-surface);
+    border: 1px solid var(--sw-border);
+    border-radius: 16px;
+    box-shadow: var(--sw-shadow-sm);
   }
 
-  /* Ledger bleibt Ledger: Tabellenfläche fast opak und nur leicht
-     verschwommen — Blur über hunderten Zeilen ist teuer, und Zahlen
-     brauchen ruhigen Grund. Die Umgebung trägt den Glas-Look. */
+  /* --- Tabellen: 36px-Kopf, 42px-Zeilen, kein Zebra --- */
   .tabellen-wrapper {
-    background: var(--glass-panel-bg);
-    backdrop-filter: blur(8px) saturate(1.3);
-    -webkit-backdrop-filter: blur(8px) saturate(1.3);
-    border: 1px solid var(--glass-border-color);
-    box-shadow: var(--glass-shadow);
+    background: var(--sw-surface);
+    border: 1px solid var(--sw-border);
+    border-radius: 12px;
+    box-shadow: var(--sw-shadow-sm);
   }
 
   .tabelle thead th {
-    background: var(--glass-elevated-bg);
-    color: var(--text-secondary);
-    border-bottom: 2px solid color-mix(in oklab, var(--farbe-akzent) 45%, transparent);
+    padding: 9px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--sw-text-muted);
+    background: var(--sw-surface-muted);
+    border-bottom: 1px solid var(--sw-border);
+  }
+
+  /* Kopfzeilen sind Beschriftung, keine Zahlen — Monospace der .num-Regel
+     hier zurücknehmen (Beträge in den Zellen bleiben tabellarisch). */
+  .tabelle thead th.num {
+    font-family: var(--schrift-system);
+  }
+
+  .tabelle td {
+    padding: 11px 12px;
+    border-bottom: 1px solid var(--sw-border);
   }
 
   .tabelle tbody tr:nth-child(even) {
-    background: color-mix(in oklab, var(--foreground) 3%, transparent);
+    background: transparent;
   }
 
   .tabelle tbody tr:hover {
-    background: color-mix(in oklab, var(--farbe-akzent) 8%, transparent);
+    background: color-mix(in srgb, var(--sw-surface-muted), transparent 42%);
   }
 
-  /* --- Eingaben: Glas Stufe 1 --- */
+  #buchungenSaldo td {
+    border-top: 2px solid var(--sw-border-strong);
+  }
+
+  /* Report-Tabellen behalten ihre Dokument-/Ledger-Optik (kompakt,
+     transparenter Kopf, Doppellinien-Summen aus der Basis-Schicht) */
+  .tabelle--report thead th {
+    padding: 8px 10px;
+    background: transparent;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 0.74rem;
+  }
+
+  .tabelle--report td {
+    padding: 8px 10px;
+  }
+
+  /* --- Eingaben: 36px, 1px Border, Teal-Fokus --- */
   input[type="text"],
   input[type="date"],
   input[type="search"],
   input[type="url"],
   input[type="password"],
   select {
-    background: var(--glass-input-bg);
-    backdrop-filter: blur(8px) saturate(1.3);
-    -webkit-backdrop-filter: blur(8px) saturate(1.3);
-    border-color: var(--input-border);
-    box-shadow: var(--glass-shadow);
+    background: var(--sw-surface);
+    border: 1px solid var(--sw-border-strong);
+    border-radius: var(--radius);
+    padding: 7px 10px;
+    box-shadow: none;
+  }
+
+  input[type="text"]:hover,
+  input[type="date"]:hover,
+  input[type="search"]:hover,
+  input[type="url"]:hover,
+  input[type="password"]:hover,
+  select:hover {
+    border-color: color-mix(in srgb, var(--sw-border-strong), var(--sw-text) 22%);
   }
 
   input[type="text"]:focus,
@@ -1471,20 +1516,25 @@ dialog.dialog::backdrop {
   input[type="url"]:focus,
   input[type="password"]:focus,
   select:focus {
-    background: var(--glass-elevated-bg);
+    background: var(--sw-surface);
     border-color: var(--farbe-akzent);
-    box-shadow: 0 0 0 3px color-mix(in oklab, var(--farbe-akzent) 25%, transparent);
+    box-shadow: var(--sw-focus);
     outline: none;
   }
 
   .verzinsungsblock {
-    background: var(--glass-input-bg);
-    border: 1px solid var(--glass-border-color);
-    border-radius: var(--radius-klein);
+    background: var(--sw-surface-muted);
+    border: 1px solid var(--sw-border);
+    border-radius: var(--radius);
   }
 
-  /* Filterzeile der Kontenübersicht: Suche links, Sortierung als kompakte
-     Glas-Pill mit eigenem Chevron rechts daneben */
+  /* Checkboxen/Radios in der Markenfarbe statt im Browser-Blau */
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: var(--farbe-akzent);
+  }
+
+  /* Filterzeile der Kontenübersicht */
   .konten-filter {
     gap: 12px;
     align-items: center;
@@ -1493,100 +1543,97 @@ dialog.dialog::backdrop {
   .konten-filter input[type="search"] {
     flex: 1 1 300px;
     max-width: 420px;
-    border-radius: 999px;
-    padding: 9px 18px;
+    border-radius: var(--radius);
+    padding: 7px 12px;
   }
 
   .konten-filter select {
     appearance: none;
     -webkit-appearance: none;
-    border-radius: 999px;
-    padding: 9px 38px 9px 16px;
+    border-radius: var(--radius);
+    padding: 7px 34px 7px 12px;
     font-weight: 560;
-    color: var(--text-secondary);
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%233d4759' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    color: var(--sw-text-muted);
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23667085' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 14px center;
+    background-position: right 12px center;
     background-size: 12px;
     cursor: pointer;
   }
 
   html.dark .konten-filter select {
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23a5adc0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23A7B0C0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   }
 
   .konten-filter select:hover {
-    background-color: var(--glass-elevated-bg);
-    color: var(--text-primary);
+    color: var(--sw-text);
   }
 
-  /* --- Buttons: solide Flächen (kein Glas), sanfte Scale-Interaktion --- */
+  /* --- Buttons: solide, präzise, kein Pill --- */
   .btn {
+    min-height: 36px;
     border-radius: var(--radius);
     text-decoration: none;
-    transition: background-color 0.15s ease, box-shadow 0.15s ease,
-      transform 0.1s ease, filter 0.15s ease;
-  }
-
-  .btn:not(:disabled):hover {
-    transform: scale(1.02);
+    transition: background-color 120ms ease, border-color 120ms ease,
+      color 120ms ease, transform 60ms ease;
   }
 
   .btn:not(:disabled):active {
-    transform: scale(0.98);
+    transform: translateY(1px);
+  }
+
+  .btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 1px var(--farbe-akzent), var(--sw-focus);
   }
 
   .btn--primaer {
-    background: var(--primary);
+    background: var(--sw-brand);
     border-color: transparent;
-    color: var(--primary-foreground);
-    box-shadow: var(--glass-shadow);
+    color: var(--sw-brand-kontrast);
   }
 
   .btn--primaer:hover {
-    background: var(--primary);
+    background: var(--sw-brand-hover);
     border-color: transparent;
-    filter: brightness(1.06);
   }
 
   .btn--sekundaer {
-    background: var(--secondary);
-    border-color: var(--border);
-    color: var(--secondary-foreground);
-    box-shadow: var(--glass-shadow);
+    background: var(--sw-surface);
+    border-color: var(--sw-border-strong);
+    color: var(--sw-text);
   }
 
   .btn--sekundaer:hover {
-    background: color-mix(in oklab, var(--secondary) 90%, var(--foreground));
-    border-color: var(--border);
+    background: var(--sw-surface-muted);
+    border-color: var(--sw-border-strong);
   }
 
   .btn--gefahr {
-    background: var(--destructive);
+    background: var(--sw-danger);
     border-color: transparent;
-    color: var(--destructive-foreground);
+    color: #fff;
   }
 
   .btn--gefahr:hover {
-    background: var(--destructive);
+    background: color-mix(in srgb, var(--sw-danger) 85%, black);
     border-color: transparent;
-    filter: brightness(1.1);
   }
 
   a.btn--primaer {
-    color: var(--primary-foreground);
+    color: var(--sw-brand-kontrast);
   }
 
   a.btn--sekundaer {
-    color: var(--secondary-foreground);
+    color: var(--sw-text);
   }
 
-  /* Icon-Button (z. B. Theme-Umschalter): quadratisch, rund */
+  /* Icon-Button (Theme-Umschalter) */
   .btn--icon {
     width: 36px;
-    height: 36px;
+    min-height: 36px;
     padding: 0;
-    border-radius: 999px;
+    border-radius: var(--radius);
   }
 
   .btn--icon svg {
@@ -1603,45 +1650,35 @@ dialog.dialog::backdrop {
     display: none;
   }
 
-  /* --- Dialoge: Glas Stufe 4 über abgedunkeltem Hintergrund --- */
+  /* --- Dialoge: erhabene Fläche, dezenter Backdrop --- */
   dialog.dialog {
-    background: var(--glass-elevated-bg);
-    backdrop-filter: blur(40px) saturate(1.6);
-    -webkit-backdrop-filter: blur(40px) saturate(1.6);
-    border: 1px solid var(--glass-border-color);
-    box-shadow: var(--glass-shadow-lg);
+    background: var(--sw-surface-raised);
+    border: 1px solid var(--sw-border);
+    border-radius: 16px;
+    box-shadow: var(--sw-shadow-md);
   }
 
-  /* Literalwerte: ::backdrop erbt Custom Properties nicht zuverlässig */
   dialog.dialog::backdrop {
-    background: rgb(0 0 0 / 0.5);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: rgba(10, 16, 32, 0.45);
   }
 
   /* --- Banner, Meldungen, Fußzeile --- */
   .app-hinweisbanner,
   .report-hinweisbox {
-    background: color-mix(in oklab, oklch(75% 0.14 75) 18%, var(--glass-card-bg));
-    backdrop-filter: blur(16px) saturate(1.4);
-    -webkit-backdrop-filter: blur(16px) saturate(1.4);
-  }
-
-  .fehlerbereich:not(:empty) {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: var(--farbe-warnung-hell);
+    border-left: 3px solid var(--sw-warning);
   }
 
   .app-fusszeile {
-    border-top: 1px solid var(--glass-border-color);
-    color: var(--text-secondary);
+    border-top: 1px solid var(--sw-border);
+    color: var(--sw-text-muted);
   }
 
   .datei-status {
-    color: var(--text-secondary);
+    color: var(--sw-text-muted);
   }
 
-  /* --- macOS-Scrollbalken --- */
+  /* --- Scrollbalken: dezent, token-basiert --- */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -1652,24 +1689,15 @@ dialog.dialog::backdrop {
   }
 
   ::-webkit-scrollbar-thumb {
-    background: oklch(60% 0.01 250 / 0.35);
+    background: color-mix(in srgb, var(--sw-text) 25%, transparent);
     border-radius: 999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: oklch(50% 0.01 250 / 0.5);
+    background: color-mix(in srgb, var(--sw-text) 40%, transparent);
   }
 
-  html.dark ::-webkit-scrollbar-thumb {
-    background: oklch(60% 0.01 250 / 0.25);
-  }
-
-  html.dark ::-webkit-scrollbar-thumb:hover {
-    background: oklch(70% 0.01 250 / 0.4);
-  }
-
-  /* Keine Einblend-Animationen (Nutzer-Entscheidung) — neutralisiert auch
-     die Basis-Animation „einblenden" der Views weiter oben in der Datei. */
+  /* Keine Einblend-Animationen (Nutzer-Entscheidung) */
   .view.active {
     animation: none;
   }
@@ -1677,10 +1705,7 @@ dialog.dialog::backdrop {
   /* --- Logo-Variante der App-Leiste (branding.logo) --- */
   .appbar__logo--bild {
     width: auto;
-    height: 40px;
-    background: none;
-    border-radius: 0;
-    box-shadow: none;
+    height: 32px;
   }
 
   .appbar__logo--bild img {
@@ -1689,22 +1714,20 @@ dialog.dialog::backdrop {
     width: auto;
   }
 
-  /* --- Globaler Glas-Tooltip für data-info-Hovertexte --- */
+  /* --- Tooltip für data-info-Hovertexte --- */
   #infoTooltip {
     position: fixed;
     z-index: 100;
     max-width: 320px;
     padding: 10px 14px;
-    background: var(--glass-elevated-bg);
-    backdrop-filter: blur(40px) saturate(1.6);
-    -webkit-backdrop-filter: blur(40px) saturate(1.6);
-    border: 1px solid var(--glass-border-color);
-    border-radius: var(--radius-klein);
-    box-shadow: var(--glass-shadow-lg);
+    background: var(--sw-surface-raised);
+    border: 1px solid var(--sw-border);
+    border-radius: var(--radius);
+    box-shadow: var(--sw-shadow-md);
     font-size: 0.85rem;
     font-weight: 400;
     font-style: normal;
-    color: var(--foreground);
+    color: var(--sw-text);
     line-height: 1.45;
     pointer-events: none;
   }
@@ -1718,7 +1741,7 @@ dialog.dialog::backdrop {
     width: 1px;
     align-self: stretch;
     margin: 4px 2px;
-    background: color-mix(in oklab, var(--foreground) 14%, transparent);
+    background: var(--sw-border-strong);
   }
 
   .werkzeugleiste__trenner:has(+ .datei-werkzeuge:empty) {

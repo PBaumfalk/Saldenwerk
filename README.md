@@ -1,3 +1,5 @@
+<img src="assets/app-icon-128.png" width="72" alt="Saldenwerk">
+
 # Saldenwerk
 
 [![Tests & Docker-Image](https://github.com/PBaumfalk/Saldenwerk/actions/workflows/docker.yml/badge.svg)](https://github.com/PBaumfalk/Saldenwerk/actions/workflows/docker.yml)
@@ -134,7 +136,9 @@ node --test tests/*.test.js
 
 Öffentliches Hosting und eigenes Branding (Name, Logo, Farben) sind über
 `konfig.js` konfigurierbar — siehe
-[Handbuch, Kapitel 10](docs/handbuch/10-anpassung.md).
+[Handbuch, Kapitel 10](docs/handbuch/10-anpassung.md). Das Corporate Design
+(Logos, Farbtokens, Gestaltungsregeln) liegt in
+[`saldenwerk-ci/`](saldenwerk-ci/).
 
 ## Lizenz
 
