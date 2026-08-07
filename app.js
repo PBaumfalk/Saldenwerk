@@ -1214,7 +1214,7 @@ if (typeof document !== 'undefined') {
       gruppe.appendChild(h3);
 
       const { wrapper, tbody, tfoot } = baueReportTabelle([
-        { label: 'Datum' }, { label: 'Text' },
+        { label: 'Datum' }, { label: 'Buchungstext' },
         { label: 'Betrag', klasse: 'num' }, { label: 'Offen', klasse: 'num' },
       ]);
       posten.forEach((p) => {

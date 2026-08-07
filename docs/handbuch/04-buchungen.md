@@ -33,7 +33,7 @@ Die Felder im Einzelnen:
 - **Datum** — bei Forderungen das Entstehungsdatum, bei Zahlungen der
   Zahltag.
 - **Betrag** — mit Komma, z. B. `5.000,00` oder `540,50`.
-- **Text** — die Bezeichnung, die später im Report erscheint
+- **Buchungstext** — die Bezeichnung, die später im Report erscheint
   (z. B. „Kaufpreis Rechnung 2024-1017").
 
 ## Verzinsung (Haupt- und Nebenforderungen)

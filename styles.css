@@ -733,6 +733,42 @@ select:focus {
   margin-bottom: 4px;
 }
 
+/* Gemeinsames Spaltenraster: jede Teiltabelle ist eine eigene <table>;
+   ohne feste Breiten verrutschen die Zahlenspalten zwischen Hauptforderung,
+   Nebenforderung und Zinsforderung. Unterscheidung nach Spaltenzahl. */
+.tabelle--report:has(thead th:nth-child(4):last-child) {
+  table-layout: fixed;
+}
+
+.tabelle--report:has(thead th:nth-child(4):last-child) thead th:first-child {
+  width: 120px;
+}
+
+.tabelle--report:has(thead th:nth-child(4):last-child) thead th.num {
+  width: 160px;
+}
+
+/* Zinsstaffel (5 Spalten): Satz-Spalte nimmt den Rest */
+.tabelle--report:has(thead th:nth-child(5):last-child) {
+  table-layout: fixed;
+}
+
+.tabelle--report:has(thead th:nth-child(5):last-child) thead th:nth-child(1) {
+  width: 230px;
+}
+
+.tabelle--report:has(thead th:nth-child(5):last-child) thead th:nth-child(2) {
+  width: 70px;
+}
+
+.tabelle--report:has(thead th:nth-child(5):last-child) thead th:nth-child(3) {
+  width: 140px;
+}
+
+.tabelle--report:has(thead th:nth-child(5):last-child) thead th:nth-child(5) {
+  width: 140px;
+}
+
 .report-tabelle__fuss td {
   font-weight: 650;
   border-top: 3px double var(--farbe-rand-stark);
