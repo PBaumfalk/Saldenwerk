@@ -356,7 +356,7 @@ body { margin: 16px; font-family: Helvetica, Arial, sans-serif; font-size: 8.5pt
 
     const colgroup = '<colgroup>' + [6.5, 26, 8.5, 8.5, 8.5, 8.5, 8.5, 8.5, 8.25, 8.25]
       .map((p) => `<col style="width:${p}%">`).join('') + '</colgroup>';
-    const kopfzeile = '<tr>' + ['Datum', 'Bezeichnung', ...HTML_SPALTEN_LABELS, 'Umsatz', 'Gesamtsaldo']
+    const kopfzeile = '<tr>' + ['Datum', 'Buchungstext', ...HTML_SPALTEN_LABELS, 'Umsatz', 'Gesamtsaldo']
       .map((l) => `<th>${escapeHtml(l)}</th>`).join('') + '</tr>';
     const zeilen = modell.zeilen.map((z) => {
       const zellen = [

@@ -1506,7 +1506,7 @@ if (typeof document !== 'undefined') {
 
     const table = document.createElement('table');
     table.className = 'druck-tabelle';
-    // Feste Spaltenbreiten (Summe 100 %): Datum, Bezeichnung, 6 Betragsspalten, Umsatz, Gesamtsaldo.
+    // Feste Spaltenbreiten (Summe 100 %): Datum, Buchungstext, 6 Betragsspalten, Umsatz, Gesamtsaldo.
     const colgroup = document.createElement('colgroup');
     [6.5, 26, 8.5, 8.5, 8.5, 8.5, 8.5, 8.5, 8.25, 8.25].forEach((prozent) => {
       const col = document.createElement('col');
@@ -1516,7 +1516,7 @@ if (typeof document !== 'undefined') {
     table.appendChild(colgroup);
     const thead = document.createElement('thead');
     const kopfzeile = document.createElement('tr');
-    ['Datum', 'Bezeichnung', ...DRUCK_SPALTEN_LABELS, 'Umsatz', 'Gesamtsaldo']
+    ['Datum', 'Buchungstext', ...DRUCK_SPALTEN_LABELS, 'Umsatz', 'Gesamtsaldo']
       .forEach((label) => kopfzeile.appendChild(druckZelle('th', label, '')));
     thead.appendChild(kopfzeile);
     const tbody = document.createElement('tbody');

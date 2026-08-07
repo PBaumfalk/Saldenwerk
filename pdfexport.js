@@ -10,7 +10,7 @@
   const { formatDatum, verrechnungsText } = AppFormat;
 
   const SPALTEN = ['zahlung', 'hauptforderung', 'hfZinsen', 'verzinslKosten', 'kostenzinsen', 'unverzinslKosten'];
-  const KOPF = ['Datum', 'Bezeichnung', 'Zahlung', 'Hauptforderung', 'HF-Zinsen', 'Verzinsl. Kosten',
+  const KOPF = ['Datum', 'Buchungstext', 'Zahlung', 'Hauptforderung', 'HF-Zinsen', 'Verzinsl. Kosten',
     'Kostenzinsen', 'Unverzinsl. Kosten', 'Umsatz', 'Gesamtsaldo'];
   const SPALTEN_PROZENT = [6.5, 26, 8.5, 8.5, 8.5, 8.5, 8.5, 8.5, 8.25, 8.25];
 
