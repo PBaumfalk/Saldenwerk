@@ -95,6 +95,11 @@ laden.
   diese wieder zurückzusetzen.
 - **Export/Import**: Konten als JSON sichern und wieder einlesen (siehe
   unten).
+- **Hell & Dunkel**: Die Oberfläche (Liquid-Glass-Design) folgt automatisch
+  der Systemeinstellung; der Umschalter in der App-Leiste merkt sich die
+  Wahl. Druck und PDF bleiben davon unberührt (immer schwarz auf weiß).
+
+![Report im Dunkelmodus](docs/screenshots/report-dunkel.png)
 
 ## Datei-Speicherung
 

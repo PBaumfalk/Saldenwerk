@@ -5,6 +5,16 @@
   rechtsbündige Beträge). Nüchtern, präzise, vertrauenswürdig.
 */
 
+/* Inter als Variable Font (vendor/fonts/, SIL OFL 1.1) — einheitliches
+   Schriftbild auf allen Plattformen, stufenlose Gewichte 100-900. */
+@font-face {
+  font-family: 'Inter var';
+  src: url('vendor/fonts/InterVariable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* Farbe */
   --farbe-hintergrund: #f4f5f8;
@@ -28,7 +38,7 @@
   --farbe-warnung-text: #92600a;
 
   /* Typografie */
-  --schrift-system: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --schrift-system: 'Inter var', 'SF Pro Display', 'SF Pro Text', Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --schrift-zahlen: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Consolas, monospace;
 
   /* Layout */
@@ -1208,64 +1218,144 @@ dialog.dialog::backdrop {
 }
 
 /* ==========================================================================
-   Glass-Design-Schicht (nur Bildschirm — Druckstile bleiben unberührt).
-   Vier Blur-Stufen analog zum Kanzlei-Designsystem: Eingaben 8px,
-   Karten 16px, Panels 24px, Dialoge 40px. Mesh-Hintergrund wird per
-   color-mix aus der Akzentfarbe abgeleitet und folgt damit automatisch
-   dem Branding (Standard: blau).
+   Liquid-Glass-Designsystem (nur Bildschirm — Druckstile bleiben unberührt).
+   Portiert aus dem Kanzlei-Designsystem: oklch-Token in hell und dunkel,
+   vier Glas-Stufen (8/16/24/40px Blur mit steigender Sättigung 1.3–1.6,
+   weiße Glanzkante, weiche Schatten), Mesh-Gradient-Bühne mit
+   background-attachment: fixed. Flächen sind Glas, Buttons sind solide.
+   Akzent-Töne werden per color-mix aus --farbe-akzent abgeleitet und folgen
+   damit dem Laufzeit-Branding (konfig.js) — in beiden Themes.
    ========================================================================== */
 @media screen {
   :root {
-    /* Ruhige, flache Bühne — die Scheiben tragen ihren Glanz selbst */
-    --farbe-hintergrund: #eef0f4;
-    --farbe-text: #101828;
-    --farbe-text-schwach: #3d4759;
-    --farbe-text-dezent: #5d6779;
+    color-scheme: light;
 
-    /* Liquid-Glass-Rezept: diagonaler Reflex-Verlauf als Fläche */
-    --glas-reflex: linear-gradient(135deg,
-      rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.6) 45%,
-      rgba(255, 255, 255, 0.78));
-    --glas-reflex-leicht: linear-gradient(135deg,
-      rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.55) 50%,
-      rgba(255, 255, 255, 0.7));
-    --glas-reflex-dicht: linear-gradient(135deg,
-      rgba(255, 255, 255, 0.97), rgba(255, 255, 255, 0.82) 45%,
-      rgba(255, 255, 255, 0.92));
-    --glas-eingabe: rgba(255, 255, 255, 0.66);
-    --glas-kontur: rgba(15, 23, 42, 0.12);
-    --glas-rand: var(--glas-kontur);
-    --glas-lichtkante: inset 0 1px 0 rgba(255, 255, 255, 0.95),
-      inset 0 -1px 0 rgba(15, 23, 42, 0.05);
-    --glas-rand-innen: inset 0 1px 0 rgba(255, 255, 255, 0.95);
-    --glas-schatten: 0 8px 32px rgba(15, 23, 42, 0.1);
-    --glas-schatten-gross: 0 16px 64px rgba(15, 23, 42, 0.22);
-    --radius: 14px;
-    --radius-klein: 9px;
-    --schatten-karte: var(--glas-schatten);
-    --schatten-erhoeht: var(--glas-schatten-gross);
+    /* oklch-Kern-Token (hell) */
+    --background: oklch(97% 0.005 250);
+    --foreground: oklch(15% 0.01 250);
+    --text-primary: oklch(15% 0.01 250);
+    --text-secondary: oklch(40% 0.015 250);
+    --text-tertiary: oklch(60% 0.01 250);
+    --border: oklch(88% 0.01 250 / 0.6);
+    --input-border: oklch(88% 0.01 250 / 0.4);
+    --secondary: oklch(94% 0.01 250);
+    --secondary-foreground: oklch(20% 0.01 250);
+    --destructive: oklch(55% 0.22 25);
+    --destructive-foreground: oklch(98% 0 0);
+    --primary: var(--farbe-akzent);
+    --primary-foreground: oklch(98% 0 0);
+
+    /* Glas-Stufen (hell) */
+    --glass-input-bg: oklch(100% 0 0 / 0.5);
+    --glass-card-bg: oklch(100% 0 0 / 0.6);
+    --glass-panel-bg: oklch(100% 0 0 / 0.72);
+    --glass-elevated-bg: oklch(100% 0 0 / 0.82);
+    --glass-border-color: oklch(100% 0 0 / 0.5);
+    --glass-shadow: 0 4px 24px oklch(0% 0 0 / 0.06);
+    --glass-shadow-lg: 0 8px 48px oklch(0% 0 0 / 0.10);
+
+    /* Mesh-Bühne aus der Akzentfarbe */
+    --mesh-grund: oklch(97% 0.005 250);
+    --mesh-1: color-mix(in oklab, var(--farbe-akzent) 16%, transparent);
+    --mesh-2: color-mix(in oklab, var(--farbe-akzent) 10%, transparent);
+    --mesh-3: color-mix(in oklab, var(--farbe-akzent) 6%, transparent);
+
+    /* Bridge: Legacy-Variablen der Basis-Schicht auf die neuen Token —
+       alle Basis-Regeln bekommen hell/dunkel, ohne Einzeledits. */
+    --farbe-hintergrund: var(--background);
+    --farbe-flaeche: var(--glass-card-bg);
+    --farbe-flaeche-erhoeht: var(--glass-elevated-bg);
+    --farbe-text: var(--text-primary);
+    --farbe-text-schwach: var(--text-secondary);
+    --farbe-text-dezent: var(--text-tertiary);
+    --farbe-rand: var(--border);
+    --farbe-rand-stark: oklch(80% 0.01 250 / 0.7);
+    --schatten-karte: var(--glass-shadow);
+    --schatten-erhoeht: var(--glass-shadow-lg);
+    --radius: 0.625rem;
+    --radius-klein: 0.4rem;
   }
 
+  html.dark {
+    color-scheme: dark;
+
+    /* oklch-Kern-Token (dunkel — Tiefnavy, kein Schwarz) */
+    --background: oklch(12% 0.02 250);
+    --foreground: oklch(92% 0.005 250);
+    --text-primary: oklch(92% 0.005 250);
+    --text-secondary: oklch(65% 0.01 250);
+    --text-tertiary: oklch(50% 0.01 250);
+    --border: oklch(30% 0.03 250 / 0.5);
+    --input-border: oklch(30% 0.03 250 / 0.4);
+    --secondary: oklch(24% 0.03 250);
+    --secondary-foreground: oklch(88% 0.005 250);
+    --destructive: oklch(45% 0.2 25);
+    /* Akzent im Dunkeln aufhellen, sonst säuft er auf Navy ab */
+    --primary: color-mix(in oklab, var(--farbe-akzent) 72%, white);
+    --primary-foreground: oklch(15% 0.02 260);
+
+    /* Glas-Stufen (dunkel) */
+    --glass-input-bg: oklch(20% 0.03 250 / 0.5);
+    --glass-card-bg: oklch(18% 0.03 250 / 0.55);
+    --glass-panel-bg: oklch(16% 0.03 250 / 0.68);
+    --glass-elevated-bg: oklch(14% 0.03 250 / 0.78);
+    --glass-border-color: oklch(50% 0.02 250 / 0.3);
+    --glass-shadow: 0 4px 24px oklch(0% 0 0 / 0.25);
+    --glass-shadow-lg: 0 8px 48px oklch(0% 0 0 / 0.35);
+
+    --mesh-grund: oklch(12% 0.02 250);
+    --mesh-1: color-mix(in oklab, var(--farbe-akzent) 24%, transparent);
+    --mesh-2: color-mix(in oklab, var(--farbe-akzent) 15%, transparent);
+    --mesh-3: color-mix(in oklab, var(--farbe-akzent) 9%, transparent);
+
+    /* Bridge-Token mit Literalwerten brauchen eigene Dunkel-Werte
+       (die var()-Bridges oben ziehen automatisch nach) */
+    --farbe-rand-stark: oklch(38% 0.03 250 / 0.7);
+    --farbe-erfolg: oklch(72% 0.14 155);
+    --farbe-erfolg-hell: oklch(72% 0.14 155 / 0.16);
+    --farbe-gefahr: oklch(68% 0.19 25);
+    --farbe-gefahr-hell: oklch(68% 0.19 25 / 0.16);
+    --farbe-warnung-hell: oklch(75% 0.14 75 / 0.16);
+    --farbe-warnung-text: oklch(82% 0.12 75);
+  }
+
+  /* --- Bühne: Mesh-Gradient, steht beim Scrollen fest --- */
   body {
-    background: var(--farbe-hintergrund);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+    background:
+      radial-gradient(80% 50% at 20% 20%, var(--mesh-1), transparent),
+      radial-gradient(60% 60% at 80% 30%, var(--mesh-2), transparent),
+      radial-gradient(70% 40% at 50% 80%, var(--mesh-3), transparent),
+      var(--mesh-grund);
+    background-attachment: fixed;
+  }
+
+  /* Sanfter Theme-Wechsel; Regeln mit eigener transition gewinnen per
+     Spezifität und behalten ihre Hover-Dynamik */
+  @media (prefers-reduced-motion: no-preference) {
+    *, *::before, *::after {
+      transition: background-color 200ms ease, color 200ms ease,
+        border-color 200ms ease;
+    }
   }
 
   h1 {
     font-size: 1.6rem;
-    font-weight: 700;
+    font-weight: 650;
     letter-spacing: -0.02em;
   }
 
-  /* --- App-Leiste: ruhiges Glas ohne Effektlinie --- */
+  /* --- App-Leiste: höchste Glas-Stufe als feststehende Topbar --- */
   .appbar {
-    background: var(--glas-reflex-dicht);
-    backdrop-filter: blur(24px) saturate(1.5);
-    -webkit-backdrop-filter: blur(24px) saturate(1.5);
-    border-bottom: 1px solid var(--glas-kontur);
-    box-shadow: 0 2px 16px rgba(15, 23, 42, 0.07);
+    background: var(--glass-elevated-bg);
+    backdrop-filter: blur(40px) saturate(1.6);
+    -webkit-backdrop-filter: blur(40px) saturate(1.6);
+    border-bottom: 1px solid var(--glass-border-color);
+    box-shadow: var(--glass-shadow);
   }
 
-  /* Navigation: Reiter werden auf Glas zu Pills */
+  /* Navigation: Pills; aktiver Reiter solide in Akzentfarbe */
   .appnav {
     align-items: center;
     gap: 6px;
@@ -1276,34 +1366,29 @@ dialog.dialog::backdrop {
     border-radius: 999px;
     padding: 8px 18px;
     margin-bottom: 0;
-  }
-
-  .appnav__btn {
-    color: var(--farbe-text-schwach);
+    color: var(--text-secondary);
   }
 
   .appnav__btn:hover {
-    background: color-mix(in srgb, var(--farbe-akzent) 12%, #ffffff);
-    color: var(--farbe-akzent-dunkel);
+    background: color-mix(in oklab, var(--farbe-akzent) 12%, transparent);
+    color: var(--primary);
   }
 
-  /* Der eine Kontrast-Punch: aktiver Reiter voll in Akzentfarbe, ohne Glow */
   .appnav__btn.active {
-    background: var(--farbe-akzent);
+    background: var(--primary);
     border-color: transparent;
-    color: #fff;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    color: var(--primary-foreground);
   }
 
-  /* --- Flächen: Liquid Glass mit Reflex und Lichtkante --- */
+  /* --- Flächen: Glas Stufe 2 (Karten) --- */
   .karte,
-  .tabellen-wrapper,
-  .kanzlei-box {
-    background: var(--glas-reflex);
+  .kanzlei-box,
+  .basiszins-form {
+    background: var(--glass-card-bg);
     backdrop-filter: blur(16px) saturate(1.4);
     -webkit-backdrop-filter: blur(16px) saturate(1.4);
-    border: 1px solid var(--glas-rand);
-    box-shadow: var(--glas-schatten), var(--glas-lichtkante);
+    border: 1px solid var(--glass-border-color);
+    box-shadow: var(--glass-shadow);
   }
 
   .karte {
@@ -1313,22 +1398,41 @@ dialog.dialog::backdrop {
 
   .karte:hover {
     transform: translateY(-2px);
-    box-shadow: var(--glas-schatten-gross), var(--glas-lichtkante);
+    box-shadow: var(--glass-shadow-lg);
   }
 
-  /* Ledger bleibt Ledger: Tabellen-Inhalte fast opak für klare Zahlen */
+  /* Report: großes Panel, Glas Stufe 3 */
+  .report-inhalt {
+    background: var(--glass-panel-bg);
+    backdrop-filter: blur(24px) saturate(1.5);
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
+    border: 1px solid var(--glass-border-color);
+    box-shadow: var(--glass-shadow-lg);
+  }
+
+  /* Ledger bleibt Ledger: Tabellenfläche fast opak und nur leicht
+     verschwommen — Blur über hunderten Zeilen ist teuer, und Zahlen
+     brauchen ruhigen Grund. Die Umgebung trägt den Glas-Look. */
+  .tabellen-wrapper {
+    background: var(--glass-panel-bg);
+    backdrop-filter: blur(8px) saturate(1.3);
+    -webkit-backdrop-filter: blur(8px) saturate(1.3);
+    border: 1px solid var(--glass-border-color);
+    box-shadow: var(--glass-shadow);
+  }
+
   .tabelle thead th {
-    background: rgba(255, 255, 255, 0.7);
-    color: #344054;
-    border-bottom: 2px solid color-mix(in srgb, var(--farbe-akzent) 45%, transparent);
+    background: var(--glass-elevated-bg);
+    color: var(--text-secondary);
+    border-bottom: 2px solid color-mix(in oklab, var(--farbe-akzent) 45%, transparent);
   }
 
   .tabelle tbody tr:nth-child(even) {
-    background: rgba(255, 255, 255, 0.5);
+    background: color-mix(in oklab, var(--foreground) 3%, transparent);
   }
 
   .tabelle tbody tr:hover {
-    background: color-mix(in srgb, var(--farbe-akzent) 7%, rgba(255, 255, 255, 0.5));
+    background: color-mix(in oklab, var(--farbe-akzent) 8%, transparent);
   }
 
   /* --- Eingaben: Glas Stufe 1 --- */
@@ -1338,11 +1442,11 @@ dialog.dialog::backdrop {
   input[type="url"],
   input[type="password"],
   select {
-    background: var(--glas-reflex-leicht);
+    background: var(--glass-input-bg);
     backdrop-filter: blur(8px) saturate(1.3);
     -webkit-backdrop-filter: blur(8px) saturate(1.3);
-    border-color: var(--glas-rand);
-    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06), var(--glas-rand-innen);
+    border-color: var(--input-border);
+    box-shadow: var(--glass-shadow);
   }
 
   input[type="text"]:focus,
@@ -1351,18 +1455,20 @@ dialog.dialog::backdrop {
   input[type="url"]:focus,
   input[type="password"]:focus,
   select:focus {
-    background: rgba(255, 255, 255, 0.75);
-    border-color: color-mix(in srgb, var(--farbe-akzent) 55%, transparent);
+    background: var(--glass-elevated-bg);
+    border-color: var(--farbe-akzent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--farbe-akzent) 25%, transparent);
+    outline: none;
   }
 
   .verzinsungsblock {
-    background: rgba(255, 255, 255, 0.35);
-    border: 1px solid var(--glas-rand);
+    background: var(--glass-input-bg);
+    border: 1px solid var(--glass-border-color);
     border-radius: var(--radius-klein);
   }
 
   /* Filterzeile der Kontenübersicht: Suche links, Sortierung als kompakte
-     Gruppe rechts, alle Kontrollen in gleicher Höhe und Pill-Form */
+     Glas-Pill mit eigenem Chevron rechts daneben */
   .konten-filter {
     gap: 12px;
     align-items: center;
@@ -1375,16 +1481,13 @@ dialog.dialog::backdrop {
     padding: 9px 18px;
   }
 
-  /* Sortierung als Glas-Pill mit eigenem Chevron direkt neben der Suche —
-     kein natives macOS-Feld, kein separates Label (aria-label/title bleiben) */
   .konten-filter select {
     appearance: none;
     -webkit-appearance: none;
     border-radius: 999px;
     padding: 9px 38px 9px 16px;
     font-weight: 560;
-    color: var(--farbe-text-schwach);
-    background-color: rgba(255, 255, 255, 0.66);
+    color: var(--text-secondary);
     background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%233d4759' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 14px center;
@@ -1392,87 +1495,118 @@ dialog.dialog::backdrop {
     cursor: pointer;
   }
 
-  .konten-filter select:hover {
-    background-color: rgba(255, 255, 255, 0.9);
-    color: var(--farbe-text);
+  html.dark .konten-filter select {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23a5adc0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   }
 
-  /* --- Buttons --- */
+  .konten-filter select:hover {
+    background-color: var(--glass-elevated-bg);
+    color: var(--text-primary);
+  }
+
+  /* --- Buttons: solide Flächen (kein Glas), sanfte Scale-Interaktion --- */
   .btn {
-    border-radius: 999px;
+    border-radius: var(--radius);
     text-decoration: none;
     transition: background-color 0.15s ease, box-shadow 0.15s ease,
       transform 0.1s ease, filter 0.15s ease;
   }
 
-  a.btn--primaer {
-    color: #fff;
+  .btn:not(:disabled):hover {
+    transform: scale(1.02);
   }
 
-  a.btn--sekundaer {
-    color: var(--farbe-text);
-  }
-
-  .btn:active {
-    transform: translateY(1px);
+  .btn:not(:disabled):active {
+    transform: scale(0.98);
   }
 
   .btn--primaer {
-    /* Solider Fallback zuerst: schlägt die color-mix-Auswertung fehl,
-       bleibt der Button satt in Akzentfarbe statt transparent. */
-    background: var(--farbe-akzent);
-    background-image: linear-gradient(180deg,
-      color-mix(in srgb, var(--farbe-akzent) 88%, #ffffff),
-      var(--farbe-akzent));
-    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.16),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    background: var(--primary);
+    border-color: transparent;
+    color: var(--primary-foreground);
+    box-shadow: var(--glass-shadow);
   }
 
-  /* Kein background-Tausch beim Hover: der Grundzustand ist ein Verlauf
-     (background-image); eine Vollfarbe würde beim Übergang kurz transparent
-     aufblitzen (die Basis-Regel oben macht genau das — hier neutralisiert).
-     Stattdessen denselben Verlauf behalten und per filter abdunkeln. */
   .btn--primaer:hover {
-    background: var(--farbe-akzent);
-    background-image: linear-gradient(180deg,
-      color-mix(in srgb, var(--farbe-akzent) 88%, #ffffff),
-      var(--farbe-akzent));
-    filter: brightness(0.9);
+    background: var(--primary);
+    border-color: transparent;
+    filter: brightness(1.06);
   }
 
   .btn--sekundaer {
-    background: var(--glas-reflex-leicht);
-    backdrop-filter: blur(8px) saturate(1.3);
-    -webkit-backdrop-filter: blur(8px) saturate(1.3);
-    border: 1px solid var(--glas-kontur);
-    color: var(--farbe-text);
-    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08), var(--glas-rand-innen);
+    background: var(--secondary);
+    border-color: var(--border);
+    color: var(--secondary-foreground);
+    box-shadow: var(--glass-shadow);
   }
 
   .btn--sekundaer:hover {
-    background: #ffffff;
-    box-shadow: var(--glas-schatten);
+    background: color-mix(in oklab, var(--secondary) 90%, var(--foreground));
+    border-color: var(--border);
   }
 
-  /* --- Dialoge: dichtes Liquid Glass über abgedunkeltem Hintergrund --- */
+  .btn--gefahr {
+    background: var(--destructive);
+    border-color: transparent;
+    color: var(--destructive-foreground);
+  }
+
+  .btn--gefahr:hover {
+    background: var(--destructive);
+    border-color: transparent;
+    filter: brightness(1.1);
+  }
+
+  a.btn--primaer {
+    color: var(--primary-foreground);
+  }
+
+  a.btn--sekundaer {
+    color: var(--secondary-foreground);
+  }
+
+  /* Icon-Button (z. B. Theme-Umschalter): quadratisch, rund */
+  .btn--icon {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 999px;
+  }
+
+  .btn--icon svg {
+    width: 18px;
+    height: 18px;
+    flex: none;
+  }
+
+  html:not(.dark) .icon-sonne {
+    display: none;
+  }
+
+  html.dark .icon-mond {
+    display: none;
+  }
+
+  /* --- Dialoge: Glas Stufe 4 über abgedunkeltem Hintergrund --- */
   dialog.dialog {
-    background: var(--glas-reflex-dicht);
+    background: var(--glass-elevated-bg);
     backdrop-filter: blur(40px) saturate(1.6);
     -webkit-backdrop-filter: blur(40px) saturate(1.6);
-    border: 1px solid var(--glas-rand);
-    box-shadow: var(--glas-schatten-gross), var(--glas-lichtkante);
+    border: 1px solid var(--glass-border-color);
+    box-shadow: var(--glass-shadow-lg);
   }
 
+  /* Literalwerte: ::backdrop erbt Custom Properties nicht zuverlässig */
   dialog.dialog::backdrop {
-    background: rgba(15, 23, 42, 0.45);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    background: rgb(0 0 0 / 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
 
   /* --- Banner, Meldungen, Fußzeile --- */
   .app-hinweisbanner,
   .report-hinweisbox {
-    background: color-mix(in srgb, #f4b942 16%, rgba(255, 255, 255, 0.6));
+    background: color-mix(in oklab, oklch(75% 0.14 75) 18%, var(--glass-card-bg));
     backdrop-filter: blur(16px) saturate(1.4);
     -webkit-backdrop-filter: blur(16px) saturate(1.4);
   }
@@ -1483,12 +1617,12 @@ dialog.dialog::backdrop {
   }
 
   .app-fusszeile {
-    border-top: 1px solid var(--glas-kontur);
-    color: var(--farbe-text-schwach);
+    border-top: 1px solid var(--glass-border-color);
+    color: var(--text-secondary);
   }
 
   .datei-status {
-    color: var(--farbe-text-schwach);
+    color: var(--text-secondary);
   }
 
   /* --- macOS-Scrollbalken --- */
@@ -1502,12 +1636,20 @@ dialog.dialog::backdrop {
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(100, 116, 139, 0.35);
+    background: oklch(60% 0.01 250 / 0.35);
     border-radius: 999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(71, 85, 105, 0.5);
+    background: oklch(50% 0.01 250 / 0.5);
+  }
+
+  html.dark ::-webkit-scrollbar-thumb {
+    background: oklch(60% 0.01 250 / 0.25);
+  }
+
+  html.dark ::-webkit-scrollbar-thumb:hover {
+    background: oklch(70% 0.01 250 / 0.4);
   }
 
   /* Keine Einblend-Animationen (Nutzer-Entscheidung) — neutralisiert auch
@@ -1532,22 +1674,21 @@ dialog.dialog::backdrop {
   }
 
   /* --- Globaler Glas-Tooltip für data-info-Hovertexte --- */
-
   #infoTooltip {
     position: fixed;
     z-index: 100;
     max-width: 320px;
     padding: 10px 14px;
-    background: var(--glas-reflex-dicht);
-    backdrop-filter: blur(24px) saturate(1.5);
-    -webkit-backdrop-filter: blur(24px) saturate(1.5);
-    border: 1px solid var(--glas-kontur);
+    background: var(--glass-elevated-bg);
+    backdrop-filter: blur(40px) saturate(1.6);
+    -webkit-backdrop-filter: blur(40px) saturate(1.6);
+    border: 1px solid var(--glass-border-color);
     border-radius: var(--radius-klein);
-    box-shadow: var(--glas-schatten-gross), var(--glas-rand-innen);
+    box-shadow: var(--glass-shadow-lg);
     font-size: 0.85rem;
     font-weight: 400;
     font-style: normal;
-    color: var(--farbe-text);
+    color: var(--foreground);
     line-height: 1.45;
     pointer-events: none;
   }
@@ -1561,7 +1702,7 @@ dialog.dialog::backdrop {
     width: 1px;
     align-self: stretch;
     margin: 4px 2px;
-    background: rgba(15, 23, 42, 0.14);
+    background: color-mix(in oklab, var(--foreground) 14%, transparent);
   }
 
   .werkzeugleiste__trenner:has(+ .datei-werkzeuge:empty) {

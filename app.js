@@ -1891,8 +1891,25 @@ if (typeof document !== 'undefined') {
     });
   }
 
+  // Hell/Dunkel: Umschalter + System-Präferenz. Die Klasse .dark wird schon
+  // vor dem ersten Paint von einem Inline-Script im <head> gesetzt.
+  function initTheme() {
+    const KEY = 'saldenwerk.theme';
+    const media = matchMedia('(prefers-color-scheme: dark)');
+    const setze = (dunkel) => document.documentElement.classList.toggle('dark', dunkel);
+    document.getElementById('btnTheme').addEventListener('click', () => {
+      const dunkel = !document.documentElement.classList.contains('dark');
+      setze(dunkel);
+      localStorage.setItem(KEY, dunkel ? 'dunkel' : 'hell');
+    });
+    media.addEventListener('change', (e) => {
+      if (!localStorage.getItem(KEY)) setze(e.matches);
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     App.laden();
+    initTheme();
     initNavigation();
     initInfoButtons();
     initKontenAnsicht();
