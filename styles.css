@@ -641,7 +641,8 @@ select:focus {
 
 .report-inhalt {
   margin-top: 18px;
-  max-width: 800px;
+  /* Querformat-Blatt wie Druck/PDF: A4 quer bei 96 dpi ≈ 1122px */
+  max-width: 1122px;
   background: var(--farbe-flaeche);
   border: 1px solid var(--farbe-rand);
   border-radius: var(--radius);
