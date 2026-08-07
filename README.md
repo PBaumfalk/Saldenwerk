@@ -1,8 +1,8 @@
-# J-Forderungsrechner
+# Saldenwerk
 
-[![Tests & Docker-Image](https://github.com/PBaumfalk/J-Forderungsrechner/actions/workflows/docker.yml/badge.svg)](https://github.com/PBaumfalk/J-Forderungsrechner/actions/workflows/docker.yml)
+[![Tests & Docker-Image](https://github.com/PBaumfalk/Saldenwerk/actions/workflows/docker.yml/badge.svg)](https://github.com/PBaumfalk/Saldenwerk/actions/workflows/docker.yml)
 [![Lizenz: MIT](https://img.shields.io/badge/Lizenz-MIT-blue.svg)](LICENSE)
-[![Docker-Image](https://img.shields.io/badge/ghcr.io-pbaumfalk%2Fj--forderungsrechner-blue?logo=docker)](https://ghcr.io/pbaumfalk/j-forderungsrechner)
+[![Docker-Image](https://img.shields.io/badge/ghcr.io-pbaumfalk%2Fsaldenwerk-blue?logo=docker)](https://ghcr.io/pbaumfalk/saldenwerk)
 
 Forderungskonten führen, Verzugszinsen nach § 288 BGB und RVG-Kosten
 berechnen — direkt im Browser, ohne Server, ohne Registrierung, ohne
@@ -24,15 +24,15 @@ und optionaler [j-lawyer.org](https://www.j-lawyer.org)-Anbindung.
 **Als Docker-Container** (empfohlen — eine URL für alle Arbeitsplätze):
 
 ```
-docker run -d -p 8090:80 ghcr.io/pbaumfalk/j-forderungsrechner:latest
+docker run -d -p 8090:80 ghcr.io/pbaumfalk/saldenwerk:latest
 ```
 
 Die App läuft dann unter `http://localhost:8090`. Alternativ mit
 j-lawyer-Anbindung per Compose (siehe [Docker-Deployment](#docker-deployment)):
 
 ```
-git clone https://github.com/PBaumfalk/J-Forderungsrechner.git
-cd J-Forderungsrechner
+git clone https://github.com/PBaumfalk/Saldenwerk.git
+cd Saldenwerk
 docker compose up -d --build
 ```
 

@@ -1,4 +1,4 @@
-// Betriebsmodus des J-Forderungsrechners.
+// Betriebsmodus von Saldenwerk.
 //
 //   oeffentlich: false  → Kanzlei-Modus (Standard): alle Funktionen inkl.
 //                         j-lawyer-Anbindung sichtbar.

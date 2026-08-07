@@ -1,4 +1,4 @@
-# J-Forderungsrechner: statische App + same-origin Proxy zur j-lawyer-REST-API.
+# Saldenwerk: statische App + same-origin Proxy zur j-lawyer-REST-API.
 # JLAWYER_URL beim Deployen setzen (z. B. in einer .env-Datei):
 #   JLAWYER_URL=http://192.168.1.10:8080   (ohne Pfad, ohne Slash am Ende)
 server {

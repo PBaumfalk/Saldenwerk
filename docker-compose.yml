@@ -1,7 +1,7 @@
-# J-Forderungsrechner als Kanzlei-Deployment: eine URL für alle Arbeitsplätze,
+# Saldenwerk als Kanzlei-Deployment: eine URL für alle Arbeitsplätze,
 # j-lawyer-API wird unter demselben Origin durchgereicht (kein CORS).
 services:
-  j-forderungsrechner:
+  saldenwerk:
     build: .
     ports:
       - "8090:80"
