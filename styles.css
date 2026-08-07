@@ -2,7 +2,7 @@
   Saldenwerk — eigenständiges Design ohne Framework.
   Zwei Schichten: eine neutrale Basis (Struktur, Abstände, Druck) und der
   Bildschirm-Layer am Dateiende, der das Saldenwerk-CI setzt (Token, Farben,
-  Komponenten — siehe saldenwerk-ci/). Tabellen folgen der Ledger-Logik
+  Komponenten). Tabellen folgen der Ledger-Logik
   (tabellarische Ziffern, rechtsbündige Beträge). Präzise statt verspielt.
 */
 
@@ -1245,7 +1245,7 @@ dialog.dialog::backdrop {
 
 /* ==========================================================================
    Saldenwerk-CI-Designsystem (nur Bildschirm — Druckstile bleiben unberührt).
-   Quelle: saldenwerk-ci/ (BRAND.md, UI-SYSTEM.md, styles/saldenwerk.css).
+   Farben, Radien und Regeln folgen dem Saldenwerk-Corporate-Design.
    Flaches, präzises B2B-Design: 1px-Borders, ruhige Flächen, Radius 8/12/16,
    keine Verläufe, kein Glas, kein Zebra. Zwei Markenkanäle:
    --sw-brand (Navy hell / fast-weiß dunkel) trägt Primär-Buttons und ist
