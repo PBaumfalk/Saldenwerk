@@ -4,7 +4,7 @@ Alle nennenswerten Änderungen an Saldenwerk werden hier festgehalten.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionierung [Semantic Versioning](https://semver.org/lang/de/).
 
-## [Unreleased]
+## [1.0.1] – 2026-08-12
 
 ### Behoben
 - Beträge mit Tausenderpunkt ohne Komma („1.000") wurden als Dezimalzahl
@@ -38,5 +38,5 @@ Erste veröffentlichte Version: Forderungskonten mit Zinsberechnung
 § 367 und § 497 Abs. 3 BGB, RVG-Gebührenrechner, Report mit PDF-Export und
 Antragstext, Datei-Speicherung im Kanzlei-Netz, Docker-Deployment.
 
-[Unreleased]: https://github.com/PBaumfalk/Saldenwerk/compare/v1.0.0...HEAD
+[1.0.1]: https://github.com/PBaumfalk/Saldenwerk/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/PBaumfalk/Saldenwerk/releases/tag/v1.0.0
