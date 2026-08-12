@@ -39,8 +39,9 @@
   const UST_SATZ = 0.19; // Nr. 7008 VV RVG
   const VERZUGSPAUSCHALE = 40; // § 288 Abs. 5 BGB
 
+  // Symmetrisch wie Engine.round2: -1.005 → -1.01 (Math.round allein käme auf -1).
   function round2(x) {
-    return Math.round((x + Number.EPSILON) * 100) / 100;
+    return Math.sign(x) * Math.round((Math.abs(x) + Number.EPSILON) * 100) / 100;
   }
 
   function formatWert(betrag) {
