@@ -11,6 +11,8 @@
     if (typeof s !== 'string' || !s.trim()) return null;
     let t = s.trim().replace(/\s|€/g, '');
     if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.');
+    // Punkte in 3er-Gruppen sind Tausendertrenner, auch ohne Komma („1.000" = 1000).
+    else if (/^-?\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, '');
     if (!/^-?\d+(\.\d+)?$/.test(t)) return null;
     return Number(t);
   }

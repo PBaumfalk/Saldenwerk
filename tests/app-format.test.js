@@ -14,6 +14,19 @@ test('parseBetrag akzeptiert deutsche und technische Schreibweise', () => {
   assert.strictEqual(parseBetrag('abc'), null);
   assert.strictEqual(parseBetrag(''), null);
 });
+test('parseBetrag erkennt Tausenderpunkte auch ohne Komma', () => {
+  assert.strictEqual(parseBetrag('1.000'), 1000);
+  assert.strictEqual(parseBetrag('10.000'), 10000);
+  assert.strictEqual(parseBetrag('1.234.567'), 1234567);
+  assert.strictEqual(parseBetrag('2.750'), 2750);
+  assert.strictEqual(parseBetrag('1.000,50'), 1000.5);
+  assert.strictEqual(parseBetrag('-1.000'), -1000);
+});
+test('parseBetrag lässt technische Dezimalpunkte unangetastet', () => {
+  assert.strictEqual(parseBetrag('1234.56'), 1234.56);
+  assert.strictEqual(parseBetrag('1.23'), 1.23);
+  assert.strictEqual(parseBetrag('0.5'), 0.5);
+});
 test('verrechnungsText benennt die Tilgungsreihenfolge', () => {
   assert.strictEqual(verrechnungsText('497'), 'Verrechnung nach § 497 Abs. 3 BGB');
   assert.strictEqual(verrechnungsText('367'), 'Verrechnung nach § 367 BGB');
