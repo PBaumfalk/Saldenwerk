@@ -1,5 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
+const { execFileSync } = require('node:child_process');
+const path = require('node:path');
 const Engine = require('../engine.js');
 
 test('tageKalender zählt tatsächliche Tage', () => {
@@ -27,6 +29,28 @@ test('jahresSegmente splittet am Jahresende', () => {
   ]);
   assert.deepStrictEqual(Engine.jahresSegmente('2024-03-01', '2024-04-01'),
     [{ von: '2024-03-01', bis: '2024-04-01', jahr: 2024, tage: 31 }]);
+});
+
+test('heute() liefert das lokale Datum, nicht das UTC-Datum', () => {
+  // 23:30 UTC = 01:30 des Folgetags in Europe/Berlin (Sommerzeit).
+  const skript = `
+    const Real = Date;
+    const fest = new Real('2026-08-11T23:30:00Z');
+    global.Date = class extends Real {
+      constructor(...a) { super(...(a.length ? a : [fest.getTime()])); }
+    };
+    const Engine = require(${JSON.stringify(path.join(__dirname, '..', 'engine.js'))});
+    process.stdout.write(Engine.heute());
+  `;
+  const aus = execFileSync(process.execPath, ['-e', skript], {
+    env: { ...process.env, TZ: 'Europe/Berlin' },
+    encoding: 'utf8',
+  });
+  assert.strictEqual(aus, '2026-08-12');
+});
+
+test('heute() liefert ein ISO-Datum', () => {
+  assert.match(Engine.heute(), /^\d{4}-\d{2}-\d{2}$/);
 });
 
 test('round2 rundet kaufmännisch', () => {

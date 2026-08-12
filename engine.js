@@ -10,7 +10,11 @@
   function tageKalender(von, bis) { return Math.round((d(bis) - d(von)) / TAG_MS); }
   function istSchaltjahr(j) { return (j % 4 === 0 && j % 100 !== 0) || j % 400 === 0; }
   function round2(x) { return Math.sign(x) * Math.round((Math.abs(x) + Number.EPSILON) * 100) / 100; }
-  function heute() { return iso(new Date()); }
+  // Lokale Datumsteile statt toISOString(): UTC wäre nachts der Vortag.
+  function heute() {
+    const x = new Date();
+    return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+  }
 
   function tageBank360(von, bis) {
     const [y1, m1, t1] = von.split('-').map(Number);
