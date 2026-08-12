@@ -1,3 +1,8 @@
+// Basiszinssatz nach § 247 BGB, halbjährlich zum 1.1. und 1.7.
+// Quelle: Deutsche Bundesbank, www.bundesbank.de → Basiszinssatz.
+// Pflege: neuen Halbjahreswert unten an TABELLE anhängen — und im selben
+// Commit tests/basiszins.test.js anpassen (dort ist deckungsEnde auf das
+// aktuelle Tabellenende festgenagelt, der Test schlägt sonst fehl).
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.Basiszins = factory();
