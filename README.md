@@ -138,6 +138,9 @@ node --test tests/*.test.js
 `konfig.js` konfigurierbar — siehe
 [Handbuch, Kapitel 10](docs/handbuch/10-anpassung.md).
 
+Was sich von Version zu Version ändert, steht im
+[Änderungsprotokoll](CHANGELOG.md).
+
 ## Lizenz
 
 [MIT](LICENSE) — © 2026 Patrick Baumfalk.
