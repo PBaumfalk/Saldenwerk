@@ -82,10 +82,16 @@
       throw new Error('Gegenstandswert muss eine Zahl größer als 0 sein.');
     }
     const datum = eingaben.datum;
+    if (typeof datum !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(datum)) {
+      throw new Error('Datum muss im Format JJJJ-MM-TT vorliegen.');
+    }
     const buchungen = [];
     const hinweise = [];
     const wertZusatz = ` (Wert: ${formatWert(wert)})`;
     const buchung = (text, betrag) => {
+      if (!Number.isFinite(betrag)) {
+        throw new Error(`Gebührenbetrag für „${text}" ist keine gültige Zahl.`);
+      }
       if (betrag > 0) buchungen.push({ typ: 'nebenforderung', datum, betrag, text, verzinsung: null });
     };
     const phase = (gebuehren, mitPauschale, mitUst) => {
@@ -105,6 +111,9 @@
     const v = eingaben.vorgerichtlich || {};
     if (v.aktiv) {
       const faktor = v.faktor;
+      if (typeof faktor !== 'number' || !isFinite(faktor) || faktor <= 0) {
+        throw new Error('Faktor der Geschäftsgebühr muss eine Zahl größer als 0 sein.');
+      }
       if (faktor > 1.3) {
         hinweise.push('Ein Faktor über 1,3 ist nach Anm. zu Nr. 2300 VV RVG nur bei umfangreicher oder schwieriger Tätigkeit zulässig.');
       }
@@ -120,7 +129,7 @@
         let faktor = 1.3;
         let zusatz = '';
         if (g.anrechnung) {
-          faktor = round2(1.3 - Math.min((g.anrechnungsFaktor || 0) / 2, 0.75));
+          faktor = round2(1.3 - Math.min(Math.max(g.anrechnungsFaktor || 0, 0) / 2, 0.75));
           zusatz = ' nach Anrechnung gem. Vorbem. 3 Abs. 4 VV RVG';
         }
         gebuehren.push([`${formatFaktor(faktor)} Verfahrensgebühr Nr. 3100 VV RVG${zusatz}${wertZusatz}`, rvgBetrag(faktor, wert)]);

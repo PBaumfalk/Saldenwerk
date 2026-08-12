@@ -139,3 +139,39 @@ test('baueNebenforderungen: ungültiger Gegenstandswert wirft Fehler', () => {
     verzugspauschale: false,
   }));
 });
+
+test('baueNebenforderungen: ungültiges Datum wirft Fehler', () => {
+  for (const datum of ['irgendwas', '05.08.2026', '', undefined]) {
+    assert.throws(() => Rvg.baueNebenforderungen({
+      gegenstandswert: 1000, datum,
+      vorgerichtlich: { aktiv: true, faktor: 1.3 }, gerichtlich: { aktiv: false },
+      verzugspauschale: false,
+    }), /Datum/, `datum=${String(datum)}`);
+  }
+});
+
+test('baueNebenforderungen: ungültiger Faktor wirft Fehler statt stillem Leerergebnis', () => {
+  for (const faktor of [NaN, undefined, '1,3', -1.3, 0]) {
+    assert.throws(() => Rvg.baueNebenforderungen({
+      gegenstandswert: 1000, datum: '2026-08-05',
+      vorgerichtlich: { aktiv: true, faktor, auslagenpauschale: false, umsatzsteuer: false },
+      gerichtlich: { aktiv: false },
+      verzugspauschale: false,
+    }), /Faktor/, `faktor=${String(faktor)}`);
+  }
+});
+
+test('baueNebenforderungen: negativer Anrechnungsfaktor erhöht die Verfahrensgebühr nicht', () => {
+  const r = Rvg.baueNebenforderungen({
+    gegenstandswert: 1000, datum: '2026-08-05',
+    vorgerichtlich: { aktiv: false },
+    gerichtlich: {
+      aktiv: true, verfahrensart: 'klage', verfahrensgebuehr: true,
+      anrechnung: true, anrechnungsFaktor: -4,
+      terminsgebuehr: false, auslagenpauschale: false, umsatzsteuer: false, gerichtskosten: false,
+    },
+    verzugspauschale: false,
+  });
+  assert.ok(r.buchungen[0].text.startsWith('1,3 Verfahrensgebühr'),
+    `unerwartet: ${r.buchungen[0].text}`);
+});
