@@ -66,12 +66,31 @@ docker compose up -d --build
 in sicheren Kontexten (HTTPS oder `localhost`). Ohne HTTPS läuft die App
 im LAN trotzdem — die Daten liegen dann im localStorage des jeweiligen
 Browsers, mit Backup-Erinnerung. Für HTTPS: Zertifikate nach
-`certs/tls.crt`/`tls.key` legen und in `docker-compose.yml` die
-auskommentierten Zeilen (Port 8443 + Volumes) aktivieren.
+`certs/tls.crt`/`tls.key` legen und in `docker-compose.yml` die drei
+markierten Stellen aktivieren — die Port-Zeile `"8443:443"` unter dem
+bestehenden `ports:` sowie den `volumes:`-Block einkommentieren (nicht
+den `ports:`-Schlüssel selbst doppeln, sonst startet Compose nicht).
 
-**Updates:** `git pull && docker compose up -d --build` bzw. beim
-Image-Betrieb `docker pull ghcr.io/pbaumfalk/saldenwerk:latest` und den
-Container neu starten. Der Container speichert selbst keine Nutzerdaten.
+**Updates:** Beim Compose-Betrieb `git pull && docker compose up -d --build`.
+Beim Image-Betrieb reicht ein Neustart **nicht** — der Container läuft
+sonst auf dem alten Stand weiter. Stattdessen:
+
+```
+docker pull ghcr.io/pbaumfalk/saldenwerk:latest
+docker rm -f <container-name>
+docker run -d -p 8090:80 --restart unless-stopped ghcr.io/pbaumfalk/saldenwerk:latest
+```
+
+Der Container speichert selbst keine Nutzerdaten. Für den Produktivbetrieb
+empfiehlt sich statt `latest` ein fester Versions-Tag (z. B. `:1.0.1`) —
+dann entscheidet die Kanzlei selbst, wann ein Update kommt; was sich
+ändert, steht im [Änderungsprotokoll](../../CHANGELOG.md).
+
+**Hinweis zur Doppelklick-Variante:** Wird `index.html` direkt aus dem
+Dateisystem geöffnet, blockiert Chrome das Nachladen der mitgelieferten
+Schrift — die App nutzt dann die Systemschrift. Rein optisch, alle
+Funktionen bleiben erhalten; im Docker-Betrieb erscheint die reguläre
+Schrift.
 
 ---
 

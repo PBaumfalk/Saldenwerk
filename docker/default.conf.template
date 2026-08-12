@@ -4,12 +4,28 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    server_tokens off;
+    charset utf-8;
+    charset_types text/css application/javascript;
+
+    # Textressourcen komprimieren (woff2 ist bereits komprimiert).
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/css application/javascript image/svg+xml application/json;
+
+    include /etc/nginx/includes/security-headers.conf;
+
     # App-Dateien immer revalidieren (verhindert Alt/Neu-Mischstaende nach
     # Updates); die grossen vendor-Bibliotheken duerfen lange cachen.
+    # Hinweis: bei einem vendor-Update Dateinamen versionieren oder die
+    # immutable-Regel lockern — Clients cachen ein Jahr.
     location ~* \.(html|css|js)$ {
         add_header Cache-Control "no-cache";
+        include /etc/nginx/includes/security-headers.conf;
     }
     location ^~ /vendor/ {
         add_header Cache-Control "public, max-age=31536000, immutable";
+        include /etc/nginx/includes/security-headers.conf;
     }
 }

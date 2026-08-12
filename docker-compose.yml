@@ -4,14 +4,14 @@ services:
     build: .
     ports:
       - "8090:80"
+      # HTTPS: zusätzlich die folgende Zeile einkommentieren (Schritt 2 unten):
+      # - "8443:443"
     restart: unless-stopped
 
     # HTTPS aktivieren (nötig für die Datei-Speicherung im LAN):
     # 1. Zertifikate nach ./certs/tls.crt und ./certs/tls.key legen,
-    # 2. die folgenden Zeilen einkommentieren:
-    # ports:
-    #   - "8090:80"
-    #   - "8443:443"
+    # 2. oben unter ports: die Zeile "8443:443" einkommentieren,
+    # 3. die folgenden Volumes einkommentieren:
     # volumes:
     #   - ./docker/ssl.conf.template:/etc/nginx/templates/ssl.conf.template:ro
     #   - ./certs:/etc/nginx/certs:ro
