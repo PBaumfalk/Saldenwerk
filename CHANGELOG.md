@@ -16,8 +16,17 @@ die Versionierung [Semantic Versioning](https://semver.org/lang/de/).
 - Der RVG-Rechner prüft seine Eingaben jetzt selbst: ungültige Faktoren
   werfen einen Fehler statt still eine leere Gebührenliste zu liefern, ein
   negativer Anrechnungsfaktor kann die Verfahrensgebühr nicht mehr erhöhen.
+- Die HTTPS-Anleitung führte zu einer defekten `docker-compose.yml`
+  (doppelter `ports:`-Schlüssel) — Compose-Kommentare und Handbuch
+  korrigiert; ebenso die Update-Anleitung für den Image-Betrieb.
 
 ### Geändert
+- Auslieferung gehärtet: Security-Header (u. a. Content-Security-Policy,
+  nosniff, Clickjacking-Schutz), gzip-Kompression (Erstaufruf ~70 %
+  kleiner), nginx-Version gepinnt, Container-Healthcheck.
+- Schrift wird vorgeladen (kein Aufblitzen der Systemschrift beim Start);
+  gebündelte Bibliotheksversionen sind jetzt in `vendor/README.md`
+  dokumentiert.
 - CI baut und testet das Docker-Image jetzt auch auf Pull Requests
   (inkl. Smoke-Test); Releases entstehen automatisch beim Taggen.
 - Dependabot hält GitHub-Actions und das nginx-Basis-Image aktuell.
