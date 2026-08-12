@@ -135,6 +135,14 @@ test('validiereExport: Buchung mit ungültigem datum liefert ok:false', () => {
   assert.ok(ergebnis.fehler);
 });
 
+test('validiereExport: unmöglicher Monat wirft nicht, sondern liefert ok:false', () => {
+  const datei = gueltigeDatei();
+  datei.konten[0].buchungen[0].datum = '2024-13-01';
+  const ergebnis = validiereExport(datei);
+  assert.strictEqual(ergebnis.ok, false);
+  assert.ok(ergebnis.fehler);
+});
+
 test('validiereExport: Betrag als String liefert ok:false', () => {
   const datei = gueltigeDatei();
   datei.konten[0].buchungen[0].betrag = '1000';

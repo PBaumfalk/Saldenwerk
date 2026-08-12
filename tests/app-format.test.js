@@ -60,3 +60,10 @@ test('Datum hin und zurück', () => {
   assert.strictEqual(parseDatum('2024-07-01'), '2024-07-01');
   assert.strictEqual(parseDatum('31.02.2024'), null);
 });
+test('parseDatum liefert null statt RangeError bei unmöglichen Werten', () => {
+  assert.strictEqual(parseDatum('2024-13-01'), null);
+  assert.strictEqual(parseDatum('2024-00-10'), null);
+  assert.strictEqual(parseDatum('9999-99-99'), null);
+  assert.strictEqual(parseDatum('13.13.2024'), null);
+  assert.strictEqual(parseDatum('2024-02-30'), null);
+});

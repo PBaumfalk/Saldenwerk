@@ -32,6 +32,7 @@
     }
     const iso = `${j}-${String(mo).padStart(2, '0')}-${String(t).padStart(2, '0')}`;
     const d = new Date(iso + 'T00:00:00Z');
+    if (Number.isNaN(d.getTime())) return null;
     return d.toISOString().slice(0, 10) === iso ? iso : null;
   }
 
