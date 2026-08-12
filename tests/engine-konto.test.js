@@ -193,3 +193,60 @@ test('Buchungen nach Stichtag werden ignoriert', () => {
   assert.strictEqual(r.summen.hauptforderung.gesamt, 100);
   assert.strictEqual(r.ignorierteBuchungen, 1);
 });
+
+test('Randfall: Zahlung am Stichtag wird noch verrechnet, Zahltag verzinst nur den Rest', () => {
+  const konto = { buchungen: [
+    hf(1000, '2024-01-01', fest5('2024-01-01')),
+    { id: 'z1', typ: 'zahlung', datum: '2024-12-31', betrag: 1000, text: 'Zahlung' },
+  ] };
+  const r = Engine.berechneKonto(konto, '2024-12-31', T);
+  // Zinsen bis 30.12.: 1000 * 5% * 365/366 = 49,86; Zahlung tilgt Zinsen + 950,14 HF;
+  // der Zahltag selbst verzinst nur noch den Rest (49,86 * 5%/366 ≈ 0,01).
+  assert.strictEqual(Engine.round2(r.summen.saldo), 49.87);
+});
+
+test('Randfall: zwei Zahlungen am selben Tag werden beide verrechnet', () => {
+  const konto = { buchungen: [
+    hf(1000, '2024-01-10', { art: 'keine' }),
+    { id: 'z1', typ: 'zahlung', datum: '2024-02-10', betrag: 400, text: 'Zahlung 1' },
+    { id: 'z2', typ: 'zahlung', datum: '2024-02-10', betrag: 600, text: 'Zahlung 2' },
+  ] };
+  const r = Engine.berechneKonto(konto, '2024-03-01', T);
+  assert.strictEqual(r.summen.saldo, 0);
+  assert.strictEqual(r.verrechnungen.length, 2);
+});
+
+test('Randfall: leeres oder fehlendes buchungen-Feld liefert Nullsummen', () => {
+  for (const konto of [{ buchungen: [] }, {}]) {
+    const r = Engine.berechneKonto(konto, '2024-06-01', T);
+    assert.strictEqual(r.summen.saldo, 0);
+    assert.strictEqual(r.posten.length, 0);
+  }
+});
+
+test('Randfall: Zahlung ohne jede Forderung ergibt Überzahlung', () => {
+  const konto = { buchungen: [
+    { id: 'z1', typ: 'zahlung', datum: '2024-01-01', betrag: 100, text: 'Zahlung' },
+  ] };
+  const r = Engine.berechneKonto(konto, '2024-06-01', T);
+  assert.strictEqual(r.summen.ueberzahlung, 100);
+  assert.strictEqual(r.summen.saldo, -100);
+});
+
+test('Randfall: verzinsung.ende undefined verhält sich wie ende null', () => {
+  const mitNull = { buchungen: [hf(1000, '2024-01-01', fest5('2024-01-01', null))] };
+  const ohneEnde = { buchungen: [
+    hf(1000, '2024-01-01', { art: 'fest', satz: 5, beginn: '2024-01-01', methode: 'kalender' }),
+  ] };
+  const a = Engine.berechneKonto(mitNull, '2024-12-31', T);
+  const b = Engine.berechneKonto(ohneEnde, '2024-12-31', T);
+  assert.strictEqual(a.summen.saldo, b.summen.saldo);
+  assert.ok(a.summen.laufendeZinsen.gesamt > 0);
+});
+
+test('Randfall: ende vor beginn ergibt 0 Zinsen statt negativer Werte', () => {
+  const konto = { buchungen: [hf(1000, '2024-06-01', fest5('2024-06-01', '2024-01-01'))] };
+  const r = Engine.berechneKonto(konto, '2024-12-31', T);
+  assert.strictEqual(r.summen.laufendeZinsen.gesamt, 0);
+  assert.strictEqual(r.summen.saldo, 1000);
+});
