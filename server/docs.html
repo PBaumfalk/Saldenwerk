@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Saldenwerk — Schnittstellenbeschreibung</title>
+<!-- Swagger UI liegt vendored unter vendor/swagger-ui/ und wird vom
+     API-Container ausgeliefert, nicht vom nginx der Browser-App. Es wird
+     bewusst nichts von einem CDN geladen: die bestehende CSP erlaubt
+     ausschliesslich 'self'. -->
+<link rel="stylesheet" href="/api/docs/swagger-ui.css">
+<style>
+  body { margin: 0; background: #fafafa; }
+  .hinweis {
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: #fff8e1; border-bottom: 1px solid #e6d48a;
+    padding: 12px 20px; color: #4a3c00;
+  }
+  .hinweis strong { color: #2b2300; }
+  .hinweis code { background: rgba(0,0,0,.06); padding: 1px 5px; border-radius: 3px; }
+  .swagger-ui .topbar { display: none; }
+</style>
+</head>
+<body>
+<p class="hinweis">
+  <strong>Saldenwerk-Schnittstelle.</strong>
+  Die Endpunkte verlangen eine Anmeldung — oben rechts über
+  <em>Authorize</em> die Zugangsdaten aus <code>SALDENWERK_API_BENUTZER</code>
+  und <code>SALDENWERK_API_PASSWORT</code> eintragen.
+  Die Schnittstelle ist <strong>zustandslos</strong>: Sie bekommt den
+  Datenbestand als Anfrage, rechnet und speichert nichts.
+  Diese Seite ist für den Betrieb im Kanzleinetz gedacht, nicht für das
+  offene Internet.
+</p>
+<div id="swagger-ui"></div>
+<script src="/api/docs/swagger-ui-bundle.js"></script>
+<script>
+  window.ui = SwaggerUIBundle({
+    url: '/api/openapi.json',
+    dom_id: '#swagger-ui',
+    deepLinking: true,
+    displayRequestDuration: true,
+    defaultModelsExpandDepth: 0,
+    tryItOutEnabled: true,
+    persistAuthorization: false,
+    supportedSubmitMethods: ['get', 'post'],
+  });
+</script>
+</body>
+</html>

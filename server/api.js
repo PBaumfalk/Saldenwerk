@@ -11,6 +11,8 @@
 // können. Das Lesen der Umgebung und der fail-closed-Start liegen in server.js.
 const http = require('node:http');
 const crypto = require('node:crypto');
+const fs = require('node:fs');
+const path = require('node:path');
 const Kern = require('../kern.js');
 
 const MAX_BYTES = 10 * 1024 * 1024; // identisch zu client_max_body_size im nginx-Block
@@ -166,8 +168,48 @@ function rechnend(anwendungsfall, sendeErgebnis) {
 
 // ── Endpunkte ──────────────────────────────────────────────────────────────
 
+// Schnittstellenbeschreibung und Swagger UI. Ohne Anmeldung erreichbar —
+// die Beschreibung enthält keine Daten, und ein Anmeldedialog vor der
+// Dokumentationsseite würde nur verhindern, dass man sich dort anmelden kann.
+// Die Endpunkte selbst bleiben geschützt.
+const DOKU_DATEIEN = {
+  '/api/docs': { datei: path.join(__dirname, 'docs.html'), typ: 'text/html; charset=utf-8' },
+  '/api/docs/swagger-ui.css': {
+    datei: path.join(__dirname, '..', 'vendor', 'swagger-ui', 'swagger-ui.css'),
+    typ: 'text/css; charset=utf-8', cachen: true },
+  '/api/docs/swagger-ui-bundle.js': {
+    datei: path.join(__dirname, '..', 'vendor', 'swagger-ui', 'swagger-ui-bundle.js'),
+    typ: 'application/javascript; charset=utf-8', cachen: true },
+};
+
+function sendeDatei(antwort, eintrag) {
+  let inhalt;
+  try {
+    inhalt = fs.readFileSync(eintrag.datei);
+  } catch {
+    return sendeFehler(antwort, 404,
+      'Die Schnittstellenbeschreibung ist in dieser Installation nicht mitgeliefert.');
+  }
+  antwort.writeHead(200, {
+    'Content-Type': eintrag.typ,
+    'Content-Length': inhalt.length,
+    'Cache-Control': eintrag.cachen ? 'public, max-age=3600' : 'no-cache',
+  });
+  antwort.end(inhalt);
+}
+
 function baueRouten(konfig) {
-  return [
+  const dokuRouten = Object.entries(DOKU_DATEIEN).map(([pfad, eintrag]) => ({
+    methode: 'GET', pfad, auth: false,
+    behandle: (anfrage, antwort) => sendeDatei(antwort, eintrag),
+  }));
+
+  return dokuRouten.concat([
+    { methode: 'GET', pfad: '/api/openapi.json', auth: false, behandle: (anfrage, antwort) => {
+      sendeDatei(antwort, { datei: path.join(__dirname, 'openapi.json'),
+        typ: 'application/json; charset=utf-8' });
+    } },
+
     // Ohne Auth: Die Browser-UI erkennt daran, ob überhaupt eine API läuft.
     { methode: 'GET', pfad: '/api/status', auth: false, behandle: (a, antwort) => {
       sendeJson(antwort, 200, {
@@ -234,7 +276,7 @@ function baueRouten(konfig) {
       if (!r.ok) return sendeKernFehler(antwort, r);
       sendeJson(antwort, 200, { buchungen: r.buchungen, hinweise: r.hinweise, stand: r.stand });
     } },
-  ];
+  ]);
 }
 
 // ── Server ─────────────────────────────────────────────────────────────────
@@ -278,4 +320,8 @@ function erzeugeServer(konfig) {
   });
 }
 
-module.exports = { erzeugeServer, MAX_BYTES };
+// baueRouten wird mitexportiert, damit tests/api-openapi.test.js die
+// tatsächlich bedienten Pfade gegen server/openapi.json abgleichen kann —
+// in beide Richtungen. Sonst läuft die Beschreibung von der Implementierung
+// weg, ohne dass es jemandem auffällt.
+module.exports = { erzeugeServer, baueRouten, inhaltsVerfuegung, MAX_BYTES };

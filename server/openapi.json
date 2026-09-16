@@ -1,0 +1,525 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Saldenwerk",
+    "version": "1.1.0",
+    "summary": "Rechen-Schnittstelle für Forderungskonten",
+    "description": "Zustandslose Schnittstelle zu den Rechenwegen von Saldenwerk: Verzugszinsen nach § 288 und § 247 BGB, Verrechnung von Zahlungen nach § 367 BGB oder § 497 Abs. 3 BGB, RVG- und GKG-Gebühren nach KostRÄG 2025, Forderungsaufstellung als HTML und PDF sowie der Antragstext für Mahnbescheid oder Klage.\n\n**Zustandslos.** Der Anfragekörper ist exakt das Dateiformat Version 1, wie es die Browser-App auf dem Netzlaufwerk ablegt. Der Server speichert nichts — weder in einer Datenbank noch als Datei. Er rechnet und vergisst.\n\n**Nur im Kanzleinetz.** Die Schnittstelle ist für den Betrieb hinter dem eigenen nginx gedacht, nicht für das offene Internet. Die Anmeldung läuft über HTTP Basic Auth; ohne TLS davor werden die Zugangsdaten im Klartext übertragen.",
+    "license": { "name": "MIT", "identifier": "MIT" },
+    "contact": { "name": "Saldenwerk", "url": "https://github.com/PBaumfalk/Saldenwerk" }
+  },
+  "servers": [
+    { "url": "/api", "description": "hinter dem nginx der Kanzlei-Installation" }
+  ],
+  "tags": [
+    { "name": "Allgemein", "description": "Erkennung und Stammdaten" },
+    { "name": "Berechnung", "description": "Forderungskonto rechnen und ausgeben" },
+    { "name": "Gebühren", "description": "RVG und GKG" }
+  ],
+  "security": [{ "basicAuth": [] }],
+  "paths": {
+    "/status": {
+      "get": {
+        "tags": ["Allgemein"],
+        "summary": "Erreichbarkeit und Funktionsumfang",
+        "description": "Ohne Anmeldung abrufbar: Die Browser-App erkennt daran, ob überhaupt eine Schnittstelle läuft und welche Zusatzfunktionen freigeschaltet sind.",
+        "operationId": "status",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Die Schnittstelle läuft.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Status" } } }
+          }
+        }
+      }
+    },
+    "/basiszins": {
+      "get": {
+        "tags": ["Allgemein"],
+        "summary": "Basiszinssatz nach § 247 BGB",
+        "description": "Die hinterlegte Halbjahrestabelle und das Datum, bis zu dem sie reicht. Für Zeiträume nach dem Deckungsende rechnet die Engine mit dem letzten bekannten Satz weiter und gibt eine Warnung aus.",
+        "operationId": "basiszins",
+        "responses": {
+          "200": {
+            "description": "Tabelle und Deckungsende.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Basiszins" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorisiert" }
+        }
+      }
+    },
+    "/berechnung": {
+      "post": {
+        "tags": ["Berechnung"],
+        "summary": "Forderungskonto auf einen Stichtag rechnen",
+        "description": "Liefert Zinsstaffel, Verrechnung der Zahlungen, offene Salden und Warnungen.",
+        "operationId": "berechnung",
+        "parameters": [
+          { "$ref": "#/components/parameters/kontoId" },
+          { "$ref": "#/components/parameters/stichtag" }
+        ],
+        "requestBody": { "$ref": "#/components/requestBodies/Bestand" },
+        "responses": {
+          "200": {
+            "description": "Das Rechenergebnis.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Ergebnis" } } }
+          },
+          "400": { "$ref": "#/components/responses/Eingabefehler" },
+          "401": { "$ref": "#/components/responses/Unauthorisiert" },
+          "404": { "$ref": "#/components/responses/KontoNichtGefunden" },
+          "413": { "$ref": "#/components/responses/ZuGross" },
+          "415": { "$ref": "#/components/responses/FalscherTyp" }
+        }
+      }
+    },
+    "/report": {
+      "post": {
+        "tags": ["Berechnung"],
+        "summary": "Forderungsaufstellung als HTML",
+        "description": "Das Druckmodell und die fertige HTML-Seite — inhaltlich identisch zur Druckansicht der Browser-App.",
+        "operationId": "report",
+        "parameters": [
+          { "$ref": "#/components/parameters/kontoId" },
+          { "$ref": "#/components/parameters/stichtag" }
+        ],
+        "requestBody": { "$ref": "#/components/requestBodies/Bestand" },
+        "responses": {
+          "200": {
+            "description": "Druckmodell und HTML.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Report" } } }
+          },
+          "400": { "$ref": "#/components/responses/Eingabefehler" },
+          "401": { "$ref": "#/components/responses/Unauthorisiert" },
+          "404": { "$ref": "#/components/responses/KontoNichtGefunden" },
+          "413": { "$ref": "#/components/responses/ZuGross" },
+          "415": { "$ref": "#/components/responses/FalscherTyp" }
+        }
+      }
+    },
+    "/pdf": {
+      "post": {
+        "tags": ["Berechnung"],
+        "summary": "Forderungsaufstellung als PDF",
+        "description": "Zweiseitiges PDF im Querformat, wie der PDF-Export der Browser-App. Der Dateiname entsteht aus Aktenzeichen und Stichtag und steht in der Content-Disposition (RFC 6266, mit ASCII-Ersatzschreibung für alte Clients).",
+        "operationId": "pdf",
+        "parameters": [
+          { "$ref": "#/components/parameters/kontoId" },
+          { "$ref": "#/components/parameters/stichtag" },
+          {
+            "name": "format", "in": "query", "required": false,
+            "description": "Mit `base64` kommt das PDF als JSON statt als Download — für Clients, die keine Binärantwort verarbeiten können.",
+            "schema": { "type": "string", "enum": ["base64"] }
+          }
+        ],
+        "requestBody": { "$ref": "#/components/requestBodies/Bestand" },
+        "responses": {
+          "200": {
+            "description": "Das PDF, je nach `format` binär oder als JSON.",
+            "headers": {
+              "Content-Disposition": {
+                "description": "attachment mit Dateiname (nur bei der Binärantwort).",
+                "schema": { "type": "string" }
+              }
+            },
+            "content": {
+              "application/pdf": { "schema": { "type": "string", "format": "binary" } },
+              "application/json": { "schema": { "$ref": "#/components/schemas/PdfBase64" } }
+            }
+          },
+          "400": { "$ref": "#/components/responses/Eingabefehler" },
+          "401": { "$ref": "#/components/responses/Unauthorisiert" },
+          "404": { "$ref": "#/components/responses/KontoNichtGefunden" },
+          "413": { "$ref": "#/components/responses/ZuGross" },
+          "415": { "$ref": "#/components/responses/FalscherTyp" }
+        }
+      }
+    },
+    "/tenor": {
+      "post": {
+        "tags": ["Berechnung"],
+        "summary": "Antragstext für Mahnbescheid oder Klage",
+        "description": "Der fertige Antragstext zum Einfügen in den Schriftsatz. Sind keine Forderungen mehr offen, ist `text` null und `hinweis` erklärt warum.",
+        "operationId": "tenor",
+        "parameters": [
+          { "$ref": "#/components/parameters/kontoId" },
+          { "$ref": "#/components/parameters/stichtag" }
+        ],
+        "requestBody": { "$ref": "#/components/requestBodies/Bestand" },
+        "responses": {
+          "200": {
+            "description": "Der Antragstext.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Tenor" } } }
+          },
+          "400": { "$ref": "#/components/responses/Eingabefehler" },
+          "401": { "$ref": "#/components/responses/Unauthorisiert" },
+          "404": { "$ref": "#/components/responses/KontoNichtGefunden" },
+          "413": { "$ref": "#/components/responses/ZuGross" },
+          "415": { "$ref": "#/components/responses/FalscherTyp" }
+        }
+      }
+    },
+    "/rvg": {
+      "post": {
+        "tags": ["Gebühren"],
+        "summary": "RVG- und GKG-Gebühren berechnen",
+        "description": "Liefert fertige Nebenforderungs-Buchungen, die unverändert in ein Forderungskonto übernommen werden können. Stand KostRÄG 2025.",
+        "operationId": "rvg",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RvgEingaben" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Buchungen, Hinweise und der zugrunde gelegte Gebührenstand.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RvgErgebnis" } } }
+          },
+          "400": { "$ref": "#/components/responses/Eingabefehler" },
+          "401": { "$ref": "#/components/responses/Unauthorisiert" },
+          "413": { "$ref": "#/components/responses/ZuGross" },
+          "415": { "$ref": "#/components/responses/FalscherTyp" }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "tags": ["Allgemein"],
+        "summary": "Diese Schnittstellenbeschreibung",
+        "operationId": "openapi",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Die OpenAPI-Beschreibung.",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/docs": {
+      "get": {
+        "tags": ["Allgemein"],
+        "summary": "Swagger UI zu dieser Schnittstelle",
+        "description": "Bedienoberfläche zum Ausprobieren. Die Endpunkte selbst verlangen weiterhin eine Anmeldung; in Swagger UI über „Authorize\".",
+        "operationId": "docs",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Die HTML-Seite.",
+            "content": { "text/html": { "schema": { "type": "string" } } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http", "scheme": "basic",
+        "description": "Zugangsdaten aus SALDENWERK_API_BENUTZER und SALDENWERK_API_PASSWORT."
+      }
+    },
+    "parameters": {
+      "kontoId": {
+        "name": "kontoId", "in": "query", "required": false,
+        "description": "`id` oder exakter `name` des Kontos. Ohne Angabe wird das erste Konto des Bestands gerechnet.",
+        "schema": { "type": "string" },
+        "example": "demo-muster-gmbh"
+      },
+      "stichtag": {
+        "name": "stichtag", "in": "query", "required": false,
+        "description": "Stichtag der Berechnung. Ohne Angabe das heutige Datum des Servers (dessen Zeitzone, nicht UTC).",
+        "schema": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "example": "2026-08-12"
+      }
+    },
+    "requestBodies": {
+      "Bestand": {
+        "required": true,
+        "description": "Das Dateiformat Version 1 — die Netzlaufwerk-Datei kann unverändert gesendet werden.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Bestand" } } }
+      }
+    },
+    "responses": {
+      "Unauthorisiert": {
+        "description": "Anmeldung fehlt oder ist falsch.",
+        "headers": { "WWW-Authenticate": { "schema": { "type": "string" } } },
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Fehler" } } }
+      },
+      "Eingabefehler": {
+        "description": "Der Bestand, der Stichtag oder die Gebühreneingaben sind ungültig. `fehler` enthält den deutschen Klartext.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Fehler" } } }
+      },
+      "KontoNichtGefunden": {
+        "description": "Im übermittelten Bestand gibt es kein Konto mit dieser Kennung.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Fehler" } } }
+      },
+      "ZuGross": {
+        "description": "Der Anfragekörper überschreitet 10 MB.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Fehler" } } }
+      },
+      "FalscherTyp": {
+        "description": "Der Inhaltstyp ist nicht application/json.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Fehler" } } }
+      }
+    },
+    "schemas": {
+      "Fehler": {
+        "type": "object",
+        "required": ["fehler"],
+        "properties": {
+          "fehler": { "type": "string", "description": "Fehlertext in deutschem Klartext, für die Anzeige geeignet." },
+          "code": {
+            "type": "string",
+            "description": "Maschinenlesbare Einordnung. Clients sollten hierauf reagieren, nicht auf den Text.",
+            "enum": ["BESTAND_UNGUELTIG", "KONTO_LEER", "KONTO_NICHT_GEFUNDEN",
+              "KONTO_MEHRDEUTIG", "STICHTAG_UNGUELTIG", "RVG_EINGABE_UNGUELTIG"]
+          }
+        },
+        "examples": [{ "fehler": "Unbekannte oder fehlende Versionsnummer (erwartet: 1).", "code": "BESTAND_UNGUELTIG" }]
+      },
+      "Status": {
+        "type": "object",
+        "required": ["app", "version", "features"],
+        "properties": {
+          "app": { "type": "string", "const": "Saldenwerk" },
+          "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+          "features": {
+            "type": "object",
+            "properties": { "jlawyer": { "type": "boolean", "description": "true, wenn die j-lawyer-Anbindung konfiguriert ist." } }
+          }
+        }
+      },
+      "Basiszins": {
+        "type": "object",
+        "required": ["tabelle", "deckungsEnde"],
+        "properties": {
+          "tabelle": { "type": "array", "items": { "$ref": "#/components/schemas/BasiszinsEintrag" } },
+          "deckungsEnde": {
+            "type": ["string", "null"],
+            "description": "Letztes Datum, für das ein Satz hinterlegt ist.",
+            "examples": ["2026-12-31"]
+          }
+        }
+      },
+      "BasiszinsEintrag": {
+        "type": "object",
+        "required": ["ab", "satz"],
+        "properties": {
+          "ab": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+          "satz": { "type": "number", "description": "Basiszinssatz in Prozent, kann negativ sein." }
+        }
+      },
+      "Bestand": {
+        "type": "object",
+        "required": ["version", "konten"],
+        "description": "Dateiformat Version 1.",
+        "properties": {
+          "version": { "type": "integer", "const": 1 },
+          "konten": { "type": "array", "items": { "$ref": "#/components/schemas/Konto" } },
+          "basiszinsOverrides": {
+            "type": "array",
+            "description": "Eigene Basiszinssätze, die die mitgelieferte Tabelle überschreiben oder verlängern.",
+            "items": { "$ref": "#/components/schemas/BasiszinsEintrag" }
+          }
+        }
+      },
+      "Konto": {
+        "type": "object",
+        "required": ["name", "buchungen"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "createdAt": { "type": "string" },
+          "updatedAt": { "type": "string" },
+          "aktenzeichen": { "type": "string" },
+          "glaeubiger": { "type": "string" },
+          "schuldner": { "type": "string" },
+          "tilgungsreihenfolge": {
+            "type": "string", "enum": ["367", "497"], "default": "367",
+            "description": "367 = Kosten, Zinsen, Hauptforderung (§ 367 BGB). 497 = Kosten, Hauptforderung, Zinsen (§ 497 Abs. 3 BGB, Verbraucherdarlehen)."
+          },
+          "buchungen": { "type": "array", "items": { "$ref": "#/components/schemas/Buchung" } }
+        }
+      },
+      "Buchung": {
+        "type": "object",
+        "required": ["typ", "datum", "betrag", "text"],
+        "properties": {
+          "id": { "type": "string" },
+          "typ": { "type": "string", "enum": ["hauptforderung", "nebenforderung", "zinsforderung", "zahlung"] },
+          "datum": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+          "betrag": { "type": "number", "exclusiveMinimum": 0 },
+          "text": { "type": "string" },
+          "verzinsung": { "$ref": "#/components/schemas/Verzinsung" }
+        }
+      },
+      "Verzinsung": {
+        "type": ["object", "null"],
+        "properties": {
+          "art": {
+            "type": "string", "enum": ["keine", "fest", "basiszins"],
+            "description": "basiszins = Basiszinssatz § 247 BGB zuzüglich `satz` Prozentpunkte (§ 288 BGB)."
+          },
+          "satz": { "type": "number", "description": "Bei art=basiszins der Aufschlag in Prozentpunkten, sonst der Zinssatz selbst." },
+          "beginn": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+          "ende": { "type": ["string", "null"] },
+          "methode": {
+            "type": "string", "enum": ["kalender", "bank360"], "default": "kalender",
+            "description": "kalender = tatsächliche Tage mit 365/366, am Jahreswechsel geteilt. bank360 = kaufmännisch 30E/360."
+          }
+        }
+      },
+      "Ergebnis": {
+        "type": "object",
+        "required": ["stichtag", "staffel", "verrechnungen", "warnungen", "summen", "posten", "ignorierteBuchungen"],
+        "properties": {
+          "stichtag": { "type": "string" },
+          "staffel": {
+            "type": "array", "description": "Zinssegmente je Forderung und Zeitraum.",
+            "items": { "$ref": "#/components/schemas/StaffelZeile" }
+          },
+          "verrechnungen": { "type": "array", "items": { "$ref": "#/components/schemas/Verrechnung" } },
+          "warnungen": { "type": "array", "items": { "type": "string" } },
+          "ignorierteBuchungen": { "type": "integer", "description": "Zahl der Buchungen nach dem Stichtag, die nicht gerechnet wurden." },
+          "summen": { "$ref": "#/components/schemas/Summen" },
+          "posten": { "type": "array", "items": { "$ref": "#/components/schemas/Posten" } }
+        }
+      },
+      "StaffelZeile": {
+        "type": "object",
+        "properties": {
+          "forderungId": { "type": "string" },
+          "basis": { "type": "number" },
+          "von": { "type": "string" },
+          "bis": { "type": "string" },
+          "tage": { "type": "integer" },
+          "nenner": { "type": ["integer", "null"], "description": "365, 366 oder 360." },
+          "satzProzent": { "type": ["number", "null"] },
+          "basiszins": { "type": ["number", "null"] },
+          "zins": { "type": "number" }
+        }
+      },
+      "Verrechnung": {
+        "type": "object",
+        "properties": {
+          "zahlungId": { "type": "string" },
+          "datum": { "type": "string" },
+          "betrag": { "type": "number" },
+          "aufKosten": { "type": "number" },
+          "aufZinsen": { "type": "number" },
+          "aufHauptforderung": { "type": "number" },
+          "ueberschuss": { "type": "number" },
+          "verteilung": { "type": "array", "items": { "type": "object" } }
+        }
+      },
+      "Summen": {
+        "type": "object",
+        "properties": {
+          "hauptforderung": { "$ref": "#/components/schemas/GesamtOffen" },
+          "nebenforderung": { "$ref": "#/components/schemas/GesamtOffen" },
+          "zinsforderung": { "$ref": "#/components/schemas/GesamtOffen" },
+          "laufendeZinsen": { "$ref": "#/components/schemas/GesamtOffen" },
+          "zahlungen": { "type": "number" },
+          "ueberzahlung": { "type": "number" },
+          "saldo": { "type": "number", "description": "Gesamtsaldo zum Stichtag." }
+        }
+      },
+      "GesamtOffen": {
+        "type": "object",
+        "properties": {
+          "gesamt": { "type": "number" },
+          "offen": { "type": "number" }
+        }
+      },
+      "Posten": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "typ": { "type": "string" },
+          "datum": { "type": "string" },
+          "text": { "type": "string" },
+          "betrag": { "type": "number" },
+          "rest": { "type": "number" },
+          "zinsOffen": { "type": "number" }
+        }
+      },
+      "Report": {
+        "type": "object",
+        "required": ["modell", "html"],
+        "properties": {
+          "modell": { "type": "object", "description": "Das Druckmodell — Kopf, Zeilen, Summenblock." },
+          "html": { "type": "string", "description": "Vollständige HTML-Seite mit eingebettetem Stylesheet." }
+        }
+      },
+      "Tenor": {
+        "type": "object",
+        "required": ["text", "hinweis"],
+        "properties": {
+          "text": { "type": ["string", "null"], "description": "null, wenn keine Forderung mehr offen ist." },
+          "hinweis": { "type": ["string", "null"] }
+        }
+      },
+      "PdfBase64": {
+        "type": "object",
+        "required": ["dateiname", "pdf"],
+        "properties": {
+          "dateiname": { "type": "string" },
+          "pdf": { "type": "string", "contentEncoding": "base64" }
+        }
+      },
+      "RvgEingaben": {
+        "type": "object",
+        "required": ["gegenstandswert", "datum"],
+        "properties": {
+          "gegenstandswert": { "type": "number", "exclusiveMinimum": 0 },
+          "datum": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "Buchungsdatum der entstehenden Kosten." },
+          "vorgerichtlich": {
+            "type": "object",
+            "properties": {
+              "aktiv": { "type": "boolean" },
+              "faktor": { "type": "number", "exclusiveMinimum": 0, "description": "Geschäftsgebühr Nr. 2300 VV RVG, Regelfall 1.3." },
+              "auslagenpauschale": { "type": "boolean", "description": "Nr. 7002 VV RVG, 20 % gedeckelt auf 20 €." },
+              "umsatzsteuer": { "type": "boolean", "description": "19 % nach Nr. 7008 VV RVG." }
+            }
+          },
+          "gerichtlich": {
+            "type": "object",
+            "properties": {
+              "aktiv": { "type": "boolean" },
+              "verfahrensart": { "type": "string", "enum": ["mahnverfahren", "klageverfahren"] },
+              "verfahrensgebuehr": { "type": "boolean" },
+              "terminsgebuehr": { "type": "boolean", "description": "Nr. 3104 VV RVG; im Mahnverfahren nicht vorgesehen." },
+              "anrechnung": { "type": "boolean", "description": "Anrechnung der Geschäftsgebühr nach Vorbem. 3 Abs. 4 VV RVG." },
+              "anrechnungsFaktor": { "type": "number", "minimum": 0 },
+              "gerichtskosten": { "type": "boolean" },
+              "auslagenpauschale": { "type": "boolean" },
+              "umsatzsteuer": { "type": "boolean" }
+            }
+          },
+          "verzugspauschale": { "type": "boolean", "description": "40 € nach § 288 Abs. 5 BGB; nicht gegenüber Verbrauchern." }
+        }
+      },
+      "RvgErgebnis": {
+        "type": "object",
+        "required": ["buchungen", "hinweise", "stand"],
+        "properties": {
+          "buchungen": {
+            "type": "array",
+            "description": "Fertige Nebenforderungen, unverändert in ein Konto übernehmbar.",
+            "items": { "$ref": "#/components/schemas/Buchung" }
+          },
+          "hinweise": {
+            "type": "array", "items": { "type": "string" },
+            "description": "Fachliche Hinweise, die ungekürzt weitergegeben werden sollten."
+          },
+          "stand": {
+            "type": "object",
+            "properties": {
+              "gueltigAb": { "type": "string" },
+              "quelle": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
