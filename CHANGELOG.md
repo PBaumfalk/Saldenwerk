@@ -4,6 +4,20 @@ Alle nennenswerten Änderungen an Saldenwerk werden hier festgehalten.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionierung [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.1.0] – unveröffentlicht
+
+### Hinzugefügt
+- Die Rechenabläufe (Bestand prüfen, Konto wählen, Stichtag setzen, rechnen,
+  Report und Antragstext bauen) liegen jetzt gebündelt in `kern.js` — eine
+  Quelle für die Browser-App und alle künftigen Schnittstellen. Die
+  Browser-App rechnet unverändert; ein Test hält beide Wege Ergebnis für
+  Ergebnis deckungsgleich.
+
+### Behoben
+- Der PDF-Export erzeugte außerhalb des Browsers keine Datei, sondern brach
+  mit „jsPDF ist nicht geladen" ab. Betraf bisher niemanden, weil Saldenwerk
+  nur im Browser lief.
+
 ## [1.0.1] – 2026-08-12
 
 ### Behoben
@@ -38,5 +52,6 @@ Erste veröffentlichte Version: Forderungskonten mit Zinsberechnung
 § 367 und § 497 Abs. 3 BGB, RVG-Gebührenrechner, Report mit PDF-Export und
 Antragstext, Datei-Speicherung im Kanzlei-Netz, Docker-Deployment.
 
+[1.1.0]: https://github.com/PBaumfalk/Saldenwerk/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/PBaumfalk/Saldenwerk/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/PBaumfalk/Saldenwerk/releases/tag/v1.0.0
