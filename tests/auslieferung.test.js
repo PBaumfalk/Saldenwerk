@@ -115,6 +115,25 @@ test('der nginx-Block für /api/ ist gegen die envsubst-Falle abgesichert', () =
     'dem /api/-Block fehlen die Sicherheits-Header');
 });
 
+test('jede GitHub-Action wird im Workflow in genau einer Version verwendet', () => {
+  // Dependabot hebt Versionen zeilenweise an. Beim Zusammenführen mit neuen
+  // Jobs bleiben deren Zeilen unberührt — dann laufen im selben Workflow zwei
+  // Versionen derselben Action, was still veraltete Laufzeiten mitschleppt.
+  // Genau das ist beim Rebase auf die sechs Dependabot-Merges passiert.
+  const workflow = lies('.github/workflows/docker.yml');
+  const versionen = new Map();
+  for (const treffer of workflow.matchAll(/uses:\s+([\w.-]+\/[\w.-]+)@(v[\d.]+)/g)) {
+    if (!versionen.has(treffer[1])) versionen.set(treffer[1], new Set());
+    versionen.get(treffer[1]).add(treffer[2]);
+  }
+  assert.ok(versionen.size >= 6, `nur ${versionen.size} Actions gefunden — Regex prüfen`);
+  for (const [action, gefunden] of versionen) {
+    assert.strictEqual(gefunden.size, 1,
+      `„${action}" wird in mehreren Versionen verwendet: ${[...gefunden].join(', ')}. ` +
+      'Alle Vorkommen auf dieselbe Version bringen.');
+  }
+});
+
 test('Node-Module der Zusatzschicht landen nicht im nginx-Image', () => {
   // kern.js und pdf-node.js sind (noch) reine Node-Module: die Browser-App
   // nutzt sie nicht, also gehören sie nicht in das statische Image.

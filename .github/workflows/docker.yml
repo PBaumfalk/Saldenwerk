@@ -44,7 +44,7 @@ jobs:
   browser-app-unveraendert:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: index.html, app.js und styles.css seit v1.0.1 unverändert
@@ -137,8 +137,8 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-qemu-action@v3
+      - uses: actions/checkout@v7
+      - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v3
       - name: API-Image für den Smoke-Test bauen
         uses: docker/build-push-action@v6
@@ -209,7 +209,7 @@ jobs:
       - name: Tags & Labels ermitteln
         if: github.event_name == 'push'
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/pbaumfalk/saldenwerk-api
           tags: |
@@ -237,7 +237,7 @@ jobs:
     needs: tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Compose ohne Profil starten
         run: docker compose up -d --build
       - name: App läuft, Schnittstelle ist sauber aus
