@@ -70,12 +70,24 @@ jobs:
           tags: saldenwerk:smoke
       - name: Smoke-Test (Startet nginx? Liefert es alle App-Dateien aus?)
         run: |
+          # Bewusst ein nacktes "docker run" ohne jede Umgebungsvariable:
+          # Genau so steht der Startbefehl in README.md und in
+          # docs/handbuch/02-installation.md. Das Image muss für sich allein
+          # lauffähig sein — fehlt der Vorgabewert für SALDENWERK_API_URL,
+          # startet nginx wegen der envsubst-Falle gar nicht erst.
           docker run -d --rm -p 8080:80 --name smoke saldenwerk:smoke
           sleep 2
+          if ! docker ps --filter name=smoke --filter status=running -q | grep -q .; then
+            echo "::error::Der Container läuft nicht. nginx-Protokoll:"
+            docker logs smoke 2>&1 | tail -30 || true
+            exit 1
+          fi
+          curl -fsS http://localhost:8080/ > /dev/null \
+            || { echo "::error::Die Startseite ist nicht erreichbar"; docker logs smoke 2>&1 | tail -30; exit 1; }
           # Jede Datei, die index.html referenziert — tests/auslieferung.test.js
           # hält die Liste mit der COPY-Zeile des Dockerfile gleich, dieser
           # Schritt belegt, dass sie im laufenden Container auch ankommt.
-          for datei in / index.html styles.css konfig.js basiszins.js engine.js \
+          for datei in index.html styles.css konfig.js basiszins.js engine.js \
                        rvg.js dateispeicher.js app.js druck.js tenor.js \
                        pdfexport.js vendor/jspdf.umd.min.js \
                        vendor/jspdf.plugin.autotable.min.js \
@@ -83,6 +95,9 @@ jobs:
             curl -fsS "http://localhost:8080/$datei" > /dev/null \
               || { echo "::error::$datei fehlt im Image"; exit 1; }
           done
+          # Ohne gesetzte Variable muss die Schnittstelle sauber aus sein.
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/status)" = "404" \
+            || { echo "::error::/api/ antwortet, obwohl keine Schnittstelle konfiguriert ist"; exit 1; }
           # Swagger UI gehört zum API-Container, nicht in die Browser-App.
           test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/vendor/swagger-ui/swagger-ui.css)" = "404" \
             || { echo "::error::Swagger UI liegt im nginx-Image — es gehört in den API-Container"; exit 1; }

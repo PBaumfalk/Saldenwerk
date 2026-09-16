@@ -89,10 +89,19 @@ test('der nginx-Block für /api/ ist gegen die envsubst-Falle abgesichert', () =
   const vorlage = lies('docker/default.conf.template');
   const compose = lies('docker-compose.yml');
   assert.match(vorlage, /location \/api\//, 'kein /api/-Block in der nginx-Vorlage');
-  // Ungesetzte Variable bliebe wörtlich stehen und nginx startete nicht mehr.
+
+  // Die eigentliche Absicherung, und sie gehört ins Image, nicht zum Aufrufer:
+  // envsubst ersetzt nur Variablen, die in der Umgebung existieren. Fehlt der
+  // Vorgabewert, bleibt der Platzhalter wörtlich stehen und nginx startet gar
+  // nicht — bei jedem, der das Image per „docker run" startet. Genau so steht
+  // es in README.md und in docs/handbuch/02-installation.md.
+  assert.match(DOCKERFILE, /ENV SALDENWERK_API_URL=""/,
+    'Dem Dockerfile fehlt der leere Vorgabewert für SALDENWERK_API_URL. ' +
+    'Ohne ihn startet der Container bei „docker run" nicht mehr — dem in ' +
+    'README.md und Handbuch-Kapitel 2 dokumentierten Standardweg.');
+  // Zusätzlich in Compose, damit die Absicht dort sichtbar bleibt.
   assert.match(compose, /SALDENWERK_API_URL: "\$\{SALDENWERK_API_URL:-\}"/,
-    'docker-compose.yml definiert SALDENWERK_API_URL nicht mit leerem Default — ' +
-    'ohne das startet nginx nach einem Update gar nicht mehr.');
+    'docker-compose.yml definiert SALDENWERK_API_URL nicht mit leerem Default.');
   assert.match(vorlage, /if \(\$api = ""\) \{ return 404; \}/,
     'der /api/-Block fällt bei leerer Variable nicht auf 404 zurück');
   // Aktenzeichen stehen im Query-String (?kontoId=) und dürfen nicht in

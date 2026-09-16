@@ -20,6 +20,16 @@ RUN rm -rf /usr/share/nginx/html/vendor/swagger-ui
 COPY docker/default.conf.template /etc/nginx/templates/default.conf.template
 COPY docker/security-headers.conf /etc/nginx/includes/security-headers.conf
 
+# envsubst ersetzt nur Variablen, die in der Umgebung wirklich existieren.
+# Ohne diesen leeren Vorgabewert bliebe ${SALDENWERK_API_URL} in der Vorlage
+# woertlich stehen, nginx saehe eine unbekannte Variable und der Container
+# startete gar nicht — und zwar bei jedem, der das Image ohne Compose per
+# "docker run" startet. Genau so steht es in README.md und im Handbuch,
+# Kapitel 2. Leer bedeutet: /api/ antwortet mit 404, die Schnittstelle ist aus.
+# Das Image bleibt damit fuer sich allein lauffaehig; docker-compose.yml setzt
+# die Variable zusaetzlich, das schadet nicht.
+ENV SALDENWERK_API_URL=""
+
 EXPOSE 80
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
