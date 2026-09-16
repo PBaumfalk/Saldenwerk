@@ -1,0 +1,43 @@
+# Optionale Rechen-Schnittstelle von Saldenwerk.
+#
+# Zweiter, getrennter Container: Ohne das Compose-Profil „api" läuft das
+# Deployment exakt wie bisher — nur der statische nginx.
+FROM node:22-alpine
+
+LABEL org.opencontainers.image.title="Saldenwerk API" \
+      org.opencontainers.image.description="Zustandslose Rechen-Schnittstelle für Forderungskonten" \
+      org.opencontainers.image.source="https://github.com/PBaumfalk/Saldenwerk" \
+      org.opencontainers.image.licenses="MIT"
+
+# Alpine läuft in UTC und bringt keine Zeitzonendaten mit; ein blosses ENV TZ
+# wirkt dort ohne dieses Paket nicht. Ohne beides liefert Engine.heute()
+# zwischen 0 und 2 Uhr nachts den Vortag — genau der Fehler, den Commit
+# 63c0c6f bereits einmal behoben hat, zurück durch die Hintertür. Er würde
+# in jedem servergenerierten PDF stehen (Erstellungsdatum, Default-Stichtag).
+RUN apk add --no-cache tzdata
+ENV TZ=Europe/Berlin
+ENV NODE_ENV=production
+
+WORKDIR /app
+
+# Kein package.json, kein npm install, kein Build — die Fachmodule sind
+# reines UMD-JavaScript. Dateien einzeln kopieren, wie im nginx-Image auch.
+COPY kern.js pdf-node.js engine.js basiszins.js rvg.js tenor.js druck.js \
+     pdfexport.js app.js ./
+COPY server/ ./server/
+
+# jsPDF für den PDF-Endpunkt, Swagger UI für /api/docs. Die Schrift aus
+# vendor/fonts/ braucht nur die Browser-App; das PDF nutzt Helvetica.
+COPY vendor/jspdf.umd.min.js vendor/jspdf.plugin.autotable.min.js \
+     vendor/LICENSE-jspdf.txt vendor/LICENSE-jspdf-autotable.txt ./vendor/
+COPY vendor/swagger-ui/ ./vendor/swagger-ui/
+
+USER node
+EXPOSE 8091
+
+# /api/status kommt ohne Anmeldung aus und ist deshalb als Healthcheck
+# geeignet; er belegt zugleich, dass kern.js geladen werden konnte.
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
+  CMD wget -qO- http://127.0.0.1:8091/api/status >/dev/null || exit 1
+
+CMD ["node", "server/server.js"]

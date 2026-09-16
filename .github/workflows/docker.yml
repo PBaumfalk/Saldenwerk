@@ -1,4 +1,6 @@
-name: Tests & Docker-Image
+# Dateiname bewusst unverändert: README.md verlinkt das Badge auf
+# .../actions/workflows/docker.yml/badge.svg.
+name: Tests, Images & Release
 
 on:
   push:
@@ -18,13 +20,37 @@ concurrency:
 jobs:
   tests:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Engine.heute() nutzt bewusst die lokale Zeitzone (Commit 63c0c6f).
+        # Die Matrix kostet Sekunden und fängt jede künftige Regression, die
+        # sonst erst nachts um halb eins in einer echten Akte auffiele.
+        zeitzone: [Europe/Berlin, UTC, Pacific/Auckland]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
-      - name: Node-Tests
+      - name: Node-Tests (TZ=${{ matrix.zeitzone }})
+        env:
+          TZ: ${{ matrix.zeitzone }}
         run: node --test tests/*.test.js
+
+  # Belegt die Zusicherung der Releases 1.1.0 und 1.2.0: Die Zusatzmodule sind
+  # rein additiv, die produktive Browser-App wird nicht angefasst. Wer sie nicht
+  # aktiviert, merkt vom Update nichts.
+  # ENTFERNEN, sobald 1.3.0 (j-lawyer) die Browser-UI erweitert.
+  browser-app-unveraendert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: index.html, app.js und styles.css seit v1.0.1 unverändert
+        run: |
+          git diff --exit-code v1.0.1 -- index.html app.js styles.css \
+            || { echo "::error::Die produktive Browser-App wurde verändert. 1.1.0 und 1.2.0 sind als rein additiv zugesagt — entweder die Änderung zurücknehmen oder diesen Job bewusst entfernen."; exit 1; }
 
   docker:
     needs: tests
@@ -42,13 +68,24 @@ jobs:
           context: .
           load: true
           tags: saldenwerk:smoke
-      - name: Smoke-Test (Startet nginx? Liefert es App und vendor aus?)
+      - name: Smoke-Test (Startet nginx? Liefert es alle App-Dateien aus?)
         run: |
           docker run -d --rm -p 8080:80 --name smoke saldenwerk:smoke
           sleep 2
-          curl -fsS http://localhost:8080/ > /dev/null
-          curl -fsS http://localhost:8080/app.js > /dev/null
-          curl -fsS http://localhost:8080/vendor/jspdf.umd.min.js > /dev/null
+          # Jede Datei, die index.html referenziert — tests/auslieferung.test.js
+          # hält die Liste mit der COPY-Zeile des Dockerfile gleich, dieser
+          # Schritt belegt, dass sie im laufenden Container auch ankommt.
+          for datei in / index.html styles.css konfig.js basiszins.js engine.js \
+                       rvg.js dateispeicher.js app.js druck.js tenor.js \
+                       pdfexport.js vendor/jspdf.umd.min.js \
+                       vendor/jspdf.plugin.autotable.min.js \
+                       impressum.html datenschutz.html; do
+            curl -fsS "http://localhost:8080/$datei" > /dev/null \
+              || { echo "::error::$datei fehlt im Image"; exit 1; }
+          done
+          # Swagger UI gehört zum API-Container, nicht in die Browser-App.
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/vendor/swagger-ui/swagger-ui.css)" = "404" \
+            || { echo "::error::Swagger UI liegt im nginx-Image — es gehört in den API-Container"; exit 1; }
           docker rm -f smoke
       - name: Bei GHCR anmelden
         if: github.event_name == 'push'
@@ -78,8 +115,131 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+  api-image:
+    needs: tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - name: API-Image für den Smoke-Test bauen
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.api
+          load: true
+          tags: saldenwerk-api:smoke
+      - name: Umgebung im Container prüfen
+        run: |
+          # Ein Node ohne vollständiges ICU macht aus 1.234,50 € still
+          # 1,234.50 € — das fiele erst im fertigen Schriftsatz auf.
+          format=$(docker run --rm saldenwerk-api:smoke node -e \
+            "process.stdout.write(new Intl.NumberFormat('de-DE',{minimumFractionDigits:2}).format(1234.5))")
+          test "$format" = "1.234,50" \
+            || { echo "::error::Zahlenformat im Container ist „$format\" statt „1.234,50\""; exit 1; }
+          # Alpine läuft ohne tzdata in UTC; dann liefert Engine.heute()
+          # zwischen 0 und 2 Uhr den Vortag (siehe Commit 63c0c6f).
+          zone=$(docker run --rm saldenwerk-api:smoke node -e \
+            "process.stdout.write(Intl.DateTimeFormat().resolvedOptions().timeZone)")
+          test "$zone" = "Europe/Berlin" \
+            || { echo "::error::Zeitzone im Container ist „$zone\" statt Europe/Berlin — fehlt tzdata?"; exit 1; }
+      - name: Ohne Zugangsdaten darf der Container nicht starten
+        run: |
+          if docker run --rm saldenwerk-api:smoke; then
+            echo "::error::Der Container ist ohne Zugangsdaten gestartet — fail-closed ist gebrochen"
+            exit 1
+          fi
+      - name: Smoke-Test der Endpunkte
+        run: |
+          docker run -d --rm -p 8091:8091 --name api-smoke \
+            -e SALDENWERK_API_BENUTZER=ci -e SALDENWERK_API_PASSWORT=ci-geheim \
+            saldenwerk-api:smoke
+          sleep 2
+          curl -fsS http://localhost:8091/api/status | grep -q '"app":"Saldenwerk"'
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:8091/api/berechnung)" = "401"
+          curl -fsS http://localhost:8091/api/docs > /dev/null
+          curl -fsS http://localhost:8091/api/openapi.json > /dev/null
+          # Der Saldo wird gegen den Wert geprüft, den die Engine auf dem
+          # Runner selbst liefert — ein fest eingetragener Betrag bräche bei
+          # jeder halbjährlichen Basiszins-Pflege.
+          erwartet=$(node -e "
+            const fs=require('node:fs'), K=require('./kern.js');
+            const b=K.ladeBestand(JSON.parse(fs.readFileSync('docs/beispiel-konto.json','utf8')));
+            process.stdout.write(String(K.berechnung({bestand:b,stichtag:'2026-08-12'}).ergebnis.summen.saldo));")
+          gerechnet=$(curl -fsS -u ci:ci-geheim -H 'Content-Type: application/json' \
+            --data @docs/beispiel-konto.json \
+            'http://localhost:8091/api/berechnung?stichtag=2026-08-12' \
+            | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(String(JSON.parse(s).summen.saldo)))")
+          test "$erwartet" = "$gerechnet" \
+            || { echo "::error::Saldo im Container ($gerechnet) weicht ab ($erwartet)"; exit 1; }
+          # PDF: Magic Bytes und Mindestgröße.
+          curl -fsS -u ci:ci-geheim -H 'Content-Type: application/json' \
+            --data @docs/beispiel-konto.json -o /tmp/smoke.pdf \
+            'http://localhost:8091/api/pdf?stichtag=2026-08-12'
+          head -c 5 /tmp/smoke.pdf | grep -q '%PDF-' \
+            || { echo "::error::Die PDF-Antwort ist kein PDF"; exit 1; }
+          test "$(stat -c%s /tmp/smoke.pdf)" -gt 10240 \
+            || { echo "::error::Das PDF ist verdächtig klein"; exit 1; }
+          docker rm -f api-smoke
+      - name: Bei GHCR anmelden
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Tags & Labels ermitteln
+        if: github.event_name == 'push'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/pbaumfalk/saldenwerk-api
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,format=short
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+      - name: API-Image bauen und pushen
+        if: github.event_name == 'push'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.api
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  # Der wichtigste neue Job: Regressionstest gegen die envsubst-Falle.
+  # Bleibt SALDENWERK_API_URL ungesetzt, lässt envsubst den Platzhalter
+  # wörtlich stehen und nginx startet gar nicht mehr — ein Update, das
+  # niemand wollte, legte die ganze Kanzlei lahm. Die bisherige Spec führte
+  # diese Prüfung nur als manuellen Schritt; das ist zu wenig.
+  compose-ohne-profil:
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compose ohne Profil starten
+        run: docker compose up -d --build
+      - name: App läuft, Schnittstelle ist sauber aus
+        run: |
+          sleep 3
+          docker compose ps
+          curl -fsS http://localhost:8090/ > /dev/null \
+            || { echo "::error::Die App ist nicht erreichbar — startet nginx?"; exit 1; }
+          status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8090/api/status)
+          test "$status" = "404" \
+            || { echo "::error::/api/status antwortet mit $status statt 404 — das Profil war nicht aus"; exit 1; }
+      - name: Aufräumen
+        if: always()
+        run: docker compose down -v
+
   release:
-    needs: docker
+    needs: [docker, api-image, compose-ohne-profil]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:

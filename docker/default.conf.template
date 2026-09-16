@@ -28,4 +28,38 @@ server {
         add_header Cache-Control "public, max-age=31536000, immutable";
         include /etc/nginx/includes/security-headers.conf;
     }
+
+    # Optionale Rechen-Schnittstelle (zweiter Container, Compose-Profil "api").
+    #
+    # ACHTUNG, envsubst-Falle: Ist SALDENWERK_API_URL in der Umgebung des
+    # nginx-Containers NICHT gesetzt, laesst envsubst den Platzhalter unten
+    # woertlich stehen, nginx sieht eine unbekannte Variable und startet gar
+    # nicht mehr — die ganze Kanzlei haette dann kein Saldenwerk. Deshalb ist
+    # die Variable in docker-compose.yml IMMER definiert, notfalls leer.
+    # Leer bedeutet: 404, die Schnittstelle ist sauber aus.
+    # Der CI-Job "compose-ohne-profil" prueft genau das bei jedem Commit.
+    location /api/ {
+        resolver 127.0.0.11 ipv6=off valid=30s;
+        set $api "${SALDENWERK_API_URL}";
+        if ($api = "") { return 404; }
+
+        # proxy_pass mit Variable reicht die Anfrage-URI unveraendert weiter —
+        # der Server routet selbst auf /api/..., das ist so gewollt.
+        proxy_pass $api;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Muss zum 10-MB-Limit des Servers passen; der nginx-Default von 1 MB
+        # wuerde groessere Bestaende abschneiden.
+        client_max_body_size 10m;
+        proxy_read_timeout 90s;
+
+        # Anfragen an /api/ tragen Aktenbezug im Query-String (?kontoId=).
+        # Der nginx-Default wuerde ihn mitprotokollieren — damit landeten
+        # Bezeichner aus Mandatsakten in Logdateien, waehrend datenschutz.html
+        # das Gegenteil zusichert.
+        access_log off;
+
+        include /etc/nginx/includes/security-headers.conf;
+    }
 }

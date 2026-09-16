@@ -60,6 +60,52 @@ test('das Dockerfile kopiert keine Datei, die es nicht gibt', () => {
   }
 });
 
+test('Swagger UI wird aus dem nginx-Image wieder entfernt', () => {
+  // COPY vendor/ zieht auch vendor/swagger-ui/ mit (1,6 MB). Das gehört zum
+  // API-Container unter /api/docs, nicht in die Browser-App — dort wäre es
+  // totes Gewicht im Image und im Jahres-Cache der Clients.
+  assert.match(DOCKERFILE, /rm -rf \/usr\/share\/nginx\/html\/vendor\/swagger-ui/,
+    'Das Dockerfile kopiert vendor/ am Stück, entfernt Swagger UI aber nicht wieder.');
+});
+
+test('das API-Image bringt alles mit, was server/ und kern.js brauchen', () => {
+  const api = lies('Dockerfile.api');
+  for (const datei of ['kern.js', 'pdf-node.js', 'engine.js', 'basiszins.js', 'rvg.js',
+    'tenor.js', 'druck.js', 'pdfexport.js', 'app.js']) {
+    assert.ok(new RegExp(`(^|\\s)${datei.replace(/\./g, '\\.')}(\\s|\\\\|$)`, 'm').test(api),
+      `Dockerfile.api kopiert „${datei}" nicht — der Server kann es nicht laden.`);
+  }
+  for (const pfad of ['server/', 'vendor/swagger-ui/',
+    'vendor/jspdf.umd.min.js', 'vendor/jspdf.plugin.autotable.min.js']) {
+    assert.ok(api.includes(pfad), `Dockerfile.api kopiert „${pfad}" nicht.`);
+  }
+  // Ohne tzdata läuft Alpine in UTC, und Engine.heute() liefert nachts den
+  // Vortag — der bereits behobene Fehler aus Commit 63c0c6f.
+  assert.match(api, /apk add --no-cache tzdata/, 'Dockerfile.api installiert kein tzdata');
+  assert.match(api, /ENV TZ=Europe\/Berlin/, 'Dockerfile.api setzt keine Zeitzone');
+});
+
+test('der nginx-Block für /api/ ist gegen die envsubst-Falle abgesichert', () => {
+  const vorlage = lies('docker/default.conf.template');
+  const compose = lies('docker-compose.yml');
+  assert.match(vorlage, /location \/api\//, 'kein /api/-Block in der nginx-Vorlage');
+  // Ungesetzte Variable bliebe wörtlich stehen und nginx startete nicht mehr.
+  assert.match(compose, /SALDENWERK_API_URL: "\$\{SALDENWERK_API_URL:-\}"/,
+    'docker-compose.yml definiert SALDENWERK_API_URL nicht mit leerem Default — ' +
+    'ohne das startet nginx nach einem Update gar nicht mehr.');
+  assert.match(vorlage, /if \(\$api = ""\) \{ return 404; \}/,
+    'der /api/-Block fällt bei leerer Variable nicht auf 404 zurück');
+  // Aktenzeichen stehen im Query-String (?kontoId=) und dürfen nicht in
+  // Logdateien landen — datenschutz.html sichert das Gegenteil zu.
+  const block = vorlage.slice(vorlage.indexOf('location /api/'));
+  assert.match(block, /access_log off;/,
+    'der /api/-Block protokolliert Anfragen samt Aktenbezug im Query-String');
+  // add_header vererbt in nginx nicht additiv: jeder location-Block mit
+  // eigenem add_header braucht sein eigenes include.
+  assert.match(block, /include \/etc\/nginx\/includes\/security-headers\.conf;/,
+    'dem /api/-Block fehlen die Sicherheits-Header');
+});
+
 test('Node-Module der Zusatzschicht landen nicht im nginx-Image', () => {
   // kern.js und pdf-node.js sind (noch) reine Node-Module: die Browser-App
   // nutzt sie nicht, also gehören sie nicht in das statische Image.

@@ -7,6 +7,12 @@ services:
       # HTTPS: zusätzlich die folgende Zeile einkommentieren (Schritt 2 unten):
       # - "8443:443"
     restart: unless-stopped
+    environment:
+      # MUSS immer definiert sein, notfalls leer — sonst lässt envsubst den
+      # Platzhalter in docker/default.conf.template wörtlich stehen und nginx
+      # startet nicht mehr. Leer bedeutet: /api/ antwortet mit 404, die
+      # Schnittstelle ist sauber aus.
+      SALDENWERK_API_URL: "${SALDENWERK_API_URL:-}"
 
     # HTTPS aktivieren (nötig für die Datei-Speicherung im LAN):
     # 1. Zertifikate nach ./certs/tls.crt und ./certs/tls.key legen,
@@ -15,3 +21,38 @@ services:
     # volumes:
     #   - ./docker/ssl.conf.template:/etc/nginx/templates/ssl.conf.template:ro
     #   - ./certs:/etc/nginx/certs:ro
+
+  # Optionale Rechen-Schnittstelle. Läuft nur mit dem Profil "api":
+  #
+  #   docker compose --profile api up -d --build
+  #
+  # Vorher eine Datei .env neben dieser docker-compose.yml anlegen:
+  #
+  #   SALDENWERK_API_URL=http://saldenwerk-api:8091
+  #   SALDENWERK_API_BENUTZER=kanzlei
+  #   SALDENWERK_API_PASSWORT=<ein langes, zufälliges Passwort>
+  #
+  # Ohne Benutzer und Passwort startet der Container nicht (fail-closed).
+  # Ohne SALDENWERK_API_URL läuft er zwar, aber nginx leitet nicht weiter —
+  # /api/ bleibt dann bei 404.
+  #
+  # Die Schnittstelle gehört ins Kanzleinetz, nicht ins offene Internet:
+  # Die Anmeldung läuft über HTTP Basic Auth, ohne TLS davor im Klartext.
+  # Der Port wird deshalb absichtlich NICHT nach außen veröffentlicht —
+  # erreichbar ist der Dienst nur über den nginx davor.
+  saldenwerk-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    profiles: ["api"]
+    restart: unless-stopped
+    expose:
+      - "8091"
+    environment:
+      SALDENWERK_API_BENUTZER: "${SALDENWERK_API_BENUTZER:-}"
+      SALDENWERK_API_PASSWORT: "${SALDENWERK_API_PASSWORT:-}"
+      # j-lawyer-Anbindung: entweder alle drei Werte oder keinen.
+      # Teilweise gesetzt bricht den Start ab.
+      # JLAWYER_URL: "${JLAWYER_URL:-}"
+      # JLAWYER_BENUTZER: "${JLAWYER_BENUTZER:-}"
+      # JLAWYER_PASSWORT: "${JLAWYER_PASSWORT:-}"

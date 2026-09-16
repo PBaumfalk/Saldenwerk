@@ -11,6 +11,11 @@ COPY index.html impressum.html datenschutz.html styles.css konfig.js app.js \
 COPY vendor/ /usr/share/nginx/html/vendor/
 COPY assets/ /usr/share/nginx/html/assets/
 
+# Swagger UI (1,6 MB) gehört zur Rechen-Schnittstelle und wird vom
+# API-Container unter /api/docs ausgeliefert. Die Browser-App braucht es
+# nicht — hier wäre es nur totes Gewicht im Image und im Cache der Clients.
+RUN rm -rf /usr/share/nginx/html/vendor/swagger-ui
+
 # nginx-Konfiguration: statische Auslieferung mit passenden Cache-Headern.
 COPY docker/default.conf.template /etc/nginx/templates/default.conf.template
 COPY docker/security-headers.conf /etc/nginx/includes/security-headers.conf
