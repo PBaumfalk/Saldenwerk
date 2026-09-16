@@ -149,21 +149,48 @@ test('leerer Körper und kaputtes JSON ergeben 400', (t) => mitServer(t, null, a
   assert.match((await kaputt.json()).fehler, /gültiges JSON/);
 }));
 
-test('ein zu großer Körper ergibt 413', (t) => mitServer(t, null, async (basis) => {
+test('ein zu großer Körper ergibt 413 mit lesbarer Meldung', (t) => mitServer(t, null, async (basis) => {
   // Gültiges JSON knapp über der Grenze, damit wirklich das Limit greift
   // und nicht der Parser.
   const fuellung = 'x'.repeat(MAX_BYTES + 1024);
   const antwort = await fetch(`${basis}/api/berechnung`,
-    json(`{"version":1,"konten":[],"fuellung":"${fuellung}"}`)).catch((e) => e);
-  // Der Server bricht die Verbindung ab; je nach Zeitpunkt sieht fetch
-  // entweder die 413-Antwort oder einen Verbindungsabbruch. Beides belegt,
-  // dass nicht 10 MB in den Speicher gelesen wurden.
-  if (antwort instanceof Error) {
-    assert.match(String(antwort.cause || antwort), /socket|terminated|closed|EPIPE|aborted/i);
-  } else {
-    assert.strictEqual(antwort.status, 413);
-    assert.match((await antwort.json()).fehler, /10 MB/);
+    json(`{"version":1,"konten":[],"fuellung":"${fuellung}"}`));
+
+  // Der Server hört zwar auf zu puffern, zerstört die Verbindung aber erst,
+  // wenn die Antwort draußen ist. Wer eine zu große Datei sendet, soll die
+  // Meldung lesen können und nicht bloß einen Verbindungsabbruch sehen.
+  assert.strictEqual(antwort.status, 413);
+  assert.match(antwort.headers.get('connection') || '', /close/i);
+  assert.match((await antwort.json()).fehler, /10 MB/);
+}));
+
+test('auch /api/rvg begrenzt die Körpergröße', (t) => mitServer(t, null, async (basis) => {
+  const fuellung = 'x'.repeat(MAX_BYTES + 1024);
+  const antwort = await fetch(`${basis}/api/rvg`,
+    json(`{"gegenstandswert":5000,"datum":"2024-05-02","fuellung":"${fuellung}"}`));
+  assert.strictEqual(antwort.status, 413);
+  assert.match((await antwort.json()).fehler, /10 MB/);
+}));
+
+test('der 413-Pfad ist nicht flaky', (t) => mitServer(t, null, async (basis) => {
+  // Der ursprüngliche Entwurf zerstörte die Verbindung, während er die
+  // Antwort schrieb — in der CI schlug das je nach Zeitpunkt fehl
+  // (ECONNRESET statt 413). Zehn Durchläufe nageln das Verhalten fest.
+  const fuellung = 'x'.repeat(MAX_BYTES + 1024);
+  for (let i = 1; i <= 10; i++) {
+    const antwort = await fetch(`${basis}/api/berechnung`,
+      json(`{"version":1,"konten":[],"fuellung":"${fuellung}"}`));
+    assert.strictEqual(antwort.status, 413, `Durchlauf ${i}`);
+    await antwort.json();
   }
+}));
+
+test('nach einem 413 bleibt der Server ansprechbar', (t) => mitServer(t, null, async (basis) => {
+  const fuellung = 'x'.repeat(MAX_BYTES + 1024);
+  await (await fetch(`${basis}/api/berechnung`,
+    json(`{"version":1,"konten":[],"fuellung":"${fuellung}"}`))).json();
+  const danach = await fetch(`${basis}/api/status`);
+  assert.strictEqual(danach.status, 200);
 }));
 
 // ── Fehlerformat ───────────────────────────────────────────────────────────

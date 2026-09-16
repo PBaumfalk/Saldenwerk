@@ -100,17 +100,43 @@ function liesKoerper(anfrage) {
   return new Promise((erfuellen, ablehnen) => {
     const teile = [];
     let laenge = 0;
+    let abgebrochen = false;
     anfrage.on('data', (teil) => {
+      if (abgebrochen) return;
       laenge += teil.length;
       if (laenge > MAX_BYTES) {
+        // Aufhören zu puffern, aber die Verbindung NICHT sofort zerstören:
+        // Sonst rennt der Abbruch gegen die 413-Antwort, und der Aufrufer
+        // sieht statt der Meldung einen Verbindungsabbruch (ECONNRESET).
+        // Geschlossen wird erst, wenn die Antwort draußen ist — siehe
+        // sendeZuGross.
+        abgebrochen = true;
+        teile.length = 0;
+        anfrage.pause();
         ablehnen(Object.assign(new Error('zu gross'), { status: 413 }));
-        anfrage.destroy();
         return;
       }
       teile.push(teil);
     });
-    anfrage.on('end', () => erfuellen(Buffer.concat(teile)));
-    anfrage.on('error', ablehnen);
+    anfrage.on('end', () => { if (!abgebrochen) erfuellen(Buffer.concat(teile)); });
+    anfrage.on('error', (e) => { if (!abgebrochen) ablehnen(e); });
+  });
+}
+
+// 413 mit sauberem Verbindungsabschluss: Der Aufrufer schreibt noch, wir
+// wollen aber weder weiter puffern noch stumm abbrechen. Antwort raus,
+// Connection: close, danach den Socket schließen.
+function sendeZuGross(antwort) {
+  if (antwort.headersSent) return;
+  const text = JSON.stringify({ fehler: 'Die übermittelten Daten sind größer als 10 MB.' });
+  antwort.writeHead(413, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Content-Length': Buffer.byteLength(text),
+    'Cache-Control': 'no-store',
+    Connection: 'close',
+  });
+  antwort.end(text, () => {
+    if (antwort.socket && !antwort.socket.destroyed) antwort.socket.destroy();
   });
 }
 
@@ -124,11 +150,8 @@ async function leseBestand(anfrage, antwort) {
   try {
     roh = await liesKoerper(anfrage);
   } catch (e) {
-    if (e.status === 413) {
-      sendeFehler(antwort, 413, 'Die übermittelten Daten sind größer als 10 MB.');
-    } else {
-      sendeFehler(antwort, 400, 'Die Anfrage konnte nicht gelesen werden.');
-    }
+    if (e.status === 413) sendeZuGross(antwort);
+    else sendeFehler(antwort, 400, 'Die Anfrage konnte nicht gelesen werden.');
     return null;
   }
   if (!roh.length) {
@@ -262,9 +285,8 @@ function baueRouten(konfig) {
       try {
         roh = await liesKoerper(anfrage);
       } catch (e) {
-        return e.status === 413
-          ? sendeFehler(antwort, 413, 'Die übermittelten Daten sind größer als 10 MB.')
-          : sendeFehler(antwort, 400, 'Die Anfrage konnte nicht gelesen werden.');
+        if (e.status === 413) return sendeZuGross(antwort);
+        return sendeFehler(antwort, 400, 'Die Anfrage konnte nicht gelesen werden.');
       }
       let eingaben;
       try {
