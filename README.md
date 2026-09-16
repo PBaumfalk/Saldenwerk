@@ -5,6 +5,7 @@
 [![Tests & Docker-Image](https://github.com/PBaumfalk/Saldenwerk/actions/workflows/docker.yml/badge.svg)](https://github.com/PBaumfalk/Saldenwerk/actions/workflows/docker.yml)
 [![Lizenz: MIT](https://img.shields.io/badge/Lizenz-MIT-blue.svg)](LICENSE)
 [![Docker-Image](https://img.shields.io/badge/ghcr.io-pbaumfalk%2Fsaldenwerk-blue?logo=docker)](https://ghcr.io/pbaumfalk/saldenwerk)
+[![API-Image](https://img.shields.io/badge/ghcr.io-pbaumfalk%2Fsaldenwerk--api-blue?logo=docker)](https://ghcr.io/pbaumfalk/saldenwerk-api)
 
 **Forderungskonten führen, Verzugszinsen berechnen, Forderungsaufstellungen
 erzeugen — direkt im Browser.** Saldenwerk ist ein kostenloses Werkzeug für
@@ -14,8 +15,10 @@ Zinsstaffel nach § 288/§ 247 BGB, gesetzlicher Tilgungsreihenfolge
 (§ 367 / § 497 Abs. 3 BGB), RVG-Kostenrechner, PDF-Export und fertigem
 Antragstext für Mahnbescheid oder Klage.
 
-Ihre Daten bleiben dabei **komplett auf Ihrem Rechner** — kein Konto,
-keine Cloud, keine Datenübertragung.
+Die **Browser-App** arbeitet dabei ohne Konto, ohne Cloud und ohne
+Datenübertragung — Ihre Eingaben bleiben auf Ihrem Rechner. Optional gibt
+es getrennte [Zusatzmodule](#zusatzmodule); sie sind standardmäßig aus und
+verändern, wo Ihre Daten verarbeitet werden.
 
 > **English abstract** — Claims-account calculator for German legal
 > practice: manage receivables ledgers, compute default interest
@@ -123,12 +126,37 @@ herunterladen und in der Konten-Ansicht über „Importieren" laden.
 
 ![Report im Dunkelmodus](docs/screenshots/report-dunkel.png)
 
+## Zusatzmodule
+
+Optionale Module, die **nicht** Teil der Browser-App sind. Sie müssen
+einzeln eingerichtet werden, sind standardmäßig aus, und wer sie nicht
+einrichtet, merkt von ihnen nichts.
+
+**Rechen-Schnittstelle (REST-API)** — lässt andere Programme dieselben
+Berechnungen ausführen wie die App: Forderungsaufstellung, Report, PDF,
+Antragstext, RVG-Gebühren, Basiszinstabelle. Zustandslos: Der Server
+bekommt den Datenbestand mit der Anfrage, rechnet und speichert nichts.
+Läuft als zweiter Container hinter dem vorhandenen nginx, im Kanzleinetz
+und nicht im Internet. Ohne hinterlegte Zugangsdaten startet der Dienst
+gar nicht erst.
+
+```
+docker compose --profile api up -d --build
+```
+
+Einrichtung, Endpunkte und Datenschutz:
+[Handbuch, Kapitel 12](docs/handbuch/12-rest-api.md). Die
+Schnittstellenbeschreibung liegt unter `/api/openapi.json`, eine
+Bedienoberfläche zum Ausprobieren unter `/api/docs`.
+
 ## Für Entwickler
 
-Saldenwerk ist bewusst einfach gebaut: statisches Vanilla-JS ohne
-Build-Schritt (`index.html` öffnen genügt), ohne Laufzeit-Abhängigkeiten
-von CDNs — die einzigen Fremdbibliotheken (jsPDF, jsPDF-AutoTable, Inter)
-liegen lokal in `vendor/`. Tests:
+Saldenwerk ist bewusst einfach gebaut: die **Browser-App** ist statisches
+Vanilla-JS ohne Build-Schritt (`index.html` öffnen genügt), ohne
+Laufzeit-Abhängigkeiten von CDNs — die einzigen Fremdbibliotheken (jsPDF,
+jsPDF-AutoTable, Inter) liegen lokal in `vendor/`. Die **Zusatzmodule**
+laufen unter Node 22, ebenfalls ohne `package.json`, ohne Build und ohne
+npm-Abhängigkeiten. Tests:
 
 ```
 node --test tests/*.test.js
@@ -150,6 +178,12 @@ Gebündelte Komponenten in `vendor/`:
 [jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable)
 (beide MIT) sowie die Schrift [Inter](https://github.com/rsms/inter)
 (SIL Open Font License 1.1) — Lizenztexte liegen bei.
+
+Die Rechen-Schnittstelle liefert zusätzlich
+[Swagger UI](https://github.com/swagger-api/swagger-ui) unter der
+Apache-Lizenz 2.0 aus; der Lizenztext liegt in `vendor/swagger-ui/` bei.
+Eine Übersicht aller gebündelten Versionen steht in
+[`vendor/README.md`](vendor/README.md).
 
 ## Haftungsausschluss
 

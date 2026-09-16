@@ -6,17 +6,49 @@ die Versionierung [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [1.1.0] – unveröffentlicht
 
+Die Browser-App ist unverändert. Wer die neuen Zusatzmodule nicht
+einrichtet, merkt von diesem Update nichts.
+
 ### Hinzugefügt
+- **Rechen-Schnittstelle (optional)**: Saldenwerk kann seine Berechnungen
+  jetzt auch über eine Schnittstelle im Kanzleinetz anbieten —
+  Forderungsaufstellung, Report, PDF, Antragstext, RVG-Gebühren und
+  Basiszinstabelle. Die Schnittstelle ist **zustandslos**: Sie bekommt den
+  Datenbestand mit der Anfrage, rechnet und speichert nichts — weder in
+  einer Datenbank noch als Datei. Der Zugang ist durch eine Anmeldung
+  geschützt; ohne hinterlegte Zugangsdaten startet der Dienst gar nicht
+  erst. Standardmäßig **aus** —
+  siehe [Handbuch, Kapitel 12](docs/handbuch/12-rest-api.md).
+- Zweites Docker-Image `ghcr.io/pbaumfalk/saldenwerk-api` und ein
+  Compose-Profil `api`. Ohne `--profile api` bleibt das Deployment exakt
+  wie bisher.
+- Maschinenlesbare Schnittstellenbeschreibung unter `/api/openapi.json`
+  und eine Bedienoberfläche zum Ausprobieren unter `/api/docs`.
+- Handbuch-Kapitel 12 „Rechen-Schnittstelle".
+
+### Geändert
 - Die Rechenabläufe (Bestand prüfen, Konto wählen, Stichtag setzen, rechnen,
   Report und Antragstext bauen) liegen jetzt gebündelt in `kern.js` — eine
-  Quelle für die Browser-App und alle künftigen Schnittstellen. Die
-  Browser-App rechnet unverändert; ein Test hält beide Wege Ergebnis für
-  Ergebnis deckungsgleich.
+  Quelle für die Browser-App und die Schnittstelle. Die Browser-App rechnet
+  unverändert; ein Test hält beide Wege Ergebnis für Ergebnis deckungsgleich.
+- README, Datenschutzerklärung und Handbuch unterscheiden jetzt ausdrücklich
+  zwischen der Browser-App (Daten bleiben auf dem Rechner) und den optionalen
+  Zusatzmodulen. Kapitel 9 „Integrationen" ist zu einem Überblick umgebaut.
+- Kapitel 8 warnt davor, ein Zusatzmodul auf dieselbe Speicherdatei zu
+  richten, mit der die App gerade verbunden ist — beide würden einander
+  überschreiben.
 
 ### Behoben
 - Der PDF-Export erzeugte außerhalb des Browsers keine Datei, sondern brach
   mit „jsPDF ist nicht geladen" ab. Betraf bisher niemanden, weil Saldenwerk
   nur im Browser lief.
+
+### Sicherheit
+- Anfragen an die Rechen-Schnittstelle werden **nicht protokolliert**.
+  Aktenzeichen stehen im Adressteil der Aufrufe und wären sonst im
+  nginx-Standard in den Protokolldateien gelandet.
+- Der API-Container veröffentlicht seinen Port nicht nach außen; erreichbar
+  ist er nur über den nginx davor.
 
 ## [1.0.1] – 2026-08-12
 

@@ -1,7 +1,7 @@
 # 8 — Daten speichern & sichern
 
-Saldenwerk speichert nichts auf fremden Servern. Umso wichtiger ist es zu
-wissen, wo die Daten liegen — und wie Sie sie sichern.
+Saldenwerk speichert Ihre Konten nicht auf fremden Servern. Umso wichtiger
+ist es zu wissen, wo die Daten liegen — und wie Sie sie sichern.
 
 ## Stufe 1: Automatisch im Browser (localStorage)
 
@@ -49,6 +49,25 @@ Access API und erfordert einen sicheren Kontext (HTTPS, `localhost` oder
 direkt geöffnete `index.html`). Firefox und Safari unterstützen sie nicht —
 dort bleibt es bei localStorage plus Export.
 
+## Stufe 3: Zugriff durch Zusatzmodule
+
+Stufe 1 und 2 beschreiben, wo Ihre Daten liegen. Richten Sie ein
+Zusatzmodul ein ([Kapitel 9](09-integrationen.md)), kommt eine weitere
+Frage dazu: wer darauf zugreift.
+
+- Die **Rechen-Schnittstelle** ([Kapitel 12](12-rest-api.md)) bekommt den
+  Datenbestand mit jeder Anfrage übermittelt, rechnet und antwortet. Sie
+  **speichert nichts** — kein Konto, keine Datenbank, keine Datei auf dem
+  Server. Nach der Antwort ist der Vorgang vorbei.
+
+**Wichtig, wenn ein Zusatzmodul Ihre Speicherdatei anfassen darf:**
+Richten Sie es **nicht auf dieselbe Datei**, mit der die Browser-App gerade
+über die Datei-Speicherung (Stufe 2) verbunden ist. Die App schreibt
+selbstständig und leicht verzögert; sie würde eine fremde Änderung
+überschreiben, ohne zu fragen — und umgekehrt. Trennen Sie die
+Datei-Verbindung in der App, bevor ein anderes Werkzeug schreibt, und laden
+Sie die Datei danach in der App neu.
+
 ## Export und Import
 
 - **Exportieren** (auf der Kontokarte) sichert ein einzelnes Konto,
@@ -70,6 +89,9 @@ dort bleibt es bei localStorage plus Export.
    läuft dann über die normale Kanzlei-Datensicherung mit).
 2. Zusätzlich gelegentlich **Alle exportieren** als Zweitsicherung.
 3. Bei mehreren Nutzern: nacheinander arbeiten, Warnhinweise ernst nehmen.
+4. Wenn ein Zusatzmodul auf Kontodateien zugreifen soll: ein eigenes
+   Verzeichnis dafür festlegen und nicht dieselbe Datei verwenden, mit
+   der die App gerade verbunden ist.
 
 ---
 

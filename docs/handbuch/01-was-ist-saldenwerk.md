@@ -41,15 +41,24 @@ Die Navigation oben in der App-Leiste führt durch vier Ansichten:
 
 Saldenwerk ist bewusst **ohne Server-Datenhaltung** gebaut:
 
-- Die App läuft vollständig in Ihrem Browser. Es gibt **kein Konto, keine
-  Registrierung, keine Cloud** — Mandats- und Schuldnerdaten verlassen
-  Ihren Rechner nicht.
+- Die **Browser-App** läuft vollständig in Ihrem Browser. Es gibt **kein
+  Konto, keine Registrierung, keine Cloud** — Mandats- und Schuldnerdaten
+  verlassen Ihren Rechner nicht.
 - Gespeichert wird lokal in Ihrem Browser und — auf Wunsch — in einer
   JSON-Datei, die Sie selbst verwalten, z. B. auf dem Netzlaufwerk der
   Kanzlei (siehe [Kapitel 8](08-datenspeicherung.md)).
 - Auch beim Betrieb über einen Kanzlei-Server (Docker) liefert der Server
   nur die App aus; Ihre Daten bleiben im Browser des jeweiligen
-  Arbeitsplatzes.
+  Arbeitsplatzes — solange das optionale API-Profil nicht aktiviert ist.
+- Saldenwerk lässt sich um **Zusatzmodule** erweitern. Sie sind nicht Teil
+  der Browser-App, müssen einzeln eingerichtet werden und sind
+  standardmäßig aus. Sie ändern, **wo** Ihre Daten verarbeitet werden —
+  bei manchen auch, **wer** sie zu sehen bekommt. Was das im Einzelnen
+  bedeutet, steht in [Kapitel 9](09-integrationen.md).
+
+Die Aussagen oben gelten also uneingeschränkt für Saldenwerk, wie Sie es
+herunterladen und öffnen. Richten Sie ein Zusatzmodul ein, lesen Sie
+vorher dessen Datenschutz-Abschnitt.
 
 ---
 

@@ -58,4 +58,4 @@ einzeln aus.
 
 ---
 
-[Zur Übersicht](README.md)
+Weiter: [12 — Rechen-Schnittstelle](12-rest-api.md) · [Zur Übersicht](README.md)

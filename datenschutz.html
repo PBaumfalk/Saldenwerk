@@ -26,13 +26,18 @@
 
   <h2>Das Wichtigste vorab</h2>
   <p>
-    Saldenwerk verarbeitet <strong>keine personenbezogenen
-    Daten auf dem Server</strong>. Alle von Ihnen erfassten Inhalte
-    (Konten, Buchungen, Einstellungen) werden ausschließlich lokal in
-    Ihrem Browser gespeichert (localStorage bzw. von Ihnen gewählte
-    Dateien auf Ihrem Gerät) und zu keinem Zeitpunkt an uns oder Dritte
-    übertragen. Es gibt keine Registrierung, keine Cookies, kein Tracking
-    und keine Analyse-Dienste.
+    In der Standardauslieferung verarbeitet Saldenwerk <strong>keine
+    personenbezogenen Daten auf dem Server</strong>. Alle von Ihnen
+    erfassten Inhalte (Konten, Buchungen, Einstellungen) werden
+    ausschließlich lokal in Ihrem Browser gespeichert (localStorage bzw.
+    von Ihnen gewählte Dateien auf Ihrem Gerät) und zu keinem Zeitpunkt an
+    uns oder Dritte übertragen. Es gibt keine Registrierung, keine Cookies,
+    kein Tracking und keine Analyse-Dienste.
+  </p>
+  <p>
+    Diese Installation kann optional eine Rechen-Schnittstelle bereitstellen.
+    Ist sie aktiviert, gilt zusätzlich der Abschnitt
+    <a href="#api">Zusatzmodul Rechen-Schnittstelle</a>.
   </p>
 
   <h2>Verantwortliche Stelle</h2>
@@ -54,6 +59,37 @@
     <!-- PLATZHALTER: an das tatsächliche Hosting anpassen (eigener
          Server / Hoster benennen, ggf. Auftragsverarbeitung). -->
   </p>
+  <p>
+    <strong>Inhalte Ihrer Anfragen werden nicht protokolliert.</strong>
+    Für die optionale Rechen-Schnittstelle ist die Protokollierung
+    ausdrücklich abgeschaltet; weder die übermittelten Konten und Buchungen
+    noch die Adressbestandteile dieser Aufrufe erscheinen in den
+    Protokolldateien.
+  </p>
+
+  <h2 id="api">Zusatzmodul Rechen-Schnittstelle (nur wenn aktiviert)</h2>
+  <p>
+    Diese Installation kann optional eine Rechen-Schnittstelle (REST-API)
+    bereitstellen, damit andere Programme dieselben Berechnungen ausführen
+    lassen können wie die App. Ist sie aktiviert, übermittelt Ihr Browser
+    den Datenbestand zur Berechnung an den Server dieser Installation.
+  </p>
+  <p>
+    Die Schnittstelle arbeitet <strong>zustandslos</strong>: Sie erhält die
+    Daten mit der Anfrage, berechnet das Ergebnis und gibt es zurück. Eine
+    <strong>Speicherung findet nicht statt</strong> — weder in einer
+    Datenbank noch als Datei auf dem Server. Der Zugang ist durch eine
+    Anmeldung geschützt. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b bzw.
+    lit. f DSGVO (Vertragserfüllung bzw. berechtigtes Interesse an einer
+    funktionsfähigen Kanzleiorganisation).
+  </p>
+  <p>
+    Ob die Schnittstelle in dieser Installation aktiv ist, erkennen Sie
+    daran, ob der Aufruf von <code>/api/status</code> eine Antwort liefert.
+    Nutzt diese Kanzlei darüber hinaus Werkzeuge, die Daten an Dritte
+    übermitteln — etwa KI-Assistenten —, ist das nicht Bestandteil dieser
+    Website; Einzelheiten dazu regelt die Kanzlei intern.
+  </p>
 
   <h2>Lokale Speicherung in Ihrem Browser</h2>
   <p>
@@ -70,7 +106,8 @@
     Sie haben nach der DSGVO Rechte auf Auskunft, Berichtigung, Löschung,
     Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch
     sowie ein Beschwerderecht bei einer Datenschutz-Aufsichtsbehörde.
-    Da wir keine Inhalte von Ihnen speichern, betreffen diese Rechte im
+    Da wir keine Inhalte von Ihnen speichern — die Rechen-Schnittstelle
+    arbeitet zustandslos und legt nichts ab —, betreffen diese Rechte im
     Wesentlichen die Server-Logdaten.
   </p>
 
