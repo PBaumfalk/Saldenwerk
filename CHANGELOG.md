@@ -4,7 +4,7 @@ Alle nennenswerten Änderungen an Saldenwerk werden hier festgehalten.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionierung [Semantic Versioning](https://semver.org/lang/de/).
 
-## [1.1.0] – unveröffentlicht
+## [1.1.0] – 2026-09-16
 
 Die Browser-App ist unverändert. Wer die neuen Zusatzmodule nicht
 einrichtet, merkt von diesem Update nichts.
