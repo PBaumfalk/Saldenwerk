@@ -89,7 +89,7 @@ jobs:
           docker rm -f smoke
       - name: Bei GHCR anmelden
         if: github.event_name == 'push'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -186,7 +186,7 @@ jobs:
           docker rm -f api-smoke
       - name: Bei GHCR anmelden
         if: github.event_name == 'push'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
