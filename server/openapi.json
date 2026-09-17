@@ -271,7 +271,8 @@
             "type": "string",
             "description": "Maschinenlesbare Einordnung. Clients sollten hierauf reagieren, nicht auf den Text.",
             "enum": ["BESTAND_UNGUELTIG", "KONTO_LEER", "KONTO_NICHT_GEFUNDEN",
-              "KONTO_MEHRDEUTIG", "STICHTAG_UNGUELTIG", "RVG_EINGABE_UNGUELTIG"]
+              "KONTO_MEHRDEUTIG", "STICHTAG_UNGUELTIG", "RVG_EINGABE_UNGUELTIG",
+              "BERECHNUNG_ZU_GROSS"]
           }
         },
         "examples": [{ "fehler": "Unbekannte oder fehlende Versionsnummer (erwartet: 1).", "code": "BESTAND_UNGUELTIG" }]

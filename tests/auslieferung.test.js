@@ -88,7 +88,11 @@ test('das API-Image bringt alles mit, was server/ und kern.js brauchen', () => {
 test('der nginx-Block für /api/ ist gegen die envsubst-Falle abgesichert', () => {
   const vorlage = lies('docker/default.conf.template');
   const compose = lies('docker-compose.yml');
-  assert.match(vorlage, /location \/api\//, 'kein /api/-Block in der nginx-Vorlage');
+  // Das ^~ ist zwingend: Ohne den Modifikator schlägt die Regex-location für
+  // .html/.css/.js diesen Präfix-Block, und /api/docs/*.css wird statisch
+  // gesucht statt weitergereicht — die Swagger-Seite bleibt dann weiß.
+  assert.match(vorlage, /location \^~ \/api\//,
+    'der /api/-Block braucht den Modifikator ^~, sonst schlägt ihn die Regex-location oben');
 
   // Die eigentliche Absicherung, und sie gehört ins Image, nicht zum Aufrufer:
   // envsubst ersetzt nur Variablen, die in der Umgebung existieren. Fehlt der
@@ -106,7 +110,7 @@ test('der nginx-Block für /api/ ist gegen die envsubst-Falle abgesichert', () =
     'der /api/-Block fällt bei leerer Variable nicht auf 404 zurück');
   // Aktenzeichen stehen im Query-String (?kontoId=) und dürfen nicht in
   // Logdateien landen — datenschutz.html sichert das Gegenteil zu.
-  const block = vorlage.slice(vorlage.indexOf('location /api/'));
+  const block = vorlage.slice(vorlage.indexOf('location ^~ /api/'));
   assert.match(block, /access_log off;/,
     'der /api/-Block protokolliert Anfragen samt Aktenbezug im Query-String');
   // add_header vererbt in nginx nicht additiv: jeder location-Block mit

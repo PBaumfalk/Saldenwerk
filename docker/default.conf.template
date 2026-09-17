@@ -38,7 +38,11 @@ server {
     # die Variable in docker-compose.yml IMMER definiert, notfalls leer.
     # Leer bedeutet: 404, die Schnittstelle ist sauber aus.
     # Der CI-Job "compose-ohne-profil" prueft genau das bei jedem Commit.
-    location /api/ {
+    # ^~ ist zwingend: Ohne den Modifikator ist dies nur eine Praefix-location,
+    # und die Regex-location fuer .html/.css/.js oben schlaegt sie. Die
+    # Swagger-Dateien unter /api/docs/ wurden dadurch statisch gesucht statt
+    # weitergereicht — die Doku-Seite blieb weiss.
+    location ^~ /api/ {
         resolver 127.0.0.11 ipv6=off valid=30s;
         set $api "${SALDENWERK_API_URL}";
         if ($api = "") { return 404; }

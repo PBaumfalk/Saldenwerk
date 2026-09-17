@@ -33,7 +33,7 @@
     ],
   };
 
-  const MINDESTGEBUEHR_RVG = 15; // § 13 Abs. 3 RVG
+  const MINDESTGEBUEHR_RVG = 15; // § 13 Abs. 2 RVG
   const MINDESTBETRAG_KV1100 = 38; // KV 1100 GKG
   const AUSLAGENPAUSCHALE_MAX = 20; // Nr. 7002 VV RVG
   const UST_SATZ = 0.19; // Nr. 7008 VV RVG

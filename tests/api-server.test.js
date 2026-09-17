@@ -160,7 +160,6 @@ test('ein zu großer Körper ergibt 413 mit lesbarer Meldung', (t) => mitServer(
   // wenn die Antwort draußen ist. Wer eine zu große Datei sendet, soll die
   // Meldung lesen können und nicht bloß einen Verbindungsabbruch sehen.
   assert.strictEqual(antwort.status, 413);
-  assert.match(antwort.headers.get('connection') || '', /close/i);
   assert.match((await antwort.json()).fehler, /10 MB/);
 }));
 
@@ -285,3 +284,98 @@ test('ohne Zugangsdaten startet der Prozess gar nicht', () => {
   }
   assert.ok(gescheitert, 'der Server hätte ohne Zugangsdaten nicht starten dürfen');
 });
+
+// ── Große Körper: die 413 muss den Aufrufer wirklich erreichen ────────────
+//
+// Der erste Anlauf schloss die Verbindung, sobald die Antwort geschrieben war.
+// Solange der Rest des Körpers noch in die Socketpuffer passte, kam die 413 an
+// — bei größeren Körpern verwarf das RST sie, und der Aufrufer sah ECONNRESET.
+// Die alten Tests benutzten ausnahmslos MAX_BYTES + 1 KB, also genau die
+// Größe, die das Problem verdeckt.
+
+for (const ueberschuss of [1024, 1024 * 1024, 20 * 1024 * 1024]) {
+  const name = ueberschuss < 1024 * 1024 ? `${ueberschuss / 1024} KB` : `${ueberschuss / 1024 / 1024} MB`;
+  test(`413 erreicht den Aufrufer auch bei ${name} über der Grenze`, (t) => mitServer(t, null, async (basis) => {
+    const fuellung = 'x'.repeat(MAX_BYTES + ueberschuss);
+    const antwort = await fetch(`${basis}/api/berechnung`,
+      json(`{"version":1,"konten":[],"fuellung":"${fuellung}"}`));
+    assert.strictEqual(antwort.status, 413);
+    assert.match((await antwort.json()).fehler, /10 MB/);
+  }));
+}
+
+// ── Validierungslecks ─────────────────────────────────────────────────────
+
+test('__proto__ im RVG-Körper hebelt die Validierung nicht aus', (t) => mitServer(t, null, async (basis) => {
+  // JSON.parse legt __proto__ als eigene Property an, die Prüfungen in
+  // Kern.rvg sehen deshalb ein leeres Objekt. Object.assign kopierte über
+  // [[Set]] und ließ den Prototyp-Setter feuern — die Felder kamen bei
+  // rvg.js an, ohne je geprüft worden zu sein.
+  const antwort = await fetch(`${basis}/api/rvg`, json(
+    '{"gegenstandswert":5000,"datum":"2025-06-01",' +
+    '"__proto__":{"verzugspauschale":true,"gerichtlich":{"aktiv":true,' +
+    '"verfahrensgebuehr":true,"gerichtskosten":true,"verfahrensart":"quatsch"}}}'));
+  // Nach dem Fix kommen die eingeschleusten Felder gar nicht mehr an: Die
+  // Anfrage wird als das behandelt, was sie sichtbar ist — Gegenstandswert
+  // und Datum, sonst nichts. Entscheidend ist, dass keine ungeprüfte Gebühr
+  // entsteht; vorher lieferte derselbe Aufruf 511,50 € Gerichtskosten.
+  assert.strictEqual(antwort.status, 200);
+  const koerper = await antwort.json();
+  const texte = koerper.buchungen.map((b) => b.text).join(' | ');
+  assert.ok(!/Gerichtskosten/.test(texte), `ungeprüfte Gerichtskosten entstanden: ${texte}`);
+  assert.ok(!/Verzugspauschale|§ 288 Abs. 5/.test(texte), `ungeprüfte Verzugspauschale: ${texte}`);
+  assert.strictEqual(koerper.buchungen.length, 0, `unerwartete Buchungen: ${texte}`);
+}));
+
+test('eine Buchung ohne Text wird abgewiesen', (t) => mitServer(t, null, async (basis) => {
+  // Ohne diese Prüfung stand später „undefined" in der Buchungstext-Spalte
+  // der Forderungsaufstellung — die dann so zum Mahnbescheid geht.
+  for (const text of [undefined, '', '   ', { fremd: 1 }, 42]) {
+    const buchung = { id: 'b', typ: 'hauptforderung', datum: '2024-01-01', betrag: 100, verzinsung: null };
+    if (text !== undefined) buchung.text = text;
+    const antwort = await fetch(`${basis}/api/berechnung`,
+      json({ version: 1, konten: [{ name: 'A', buchungen: [buchung] }] }));
+    assert.strictEqual(antwort.status, 400, `text=${JSON.stringify(text)} wurde angenommen`);
+    assert.match((await antwort.json()).fehler, /text/);
+  }
+}));
+
+test('eine numerische Konto-id ist über kontoId erreichbar', (t) => mitServer(t, null, async (basis) => {
+  const bestand = { version: 1, konten: [
+    { id: 3, name: 'Meier', buchungen: [] },
+    { id: 4, name: 'Schulze', buchungen: [] },
+  ] };
+  const antwort = await fetch(`${basis}/api/berechnung?kontoId=3`, json(bestand));
+  assert.strictEqual(antwort.status, 200,
+    'die Fehlermeldung nannte die gesuchte id früher im selben Satz als vorhanden');
+}));
+
+test('unsinnig große Berechnungen werden abgewiesen, nicht ausgeführt', (t) => mitServer(t, null, async (basis) => {
+  const buchungen = [];
+  for (let i = 0; i < 800; i++) {
+    buchungen.push({ id: 'b' + i, typ: 'hauptforderung', datum: '1900-01-01', betrag: 1000, text: 'x',
+      verzinsung: { art: 'basiszins', satz: 5, beginn: '1900-01-01', ende: null, methode: 'kalender' } });
+  }
+  const antwort = await fetch(`${basis}/api/berechnung?stichtag=2100-12-31`,
+    json({ version: 1, konten: [{ name: 'Groß', buchungen }] }));
+  assert.strictEqual(antwort.status, 400);
+  const koerper = await antwort.json();
+  assert.strictEqual(koerper.code, Kern.FEHLERCODES.BERECHNUNG_ZU_GROSS);
+  assert.match(koerper.fehler, /Zinssegmente/);
+}));
+
+test('Datumsangaben außerhalb 1900 bis 2100 ergeben 400, nicht 500', (t) => mitServer(t, null, async (basis) => {
+  // Jahreszahlen unter 1000 brachen die Segmentierung mit einem RangeError ab
+  // („202-12-31" ist kein parsbares Datum) — die API antwortete mit 500.
+  const bestand = (beginn) => ({ version: 1, konten: [{ name: 'A', buchungen: [
+    { id: 'h', typ: 'hauptforderung', datum: '2020-01-01', betrag: 100, text: 'x',
+      verzinsung: { art: 'basiszins', satz: 5, beginn, ende: null, methode: 'kalender' } }] }] });
+  for (const beginn of ['0202-01-01', '0999-12-31', '2200-01-01']) {
+    const antwort = await fetch(`${basis}/api/berechnung`, json(bestand(beginn)));
+    assert.strictEqual(antwort.status, 400, `beginn=${beginn} ergab ${antwort.status}`);
+    assert.match((await antwort.json()).fehler, /1900 bis 2100/);
+  }
+  const weit = await fetch(`${basis}/api/berechnung?stichtag=9999-12-31`, json(bestand('2020-01-01')));
+  assert.strictEqual(weit.status, 400);
+  assert.match((await weit.json()).fehler, /1900 bis 2100/);
+}));

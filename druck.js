@@ -53,9 +53,14 @@
     return istVerzinst(b.verzinsung) ? 'verzinslKosten' : 'unverzinslKosten';
   }
 
-  function verzinsungsZusatz(verzinsung, stichtag) {
+  // `bisTatsaechlich` ist der letzte Tag, für den wirklich Zinsen angefallen
+  // sind. Ohne ihn behauptete der Fließtext eine Verzinsung bis zum Stichtag,
+  // auch wenn die Forderung längst getilgt war — die Zinsstaffel darunter
+  // endete korrekt am Tilgungstag. In einem Schriftsatz ist das angreifbar.
+  function verzinsungsZusatz(verzinsung, stichtag, bisTatsaechlich) {
     if (!istVerzinst(verzinsung)) return null;
-    const bis = verzinsung.ende && verzinsung.ende < stichtag ? verzinsung.ende : stichtag;
+    let bis = verzinsung.ende && verzinsung.ende < stichtag ? verzinsung.ende : stichtag;
+    if (bisTatsaechlich && bisTatsaechlich < bis) bis = bisTatsaechlich;
     const zeitraum = `ab dem ${formatDatum(verzinsung.beginn)} bis zum ${formatDatum(bis)}`;
     if (verzinsung.art === 'basiszins') {
       return `verzinst mit ${formatZahl5(verzinsung.satz)} Prozentpunkten über dem Basiszinssatz gem. § 247 BGB ${zeitraum}`;
@@ -126,6 +131,11 @@
         (a.typ === 'zahlung' ? 1 : 0) - (b.typ === 'zahlung' ? 1 : 0)));
     const buchungById = new Map(buchungen.map((b) => [b.id, b]));
 
+    // Letzter Tag mit tatsächlichem Zinsanfall je Forderung — für den
+    // Zusatztext, damit er keinen zu langen Zinslauf behauptet.
+    const letzterZinstag = new Map();
+    for (const s of ergebnis.staffel) letzterZinstag.set(s.forderungId, s.bis);
+
     const zeilen = [];
     const spaltensummen = { zahlung: 0, hauptforderung: 0, hfZinsen: 0,
       verzinslKosten: 0, kostenzinsen: 0, unverzinslKosten: 0 };
@@ -140,7 +150,7 @@
         const betrag = Engine.round2(b.betrag);
         saldo = Engine.round2(saldo + betrag);
         spaltensummen[spalte] = Engine.round2(spaltensummen[spalte] + betrag);
-        const zusatz = verzinsungsZusatz(b.verzinsung, stichtag);
+        const zusatz = verzinsungsZusatz(b.verzinsung, stichtag, letzterZinstag.get(b.id));
         zeilen.push({ art: 'buchung', datum: b.datum,
           text: zusatz ? `${b.text} ${zusatz}` : b.text,
           spalte, betrag, gesamtsaldo: saldo });

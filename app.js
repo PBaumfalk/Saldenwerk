@@ -36,6 +36,17 @@
     return d.toISOString().slice(0, 10) === iso ? iso : null;
   }
 
+  // Plausibles Datumsfenster. Ohne Grenze erzeugte ein Verzinsungsbeginn im
+  // Jahr 1000 mit fernem Stichtag Millionen Zinssegmente (Speicherabsturz),
+  // und Jahreszahlen unter 1000 brachen die Segmentierung in engine.js sogar
+  // mit einem RangeError ab ("202-12-31" ist kein parsbares Datum).
+  const DATUM_VON = '1900-01-01';
+  const DATUM_BIS = '2100-12-31';
+
+  function datumImFenster(iso) {
+    return iso >= DATUM_VON && iso <= DATUM_BIS;
+  }
+
   const EXPORT_BUCHUNG_TYPEN = ['hauptforderung', 'nebenforderung', 'zinsforderung', 'zahlung'];
   const EXPORT_VERZINSUNG_ARTEN = ['fest', 'basiszins'];
   const EXPORT_VERZINSUNG_METHODEN = ['kalender', 'bank360'];
@@ -56,10 +67,16 @@
     if (!beginn) {
       return 'Verzinsungsbeginn fehlt oder ist ungültig.';
     }
+    if (!datumImFenster(beginn)) {
+      return `Verzinsungsbeginn „${v.beginn}" liegt außerhalb des zulässigen Bereichs (1900 bis 2100).`;
+    }
     if (v.ende !== null && v.ende !== undefined) {
       const ende = parseDatum(v.ende);
       if (!ende) {
         return 'Verzinsungsende ist ungültig.';
+      }
+      if (!datumImFenster(ende)) {
+        return `Verzinsungsende „${v.ende}" liegt außerhalb des zulässigen Bereichs (1900 bis 2100).`;
       }
       if (ende < beginn) {
         return 'Das Ende der Verzinsung darf nicht vor dem Beginn liegen.';
@@ -90,6 +107,14 @@
         if (!o || typeof o !== 'object' || !parseDatum(o.ab) ||
             typeof o.satz !== 'number' || !isFinite(o.satz)) {
           return { ok: false, fehler: `Basiszins-Override ${i + 1}: ungültiges Format (erwartet Datum „ab" und Zahl „satz").` };
+        }
+        // Der Basiszinssatz wechselt nur zum 1.1. und 1.7.; die Zinsrechnung
+        // teilt Zeiträume ausschließlich an diesen Grenzen. Ein Override zu
+        // einem anderen Datum bliebe vollständig wirkungslos — das Formular
+        // verhindert das, Import und Schnittstelle taten es bisher nicht.
+        const tagMonat = parseDatum(o.ab).slice(5);
+        if (tagMonat !== '01-01' && tagMonat !== '07-01') {
+          return { ok: false, fehler: `Basiszins-Override ${i + 1}: „${o.ab}" ist kein Halbjahresbeginn (erwartet 1. Januar oder 1. Juli).` };
         }
       }
     }
@@ -125,8 +150,17 @@
         if (!parseDatum(b.datum)) {
           return { ok: false, fehler: `${buchungsBezeichnung}: ungültiges Datum.` };
         }
+        if (!datumImFenster(parseDatum(b.datum))) {
+          return { ok: false, fehler: `${buchungsBezeichnung}: Datum „${b.datum}" liegt außerhalb des zulässigen Bereichs (1900 bis 2100).` };
+        }
         if (typeof b.betrag !== 'number' || !isFinite(b.betrag) || b.betrag <= 0) {
           return { ok: false, fehler: `${buchungsBezeichnung}: Betrag muss eine Zahl größer als 0 sein.` };
+        }
+        // Ohne diese Prüfung stand bei fehlendem Text später „undefined" in der
+        // Buchungstext-Spalte der Forderungsaufstellung — die Browser-App setzt
+        // immer einen Text, die Schnittstelle nahm auch Buchungen ohne an.
+        if (typeof b.text !== 'string' || !b.text.trim()) {
+          return { ok: false, fehler: `${buchungsBezeichnung}: Feld „text" fehlt oder ist kein Text.` };
         }
         const verzinsungFehler = verzinsungFehlerText(b.verzinsung);
         if (verzinsungFehler) {
@@ -154,7 +188,7 @@
       : 'Verrechnung nach § 367 BGB';
   }
 
-  return { formatEUR, parseBetrag, formatDatum, parseDatum, validiereExport, verrechnungsText, backupErinnerungFaellig };
+  return { formatEUR, parseBetrag, formatDatum, parseDatum, validiereExport, verrechnungsText, backupErinnerungFaellig, DATUM_VON, DATUM_BIS };
 });
 
 if (typeof document !== 'undefined') {

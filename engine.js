@@ -9,7 +9,10 @@
   function addTage(s, n) { const x = d(s); x.setUTCDate(x.getUTCDate() + n); return iso(x); }
   function tageKalender(von, bis) { return Math.round((d(bis) - d(von)) / TAG_MS); }
   function istSchaltjahr(j) { return (j % 4 === 0 && j % 100 !== 0) || j % 400 === 0; }
-  function round2(x) { return Math.sign(x) * Math.round((Math.abs(x) + Number.EPSILON) * 100) / 100; }
+  function round2(x) {
+    const r = Math.sign(x) * Math.round((Math.abs(x) + Number.EPSILON) * 100) / 100;
+    return r === 0 ? 0 : r; // Math.sign(-0.001) * 0 ergäbe -0 und damit „-0,00 €"
+  }
   // Lokale Datumsteile statt toISOString(): UTC wäre nachts der Vortag.
   function heute() {
     const x = new Date();
@@ -62,7 +65,10 @@
     if (art === 'basiszins') {
       const letzteGrenze = Basiszins.deckungsEnde(t);
       if (letzteGrenze && bis > letzteGrenze) {
-        warnungen.push('Für Zeiträume nach dem ' + letzteGrenze +
+        // Deutsches Datumsformat: Die Warnung landet über druck.js im
+        // Hinweiskasten des PDF, dort wäre ein ISO-Datum ein Fremdkörper.
+        const [j, m, tg] = letzteGrenze.split('-');
+        warnungen.push(`Für Zeiträume nach dem ${tg}.${m}.${j}` +
           ' ist noch kein Basiszinssatz hinterlegt – der letzte bekannte Satz wird verwendet.');
       }
     }
@@ -118,7 +124,11 @@
       };
     });
     const zahlungen = alle.filter((b) => b.typ === 'zahlung');
-    const nachDatum = (a, b) => (a.buchung.datum < b.buchung.datum ? -1 : 1);
+    // Bei Gleichstand 0 zurückgeben: Ein Komparator, der nie 0 liefert,
+    // verletzt den Vertrag von Array.sort. Die Verrechnung „ältester zuerst"
+    // hing sonst daran, dass V8s TimSort zufällig stabil bleibt.
+    const nachDatum = (a, b) => (a.buchung.datum < b.buchung.datum ? -1
+      : a.buchung.datum > b.buchung.datum ? 1 : 0);
     const vom = (typ) => posten.filter((p) => p.buchung.typ === typ).sort(nachDatum);
 
     if (posten.length) {

@@ -30,7 +30,16 @@
     KONTO_MEHRDEUTIG: 'KONTO_MEHRDEUTIG',
     STICHTAG_UNGUELTIG: 'STICHTAG_UNGUELTIG',
     RVG_EINGABE_UNGUELTIG: 'RVG_EINGABE_UNGUELTIG',
+    BERECHNUNG_ZU_GROSS: 'BERECHNUNG_ZU_GROSS',
   });
+
+  // Obergrenze für die Zahl der Zinssegmente. Gemessen: 201.000 Segmente
+  // brauchen rund 0,5 s und erzeugen eine 28 MB große Antwort. Ein
+  // realistisches Großkonto mit 10.000 Buchungen kommt auf etwa 130.000
+  // Segmente und passt damit; unsinnige Eingaben (Jahrhunderte lange
+  // Zinsläufe über hunderte Buchungen) werden abgewiesen, statt den Prozess
+  // am Speicher sterben zu lassen und alle parallelen Anfragen mitzureißen.
+  const MAX_SEGMENTE = 250000;
 
   const fehler = (code, text) => ({ ok: false, code, fehler: text });
   const istZahl = (w) => typeof w === 'number' && isFinite(w);
@@ -66,13 +75,17 @@
       return { ok: true, konto: konten[0] };
     }
     const kennung = String(kontoId);
-    const perId = konten.filter((k) => k.id === kennung);
+    // Beide Seiten in Zeichenketten wandeln: validiereExport prüft konto.id
+    // nicht, ein Fremdsystem darf also Zahlen liefern. Ein strikter Vergleich
+    // ließ ?kontoId=3 an einer id 3 scheitern — mit einer Fehlermeldung, die
+    // die gesuchte id im selben Satz als vorhanden auflistete.
+    const perId = konten.filter((k) => k.id != null && String(k.id) === kennung);
     if (perId.length === 1) return { ok: true, konto: perId[0] };
     if (perId.length > 1) {
       return fehler(FEHLERCODES.KONTO_MEHRDEUTIG,
         `Mehrere Konten tragen die id „${kennung}".`);
     }
-    const perName = konten.filter((k) => k.name === kennung);
+    const perName = konten.filter((k) => String(k.name) === kennung);
     if (perName.length === 1) return { ok: true, konto: perName[0] };
     if (perName.length > 1) {
       return fehler(FEHLERCODES.KONTO_MEHRDEUTIG,
@@ -93,6 +106,10 @@
     if (!stichtag) {
       return fehler(FEHLERCODES.STICHTAG_UNGUELTIG,
         `Stichtag „${wert}" ist kein gültiges Datum (erwartet JJJJ-MM-TT oder TT.MM.JJJJ).`);
+    }
+    if (stichtag < AppFormat.DATUM_VON || stichtag > AppFormat.DATUM_BIS) {
+      return fehler(FEHLERCODES.STICHTAG_UNGUELTIG,
+        `Stichtag „${wert}" liegt außerhalb des zulässigen Bereichs (1900 bis 2100).`);
     }
     return { ok: true, stichtag };
   }
@@ -122,9 +139,33 @@
     return { ok: true, konto: gewaehlt.konto, stichtag: tag.stichtag, tabelle: a.bestand.tabelle };
   }
 
+  // Schätzt die Zahl der Zinssegmente, BEVOR gerechnet wird. Jede verzinste
+  // Buchung erzeugt etwa zwei Segmente je Jahr (Halbjahres- und Jahressplit).
+  // Ohne diese Schranke brachte eine 16 KB große Anfrage den Server mit
+  // "heap out of memory" zu Fall und riss alle parallelen Anfragen mit.
+  function schaetzeSegmente(konto, stichtag) {
+    let summe = 0;
+    for (const b of konto.buchungen || []) {
+      const v = b.verzinsung;
+      if (!v || v.art === 'keine' || !v.beginn) continue;
+      const bis = v.ende && v.ende < stichtag ? v.ende : stichtag;
+      if (bis <= v.beginn) continue;
+      const jahre = (Number(bis.slice(0, 4)) - Number(v.beginn.slice(0, 4))) + 1;
+      summe += jahre * 2 + 2;
+    }
+    return summe;
+  }
+
   function berechnung(argumente) {
     const vor = vorbereiten(argumente);
     if (!vor.ok) return vor;
+    const geschaetzt = schaetzeSegmente(vor.konto, vor.stichtag);
+    if (geschaetzt > MAX_SEGMENTE) {
+      return fehler(FEHLERCODES.BERECHNUNG_ZU_GROSS,
+        `Die Berechnung wäre zu umfangreich (geschätzt ${geschaetzt.toLocaleString('de-DE')} Zinssegmente, ` +
+        `zulässig sind ${MAX_SEGMENTE.toLocaleString('de-DE')}). Bitte den Stichtag näher legen oder ` +
+        'die Verzinsungszeiträume prüfen.');
+    }
     return {
       ok: true, konto: vor.konto, stichtag: vor.stichtag, tabelle: vor.tabelle,
       ergebnis: Engine.berechneKonto(vor.konto, vor.stichtag, vor.tabelle),
@@ -224,7 +265,11 @@
     try {
       // Datum normalisiert weiterreichen: rvg.js akzeptiert nur JJJJ-MM-TT,
       // parseDatum oben nimmt auch TT.MM.JJJJ entgegen.
-      ergebnis = Rvg.baueNebenforderungen(Object.assign({}, eingaben, { datum }));
+      // Spread statt Object.assign: Object.assign kopiert über [[Set]], wodurch
+      // ein per JSON.parse eingeschleustes „__proto__" den Prototyp-Setter
+      // auslöst und Felder an den Prüfungen oben vorbei nach rvg.js schleust.
+      // Spread nutzt DefineOwnProperty und legt es als gewöhnliche Property an.
+      ergebnis = Rvg.baueNebenforderungen({ ...eingaben, datum });
     } catch (e) {
       return fehler(FEHLERCODES.RVG_EINGABE_UNGUELTIG, e.message);
     }
@@ -253,7 +298,7 @@
   }
 
   return {
-    VERSION, FEHLERCODES,
+    VERSION, FEHLERCODES, MAX_SEGMENTE,
     ladeBestand, waehleKonto, normalisiereStichtag, dateiname,
     berechnung, report, pdfModell, tenor, rvg, basiszins, baueBestand,
   };

@@ -27,6 +27,9 @@ const HTTP_FUER_CODE = {
   [Kern.FEHLERCODES.KONTO_MEHRDEUTIG]: 400,
   [Kern.FEHLERCODES.KONTO_LEER]: 400,
   [Kern.FEHLERCODES.KONTO_NICHT_GEFUNDEN]: 404,
+  // Die Anfrage ist formal gültig, der Rechenaufwand aber unvertretbar —
+  // 400 mit erklärendem Text ist ehrlicher als ein Timeout oder ein Absturz.
+  [Kern.FEHLERCODES.BERECHNUNG_ZU_GROSS]: 400,
 };
 
 // Node lehnt Nicht-ASCII in Kopfzeilen ab (ERR_INVALID_CHAR) — ein Konto
@@ -126,17 +129,30 @@ function liesKoerper(anfrage) {
 // 413 mit sauberem Verbindungsabschluss: Der Aufrufer schreibt noch, wir
 // wollen aber weder weiter puffern noch stumm abbrechen. Antwort raus,
 // Connection: close, danach den Socket schließen.
-function sendeZuGross(antwort) {
+function sendeZuGross(antwort, anfrage) {
   if (antwort.headersSent) return;
   const text = JSON.stringify({ fehler: 'Die übermittelten Daten sind größer als 10 MB.' });
   antwort.writeHead(413, {
     'Content-Type': 'application/json; charset=utf-8',
     'Content-Length': Buffer.byteLength(text),
     'Cache-Control': 'no-store',
-    Connection: 'close',
   });
   antwort.end(text, () => {
-    if (antwort.socket && !antwort.socket.destroyed) antwort.socket.destroy();
+    const schliessen = () => {
+      if (antwort.socket && !antwort.socket.destroyed) antwort.socket.destroy();
+    };
+    // Den Rest des Körpers verwerfend leerlesen, statt sofort zu schließen:
+    // Sendet der Aufrufer noch, verwirft ein RST die gerade geschriebene
+    // Antwort, und er sieht ECONNRESET statt der Meldung. Das Datenereignis
+    // puffert nichts mehr (siehe liesKoerper), der Speicherschutz bleibt.
+    if (!anfrage || anfrage.destroyed || anfrage.readableEnded) return schliessen();
+    const uhr = setTimeout(schliessen, 5000);
+    if (uhr.unref) uhr.unref();
+    const fertig = () => { clearTimeout(uhr); schliessen(); };
+    anfrage.once('end', fertig);
+    anfrage.once('error', fertig);
+    anfrage.once('aborted', fertig);
+    anfrage.resume();
   });
 }
 
@@ -150,7 +166,7 @@ async function leseBestand(anfrage, antwort) {
   try {
     roh = await liesKoerper(anfrage);
   } catch (e) {
-    if (e.status === 413) sendeZuGross(antwort);
+    if (e.status === 413) sendeZuGross(antwort, anfrage);
     else sendeFehler(antwort, 400, 'Die Anfrage konnte nicht gelesen werden.');
     return null;
   }
@@ -285,7 +301,7 @@ function baueRouten(konfig) {
       try {
         roh = await liesKoerper(anfrage);
       } catch (e) {
-        if (e.status === 413) return sendeZuGross(antwort);
+        if (e.status === 413) return sendeZuGross(antwort, anfrage);
         return sendeFehler(antwort, 400, 'Die Anfrage konnte nicht gelesen werden.');
       }
       let eingaben;

@@ -99,7 +99,7 @@ test('die Zusage, Anfragen nicht zu protokollieren, ist technisch gedeckt', () =
   // Und sie muss technisch stimmen: Aktenzeichen stehen als ?kontoId= im
   // Adressteil, den nginx im Standard mitprotokolliert.
   const block = lies('docker/default.conf.template');
-  const apiBlock = block.slice(block.indexOf('location /api/'));
+  const apiBlock = block.slice(block.indexOf('location ^~ /api/'));
   assert.match(apiBlock, /access_log off;/,
     'datenschutz.html sichert zu, dass Anfragen nicht protokolliert werden — ' +
     'der /api/-Block in docker/default.conf.template schaltet access_log aber nicht ab. ' +
