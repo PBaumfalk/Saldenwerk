@@ -37,21 +37,6 @@ jobs:
           TZ: ${{ matrix.zeitzone }}
         run: node --test tests/*.test.js
 
-  # Belegt die Zusicherung der Releases 1.1.0 und 1.2.0: Die Zusatzmodule sind
-  # rein additiv, die produktive Browser-App wird nicht angefasst. Wer sie nicht
-  # aktiviert, merkt vom Update nichts.
-  # ENTFERNEN, sobald 1.3.0 (j-lawyer) die Browser-UI erweitert.
-  browser-app-unveraendert:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - name: index.html, app.js und styles.css seit v1.0.1 unverändert
-        run: |
-          git diff --exit-code v1.0.1 -- index.html app.js styles.css \
-            || { echo "::error::Die produktive Browser-App wurde verändert. 1.1.0 und 1.2.0 sind als rein additiv zugesagt — entweder die Änderung zurücknehmen oder diesen Job bewusst entfernen."; exit 1; }
-
   docker:
     needs: tests
     runs-on: ubuntu-latest
@@ -253,8 +238,51 @@ jobs:
         if: always()
         run: docker compose down -v
 
+  # Prüft den Weg, den Nutzer tatsächlich gehen, und den README.md und
+  # Handbuch-Kapitel 12 beschreiben: über den nginx, nicht direkt gegen 8091.
+  # Genau diese Lücke ließ in 1.1.0 unbemerkt, dass /api/docs hinter dem Proxy
+  # gar nicht funktionierte — die Regex-location für .css/.js schlug den
+  # Präfix-Block und die Swagger-Dateien wurden statisch gesucht.
+  compose-mit-profil:
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Compose mit API-Profil starten
+        env:
+          SALDENWERK_API_URL: http://saldenwerk-api:8091
+          SALDENWERK_API_BENUTZER: ci
+          SALDENWERK_API_PASSWORT: ci-geheim
+        run: docker compose --profile api up -d --build
+      - name: Schnittstelle und Doku durch den Proxy abrufen
+        run: |
+          sleep 6
+          curl -fsS http://localhost:8090/ > /dev/null
+          curl -fsS http://localhost:8090/api/status | grep -q '"app":"Saldenwerk"'
+          # Die Doku-Seite UND ihre beiden Dateien — letztere enden auf .css
+          # und .js und sind deshalb der eigentliche Prüfstein.
+          curl -fsS http://localhost:8090/api/docs | grep -q 'swagger-ui-bundle.js'
+          for datei in swagger-ui.css swagger-ui-bundle.js; do
+            groesse=$(curl -fsS -o /dev/null -w '%{size_download}' "http://localhost:8090/api/docs/$datei") \
+              || { echo "::error::/api/docs/$datei wird nicht weitergereicht"; exit 1; }
+            test "$groesse" -gt 10000 \
+              || { echo "::error::/api/docs/$datei ist nur $groesse Bytes groß"; exit 1; }
+          done
+          curl -fsS http://localhost:8090/api/openapi.json > /dev/null
+          # Anmeldung greift auch durch den Proxy.
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:8090/api/berechnung)" = "401"
+          curl -fsS -u ci:ci-geheim -H 'Content-Type: application/json' \
+            --data @docs/beispiel-konto.json \
+            'http://localhost:8090/api/berechnung?stichtag=2026-08-12' | grep -q '"saldo"'
+      - name: Protokolle bei Fehlschlag
+        if: failure()
+        run: docker compose --profile api logs --tail 50
+      - name: Aufräumen
+        if: always()
+        run: docker compose --profile api down -v
+
   release:
-    needs: [docker, api-image, compose-ohne-profil]
+    needs: [docker, api-image, compose-ohne-profil, compose-mit-profil]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:

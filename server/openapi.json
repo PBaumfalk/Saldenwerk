@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Saldenwerk",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "summary": "Rechen-Schnittstelle für Forderungskonten",
     "description": "Zustandslose Schnittstelle zu den Rechenwegen von Saldenwerk: Verzugszinsen nach § 288 und § 247 BGB, Verrechnung von Zahlungen nach § 367 BGB oder § 497 Abs. 3 BGB, RVG- und GKG-Gebühren nach KostRÄG 2025, Forderungsaufstellung als HTML und PDF sowie der Antragstext für Mahnbescheid oder Klage.\n\n**Zustandslos.** Der Anfragekörper ist exakt das Dateiformat Version 1, wie es die Browser-App auf dem Netzlaufwerk ablegt. Der Server speichert nichts — weder in einer Datenbank noch als Datei. Er rechnet und vergisst.\n\n**Nur im Kanzleinetz.** Die Schnittstelle ist für den Betrieb hinter dem eigenen nginx gedacht, nicht für das offene Internet. Die Anmeldung läuft über HTTP Basic Auth; ohne TLS davor werden die Zugangsdaten im Klartext übertragen.",
     "license": { "name": "MIT", "identifier": "MIT" },

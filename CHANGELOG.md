@@ -4,6 +4,70 @@ Alle nennenswerten Änderungen an Saldenwerk werden hier festgehalten.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionierung [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.1.1] – 2026-09-17
+
+Reine Fehlerbehebungen. **Zwei davon ändern Ergebnisse** — bitte die Hinweise
+unter „Behoben" lesen, bevor Sie ältere Ausdrucke vergleichen.
+
+### Behoben
+
+**Antragstext (Mahnbescheid und Klage)**
+
+- Wurde eine Zahlung nach § 367 BGB auf die laufenden Zinsen verrechnet,
+  erschien sie im Antragstext überhaupt nicht, während die Zinsklausel
+  unverändert „seit dem …" lief. Ein Gericht hätte damit auch den Zeitraum
+  verzinst, für den bereits gezahlt wurde. Der Zinslauf wird jetzt geteilt:
+  ein bezifferter Betrag bis zur Zahlung, die Zahlung ausgewiesen, und die
+  laufende Klausel setzt erst am Zahlungstag an.
+- Bei Verrechnung nach § 497 Abs. 3 BGB entstand gar kein Antragstext, sobald
+  die Hauptforderung getilgt war — obwohl Zinsen offen blieben. Saldenwerk
+  meldete dann „Keine offenen Forderungen". Solche Fälle erscheinen jetzt als
+  bezifferter Zinsantrag.
+
+**Zinsberechnung**
+
+- Die Zinsmethode „Bank 30/360" rechnete an Monatsenden ein bis zwei Zinstage
+  zu wenig. **Betroffene Konten rechnen jetzt geringfügig höhere Zinsen.**
+  Betroffen ist nur, wessen Verzinsungsbeginn oder Stichtag auf einen
+  Monatsletzten fällt; bei allen anderen Daten ändert sich nichts. Beispiel:
+  Verzug seit 01.01., Stichtag 28.02. — statt 58 werden jetzt 60 Zinstage
+  gezählt.
+
+**Forderungsaufstellung**
+
+- Im Kopf der Aufstellung überlappten sich die Angaben, wenn die Parteinamen
+  lang waren. Steht die Gegenüberstellung bereits im Kontonamen, wird sie
+  nicht mehr ein zweites Mal ausgegeben.
+- Der Zusatz hinter einer Buchung behauptete eine Verzinsung bis zum Stichtag,
+  auch wenn die Forderung zwischenzeitlich getilgt war.
+- Der Hinweis zum Ende der Basiszins-Tabelle zeigte das Datum in technischer
+  Schreibweise.
+
+**Rechen-Schnittstelle (nur bei aktiviertem API-Profil)**
+
+- Die Dokumentationsseite unter `/api/docs` funktionierte hinter dem
+  Kanzlei-Server nicht — sie blieb leer.
+- Unsinnige Datumsangaben konnten den Dienst zum Absturz bringen. Alle Daten
+  sind jetzt auf die Jahre 1900 bis 2100 begrenzt, und zu umfangreiche
+  Berechnungen werden mit einer verständlichen Meldung abgelehnt.
+- Buchungen ohne Text wurden angenommen und erschienen in der
+  Forderungsaufstellung als „undefined".
+- Die Meldung „Daten zu groß" erreichte den Aufrufer bei sehr großen Anfragen
+  nicht; stattdessen brach die Verbindung ab.
+- Konten mit numerischer Kennung waren über `?kontoId=` nicht auffindbar.
+- Eine Sonderform im Anfrageinhalt konnte die Prüfung der RVG-Eingaben
+  umgehen und zu falschen Gebühren führen.
+
+**Basiszinssatz**
+
+- Eigene Basiszinssätze zu einem anderen Datum als dem 1. Januar oder
+  1. Juli wurden angenommen, aber nicht verwendet. Sie werden jetzt beim
+  Einlesen abgelehnt. In der Anwendung selbst war das nie möglich.
+
+### Geändert
+- Die Prüfungen wurden von 279 auf 306 erweitert, überwiegend an genau den
+  Stellen, an denen die obigen Fehler saßen.
+
 ## [1.1.0] – 2026-09-16
 
 Die Browser-App ist unverändert. Wer die neuen Zusatzmodule nicht
@@ -84,6 +148,7 @@ Erste veröffentlichte Version: Forderungskonten mit Zinsberechnung
 § 367 und § 497 Abs. 3 BGB, RVG-Gebührenrechner, Report mit PDF-Export und
 Antragstext, Datei-Speicherung im Kanzlei-Netz, Docker-Deployment.
 
+[1.1.1]: https://github.com/PBaumfalk/Saldenwerk/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/PBaumfalk/Saldenwerk/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/PBaumfalk/Saldenwerk/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/PBaumfalk/Saldenwerk/releases/tag/v1.0.0

@@ -21,7 +21,7 @@
   // Einzige Versionsquelle des Projekts: /api/status, MCP-serverInfo,
   // cli.js --version und .claude-plugin/plugin.json leiten sich hiervon ab.
   // tests/version.test.js hält sie mit CHANGELOG.md und dem Git-Tag gleich.
-  const VERSION = '1.1.0';
+  const VERSION = '1.1.1';
 
   const FEHLERCODES = Object.freeze({
     BESTAND_UNGUELTIG: 'BESTAND_UNGUELTIG',

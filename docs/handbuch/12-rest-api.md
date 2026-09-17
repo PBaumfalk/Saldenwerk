@@ -130,6 +130,7 @@ Text, der sich ändern kann.
 | `KONTO_LEER` | Die Datei enthält überhaupt kein Konto |
 | `STICHTAG_UNGUELTIG` | Der Stichtag ist kein gültiges Datum |
 | `RVG_EINGABE_UNGUELTIG` | Die Gebühreneingaben sind unvollständig oder falsch |
+| `BERECHNUNG_ZU_GROSS` | Der Rechenaufwand wäre unvertretbar — Stichtag oder Verzinsungszeitraum prüfen |
 
 ## Datenschutz
 
@@ -162,6 +163,9 @@ KI-Anbieter übertragen, sind ein völlig anderer Sachverhalt.
 - **Zeitzone:** Der API-Container läuft auf `Europe/Berlin`. Das ist
   wichtig, weil der Stichtag ohne ausdrückliche Angabe das Datum des
   Servers ist — in UTC wäre das zwischen 0 und 2 Uhr nachts der Vortag.
+- **Plausibilitätsgrenzen:** Alle Datumsangaben müssen zwischen 1900 und 2100
+  liegen, und sehr umfangreiche Berechnungen werden abgelehnt statt ausgeführt.
+  Realistische Konten sind davon nicht betroffen.
 - **Größenbegrenzung:** Anfragen dürfen bis 10 MB groß sein. Das reicht
   für sehr große Bestände; darüber antwortet die Schnittstelle mit 413.
 - **Aktualisieren:** `docker compose --profile api pull` und erneut
