@@ -85,7 +85,15 @@
       const fein = methode === 'kalender' ? jahresSegmente(g.von, g.bis)
                                           : [{ von: g.von, bis: g.bis }];
       for (const f of fein) {
-        const tage = methode === 'kalender' ? f.tage : tageBank360(f.von, f.bis);
+        // Zinstage zählen hier "von exklusiv, bis inklusiv". tageBank360 ist
+        // 30E/360 und zählt "Start inklusiv, Ende exklusiv" — beide Grenzen
+        // müssen deshalb um einen Tag nach vorn. Früher wurde stattdessen der
+        // Start zurückgeschoben (abgerechnetBis = beginn - 1); wegen der
+        // Kappung min(tag, 30) ist das an Monatsenden nicht verlustfrei und
+        // ließ dort ein bis zwei Zinstage verschwinden.
+        const tage = methode === 'kalender'
+          ? f.tage
+          : tageBank360(addTage(f.von, 1), addTage(f.bis, 1));
         const nenner = methode === 'kalender' ? (istSchaltjahr(f.jahr) ? 366 : 365) : 360;
         const zins = round2(basis * (satzProzent / 100) * (tage / nenner));
         segmente.push({ von: f.von, bis: f.bis, tage, nenner, satzProzent, basiszins, zins });
