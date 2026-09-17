@@ -263,7 +263,7 @@
   const DRUCK_CSS = `
 body { margin: 16px; font-family: Helvetica, Arial, sans-serif; font-size: 8.5pt; line-height: 1.35; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .druck-titel { text-align: center; font-size: 12pt; margin: 0 0 10pt; }
-.druck-balken { display: flex; justify-content: space-between; background: #e0e0e0; font-weight: 700; padding: 3pt 6pt; margin-bottom: 4pt; }
+.druck-balken { display: flex; flex-wrap: wrap; gap: 2pt 12pt; justify-content: space-between; background: #e0e0e0; font-weight: 700; padding: 3pt 6pt; margin-bottom: 4pt; }
 .druck-hinweise { border: 1pt solid #000; padding: 3pt 6pt; margin-bottom: 4pt; font-size: 8pt; }
 .druck-hinweise ul { margin: 0; padding-left: 12pt; }
 .druck-tabelle { width: 100%; border-collapse: collapse; table-layout: fixed; }
@@ -339,16 +339,31 @@ body { margin: 16px; font-family: Helvetica, Arial, sans-serif; font-size: 8.5pt
     return `<div class="druck-summenblock"><h3>${escapeHtml(titel)}</h3>${zeilen.join('')}</div>`;
   }
 
+  // Die Felder des Kopfbalkens — eine Quelle für HTML und PDF. Beide bauten
+  // die Liste früher getrennt, mit demselben Fehler: Lautet der Kontoname
+  // bereits „A ./. B" (die übliche Benennung), gab das Parteienfeld dasselbe
+  // ein zweites Mal aus. Der Balken lief dadurch über, und im PDF schoben
+  // sich die Felder übereinander.
+  function parteienZeile(kopf) {
+    if (!kopf.glaeubiger && !kopf.schuldner) return null;
+    return `${kopf.glaeubiger || '–'} ./. ${kopf.schuldner || '–'}`;
+  }
+
+  function kopfFelder(kopf) {
+    const felder = [`Forderungskonto: ${kopf.kontoName}`];
+    if (kopf.aktenzeichen) felder.push(`Az.: ${kopf.aktenzeichen}`);
+    const parteien = parteienZeile(kopf);
+    // Nur aufnehmen, wenn es nicht ohnehin im Kontonamen steht.
+    if (parteien && !(kopf.kontoName || '').includes(parteien)) felder.push(parteien);
+    felder.push(`Berechnungsstand: ${formatDatum(kopf.stichtag)}`);
+    return felder;
+  }
+
   function druckHtml(modell, erstelltAm) {
     const heute = erstelltAm || Engine.heute();
     const titel = `Forderungsaufstellung per ${formatDatum(modell.kopf.stichtag)}`;
 
-    const balken = [`<span>Forderungskonto: ${escapeHtml(modell.kopf.kontoName)}</span>`];
-    if (modell.kopf.aktenzeichen) balken.push(`<span>Az.: ${escapeHtml(modell.kopf.aktenzeichen)}</span>`);
-    if (modell.kopf.glaeubiger || modell.kopf.schuldner) {
-      balken.push(`<span>${escapeHtml(modell.kopf.glaeubiger || '–')} ./. ${escapeHtml(modell.kopf.schuldner || '–')}</span>`);
-    }
-    balken.push(`<span>Berechnungsstand: ${escapeHtml(formatDatum(modell.kopf.stichtag))}</span>`);
+    const balken = kopfFelder(modell.kopf).map((t) => `<span>${escapeHtml(t)}</span>`);
 
     const hinweise = modell.warnungen.length
       ? `<div class="druck-hinweise"><ul>${modell.warnungen.map((w) => `<li>${escapeHtml(w)}</li>`).join('')}</ul></div>`
@@ -402,5 +417,5 @@ body { margin: 16px; font-family: Helvetica, Arial, sans-serif; font-size: 8.5pt
       `<style>${DRUCK_CSS}</style></head><body>${seite1}${seite2}</body></html>`;
   }
 
-  return { formatBetragEUR, formatZahl5, formatProzent5, istVerzinst, spalteFuerBuchung, verzinsungsZusatz, baueDruckmodell, chartGeometrie, druckHtml };
+  return { formatBetragEUR, formatZahl5, formatProzent5, istVerzinst, spalteFuerBuchung, verzinsungsZusatz, baueDruckmodell, chartGeometrie, kopfFelder, druckHtml };
 });

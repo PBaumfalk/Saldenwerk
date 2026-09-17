@@ -77,14 +77,47 @@
     ];
   }
 
-  function balkenTexte(modell) {
-    const teile = [`Forderungskonto: ${modell.kopf.kontoName}`];
-    if (modell.kopf.aktenzeichen) teile.push(`Az.: ${modell.kopf.aktenzeichen}`);
-    if (modell.kopf.glaeubiger || modell.kopf.schuldner) {
-      teile.push(`${modell.kopf.glaeubiger || '–'} ./. ${modell.kopf.schuldner || '–'}`);
+  const balkenTexte = (modell) => Druck.kopfFelder(modell.kopf);
+
+  // Verteilt die Kopffelder über die Breite, ohne dass sie sich überlappen.
+  //
+  // Früher saßen sie auf festen Bruchteilen der Seitenbreite (0, 1/3, 2/3) und
+  // nur das letzte war rechtsbündig — ohne dass je eine Textbreite gemessen
+  // wurde. Bei Parteinamen der Form „Nachname, Vorname ./. Nachname, Vorname"
+  // schob sich das dritte Feld zwangsläufig in das vierte.
+  //
+  // `messe` ist doc.getTextWidth; als Parameter übergeben, damit die Funktion
+  // ohne jsPDF testbar bleibt.
+  function balkenLayout(texte, breite, messe, schriftgroesse) {
+    const MIN_ABSTAND = 4;
+    for (const groesse of [schriftgroesse, schriftgroesse - 1, schriftgroesse - 2]) {
+      const faktor = groesse / schriftgroesse;
+      const breiten = texte.map((t) => messe(t) * faktor);
+      const summe = breiten.reduce((s, b) => s + b, 0);
+      const luecken = Math.max(texte.length - 1, 1);
+      if (summe + MIN_ABSTAND * luecken <= breite) {
+        const abstand = (breite - summe) / luecken;
+        let x = 0;
+        const positionen = breiten.map((b) => { const hier = x; x += b + abstand; return hier; });
+        return { groesse, zeilen: [texte.map((t, i) => ({ text: t, x: positionen[i] }))] };
+      }
     }
-    teile.push(`Berechnungsstand: ${formatDatum(modell.kopf.stichtag)}`);
-    return teile;
+    // Passt es auch verkleinert nicht in eine Zeile, wird umbrochen statt
+    // überschrieben — ein abgeschnittener Parteiname wäre in einem
+    // Gerichtsdokument schlimmer als ein zweizeiliger Kopf.
+    const groesse = schriftgroesse - 1;
+    const faktor = groesse / schriftgroesse;
+    const zeilen = [];
+    let aktuell = [];
+    let x = 0;
+    for (const text of texte) {
+      const b = messe(text) * faktor;
+      if (aktuell.length && x + b > breite) { zeilen.push(aktuell); aktuell = []; x = 0; }
+      aktuell.push({ text, x });
+      x += b + MIN_ABSTAND;
+    }
+    if (aktuell.length) zeilen.push(aktuell);
+    return { groesse, zeilen };
   }
 
   // Nur im Browser mit geladenem vendor/jspdf nutzbar.
@@ -117,17 +150,19 @@
     doc.text(`Forderungsaufstellung per ${formatDatum(modell.kopf.stichtag)}`, seitenBreite / 2, rand + 4, { align: 'center' });
 
     doc.setFontSize(8);
+    const layout = balkenLayout(balkenTexte(modell), nutzBreite - 4,
+      (t) => doc.getTextWidth(t), 8);
+    const balkenHoehe = 2 + layout.zeilen.length * 4;
     doc.setFillColor(224, 224, 224);
-    doc.rect(rand, rand + 8, nutzBreite, 6, 'F');
-    const balken = balkenTexte(modell);
-    balken.forEach((text, i) => {
-      const x = rand + 2 + (nutzBreite - 4) * (i / Math.max(balken.length - 1, 1));
-      doc.text(text, i === balken.length - 1 ? seitenBreite - rand - 2 : x, rand + 12,
-        i === balken.length - 1 ? { align: 'right' } : undefined);
+    doc.rect(rand, rand + 8, nutzBreite, balkenHoehe, 'F');
+    doc.setFontSize(layout.groesse);
+    layout.zeilen.forEach((zeile, z) => {
+      for (const feld of zeile) doc.text(feld.text, rand + 2 + feld.x, rand + 12 + z * 4);
     });
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
 
-    let startY = rand + 17;
+    let startY = rand + 11 + balkenHoehe;
     if (modell.warnungen.length) {
       doc.setFontSize(7);
       const zeilen = modell.warnungen.map((w) => `• ${w}`);
@@ -235,5 +270,5 @@
     return doc.output('arraybuffer');
   }
 
-  return { baueTabellenKonfig, baueSeite2Konfig, erzeugePdf };
+  return { baueTabellenKonfig, baueSeite2Konfig, balkenLayout, erzeugePdf };
 });

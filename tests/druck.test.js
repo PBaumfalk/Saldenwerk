@@ -415,3 +415,37 @@ test('baueDruckmodell: zwei Zahlungen an verschiedenen Daten ergeben drei Sammel
   assert.ok(sammelIdx[0] < zahlungIdx1);
   assert.ok(sammelIdx[1] < zahlungIdx2);
 });
+
+// ── Kopffelder ────────────────────────────────────────────────────────────
+
+test('kopfFelder: Parteien entfallen, wenn sie schon im Kontonamen stehen', () => {
+  const kopf = { kontoName: 'Muster GmbH ./. Max Beispiel', aktenzeichen: '1 C 2/26',
+    glaeubiger: 'Muster GmbH', schuldner: 'Max Beispiel', stichtag: '2026-09-16' };
+  const felder = Druck.kopfFelder(kopf);
+  assert.strictEqual(felder.length, 3, felder.join(' | '));
+  assert.ok(!felder.slice(1).some((f) => f === 'Muster GmbH ./. Max Beispiel'));
+});
+
+test('kopfFelder: Parteien bleiben, wenn der Kontoname etwas anderes sagt', () => {
+  const kopf = { kontoName: 'Rechnung 4711', aktenzeichen: '1 C 2/26',
+    glaeubiger: 'Muster GmbH', schuldner: 'Max Beispiel', stichtag: '2026-09-16' };
+  const felder = Druck.kopfFelder(kopf);
+  assert.strictEqual(felder.length, 4, felder.join(' | '));
+  assert.ok(felder.includes('Muster GmbH ./. Max Beispiel'));
+});
+
+test('kopfFelder: ohne Aktenzeichen und ohne Parteien bleiben zwei Felder', () => {
+  const felder = Druck.kopfFelder({ kontoName: 'K', stichtag: '2026-09-16' });
+  assert.deepStrictEqual(felder, ['Forderungskonto: K', 'Berechnungsstand: 16.09.2026']);
+});
+
+test('druckHtml: der Kopfbalken bricht um statt zu überlappen', () => {
+  const css = Druck.druckHtml({ kopf: { kontoName: 'K', stichtag: '2026-09-16' },
+    zeilen: [], saldozeile: { zahlung: 0, hauptforderung: 0, hfZinsen: 0, verzinslKosten: 0,
+      kostenzinsen: 0, unverzinslKosten: 0, umsatz: 0, gesamtsaldo: 0 },
+    warnungen: [], tageszins: { betragProTag: 0, ab: '2026-09-17' },
+    seite2: { summen: { gesamt: 0 }, zahlungen: { gesamt: 0 }, salden: { gesamt: 0 } },
+    chart: null }, '2026-09-16');
+  assert.match(css, /\.druck-balken \{[^}]*flex-wrap: wrap/);
+  assert.match(css, /\.druck-balken \{[^}]*gap:/);
+});
