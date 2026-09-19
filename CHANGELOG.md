@@ -4,7 +4,7 @@ Alle nennenswerten Änderungen an Saldenwerk werden hier festgehalten.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionierung [Semantic Versioning](https://semver.org/lang/de/).
 
-## [Unveröffentlicht]
+## [1.1.2] – 2026-09-19
 
 **Ändert Ergebnisse:** Gebührenaufstellungen für das Mahnverfahren fallen
 niedriger aus als bisher.
@@ -168,6 +168,7 @@ Erste veröffentlichte Version: Forderungskonten mit Zinsberechnung
 § 367 und § 497 Abs. 3 BGB, RVG-Gebührenrechner, Report mit PDF-Export und
 Antragstext, Datei-Speicherung im Kanzlei-Netz, Docker-Deployment.
 
+[1.1.2]: https://github.com/PBaumfalk/Saldenwerk/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/PBaumfalk/Saldenwerk/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/PBaumfalk/Saldenwerk/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/PBaumfalk/Saldenwerk/compare/v1.0.0...v1.0.1
