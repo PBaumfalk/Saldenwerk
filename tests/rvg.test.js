@@ -110,6 +110,54 @@ test('baueNebenforderungen: Terminsgebühr im Mahnverfahren wird ignoriert', () 
   assert.ok(r.buchungen[0].text.includes('KV 1100'));
 });
 
+test('baueNebenforderungen: Mahnverfahren bucht 1,0 Nr. 3305 statt 1,3 Nr. 3100', () => {
+  const r = Rvg.baueNebenforderungen({
+    gegenstandswert: 5000, datum: '2026-08-05',
+    vorgerichtlich: { aktiv: false },
+    gerichtlich: { aktiv: true, verfahrensart: 'mahnverfahren', verfahrensgebuehr: true,
+      terminsgebuehr: false, gerichtskosten: true, anrechnung: false,
+      auslagenpauschale: true, umsatzsteuer: true },
+    verzugspauschale: false,
+  });
+  // 1,0 × 354,50 = 354,50; 7002 = 20; USt 19 % von 374,50 = 71,16; KV 1100 = 0,5 × 170,50 = 85,25
+  assert.deepStrictEqual(r.buchungen.map((b) => b.betrag), [354.5, 20.0, 71.16, 85.25]);
+  assert.ok(r.buchungen[0].text.startsWith('1,0 Verfahrensgebühr Nr. 3305 VV RVG'));
+  assert.ok(!r.buchungen.some((b) => b.text.includes('3100')));
+});
+
+test('baueNebenforderungen: Anrechnung kürzt im Mahnverfahren die Nr. 3305', () => {
+  const r = Rvg.baueNebenforderungen({
+    gegenstandswert: 1000, datum: '2026-08-05',
+    vorgerichtlich: { aktiv: true, faktor: 1.3, auslagenpauschale: false, umsatzsteuer: false },
+    gerichtlich: { aktiv: true, verfahrensart: 'mahnverfahren', verfahrensgebuehr: true,
+      terminsgebuehr: false, gerichtskosten: false, anrechnung: true, anrechnungsFaktor: 1.3,
+      auslagenpauschale: false, umsatzsteuer: false },
+    verzugspauschale: false,
+  });
+  // 1,0 − min(1,3/2; 0,75) = 0,35 → 0,35 × 93 = 32,55
+  const vg = r.buchungen.find((b) => b.text.includes('Nr. 3305'));
+  assert.strictEqual(vg.betrag, 32.55);
+  assert.ok(vg.text.startsWith('0,35 Verfahrensgebühr'));
+  assert.ok(vg.text.includes('Anrechnung'));
+});
+
+test('baueNebenforderungen: Vollstreckungsbescheid bucht 0,5 Nr. 3308 nur im Mahnverfahren', () => {
+  const eingaben = (verfahrensart) => ({
+    gegenstandswert: 1000, datum: '2026-08-05',
+    vorgerichtlich: { aktiv: false },
+    gerichtlich: { aktiv: true, verfahrensart, verfahrensgebuehr: true, vollstreckungsbescheid: true,
+      terminsgebuehr: false, gerichtskosten: false, anrechnung: false,
+      auslagenpauschale: false, umsatzsteuer: false },
+    verzugspauschale: false,
+  });
+  const mahn = Rvg.baueNebenforderungen(eingaben('mahnverfahren'));
+  // 1,0 × 93 = 93; 0,5 × 93 = 46,50
+  assert.deepStrictEqual(mahn.buchungen.map((b) => b.betrag), [93.0, 46.5]);
+  assert.ok(mahn.buchungen[1].text.startsWith('0,5 Verfahrensgebühr Nr. 3308 VV RVG'));
+  const klage = Rvg.baueNebenforderungen(eingaben('klage'));
+  assert.deepStrictEqual(klage.buchungen.map((b) => b.betrag), [120.9]);
+});
+
 test('baueNebenforderungen: Verzugspauschale mit Anrechnungs-Hinweis', () => {
   const r = Rvg.baueNebenforderungen({
     gegenstandswert: 1000, datum: '2026-08-05',

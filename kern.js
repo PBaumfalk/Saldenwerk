@@ -210,7 +210,7 @@
       bool: ['aktiv', 'auslagenpauschale', 'umsatzsteuer'],
       zahl: ['faktor'] },
     { feld: 'gerichtlich',
-      bool: ['aktiv', 'verfahrensgebuehr', 'terminsgebuehr', 'anrechnung',
+      bool: ['aktiv', 'verfahrensgebuehr', 'vollstreckungsbescheid', 'terminsgebuehr', 'anrechnung',
         'gerichtskosten', 'auslagenpauschale', 'umsatzsteuer'],
       zahl: ['anrechnungsFaktor'] },
   ];

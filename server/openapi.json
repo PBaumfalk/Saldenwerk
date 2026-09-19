@@ -487,7 +487,8 @@
             "properties": {
               "aktiv": { "type": "boolean" },
               "verfahrensart": { "type": "string", "enum": ["mahnverfahren", "klageverfahren"] },
-              "verfahrensgebuehr": { "type": "boolean" },
+              "verfahrensgebuehr": { "type": "boolean", "description": "Im Mahnverfahren 1,0 nach Nr. 3305 VV RVG, im Klageverfahren 1,3 nach Nr. 3100 VV RVG." },
+              "vollstreckungsbescheid": { "type": "boolean", "description": "0,5 nach Nr. 3308 VV RVG für den Antrag auf Vollstreckungsbescheid; nur im Mahnverfahren." },
               "terminsgebuehr": { "type": "boolean", "description": "Nr. 3104 VV RVG; im Mahnverfahren nicht vorgesehen." },
               "anrechnung": { "type": "boolean", "description": "Anrechnung der Geschäftsgebühr nach Vorbem. 3 Abs. 4 VV RVG." },
               "anrechnungsFaktor": { "type": "number", "minimum": 0 },

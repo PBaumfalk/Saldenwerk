@@ -29,7 +29,10 @@ mit einem Klick als Nebenforderungs-Buchungen ins Konto ein.
 - **Verfahrensart**: *Mahnverfahren* (Gerichtskosten KV 1100 GKG,
   0,5-Gebühr, mindestens 38 €) oder *Klageverfahren* (KV 1210 GKG,
   3,0-Gebühr).
-- **Verfahrensgebühr Nr. 3100** (1,3).
+- **Verfahrensgebühr**: im Mahnverfahren **Nr. 3305** (1,0), im
+  Klageverfahren **Nr. 3100** (1,3).
+- **Vollstreckungsbescheid Nr. 3308** (0,5) — nur im Mahnverfahren, für
+  den Antrag auf Erlass des Vollstreckungsbescheids.
 - **Terminsgebühr Nr. 3104** (1,2) — entsteht mit Wahrnehmung eines
   Termins; im Mahnverfahren gibt es keine.
 - **Anrechnung der Geschäftsgebühr** (Vorbem. 3 Abs. 4 VV RVG): Die
