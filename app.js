@@ -673,6 +673,8 @@ if (typeof document !== 'undefined') {
       gerAktiv: document.getElementById('rGerAktiv'),
       verfahrensart: document.getElementById('rVerfahrensart'),
       verfahrensgebuehr: document.getElementById('rVerfahrensgebuehr'),
+      verfahrensgebuehrText: document.getElementById('rVerfahrensgebuehrText'),
+      vollstreckungsbescheid: document.getElementById('rVollstreckungsbescheid'),
       terminsgebuehr: document.getElementById('rTerminsgebuehr'),
       anrechnung: document.getElementById('rAnrechnung'),
       gerPauschale: document.getElementById('rGerPauschale'),
@@ -698,6 +700,7 @@ if (typeof document !== 'undefined') {
           auslagenpauschale: f.vorPauschale.checked, umsatzsteuer: f.ust.checked },
         gerichtlich: { aktiv: f.gerAktiv.checked, verfahrensart: f.verfahrensart.value,
           verfahrensgebuehr: f.verfahrensgebuehr.checked, terminsgebuehr: f.terminsgebuehr.checked,
+          vollstreckungsbescheid: f.vollstreckungsbescheid.checked,
           gerichtskosten: f.gerichtskosten.checked,
           anrechnung: f.vorAktiv.checked && f.anrechnung.checked, anrechnungsFaktor: faktor,
           auslagenpauschale: f.gerPauschale.checked, umsatzsteuer: f.ust.checked },
@@ -707,7 +710,11 @@ if (typeof document !== 'undefined') {
 
     function aktualisiereVorschau() {
       const f = felder();
-      f.terminsgebuehr.disabled = f.verfahrensart.value === 'mahnverfahren';
+      const mahnverfahren = f.verfahrensart.value === 'mahnverfahren';
+      f.terminsgebuehr.disabled = mahnverfahren;
+      f.vollstreckungsbescheid.disabled = !mahnverfahren;
+      f.verfahrensgebuehrText.textContent = mahnverfahren
+        ? 'Verfahrensgebühr Nr. 3305 (1,0)' : 'Verfahrensgebühr Nr. 3100 (1,3)';
       const vorschau = document.getElementById('rvgVorschau');
       const summeZeile = document.getElementById('rvgSumme');
       const hinweisListe = document.getElementById('rvgHinweise');

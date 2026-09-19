@@ -49,7 +49,8 @@
   }
 
   function formatFaktor(faktor) {
-    return String(faktor).replace('.', ',');
+    // Ganze Faktoren mit Nachkommastelle, wie im VV üblich: „1,0", nicht „1".
+    return (Number.isInteger(faktor) ? faktor.toFixed(1) : String(faktor)).replace('.', ',');
   }
 
   function wertgebuehr(wert, tabelle) {
@@ -127,13 +128,19 @@
       const mahnverfahren = g.verfahrensart === 'mahnverfahren';
       const gebuehren = [];
       if (g.verfahrensgebuehr) {
-        let faktor = 1.3;
+        // Im Mahnverfahren entsteht die 1,0-Gebühr Nr. 3305, nicht die 1,3 Nr. 3100.
+        const grundfaktor = mahnverfahren ? 1.0 : 1.3;
+        const nummer = mahnverfahren ? '3305' : '3100';
+        let faktor = grundfaktor;
         let zusatz = '';
         if (g.anrechnung) {
-          faktor = round2(1.3 - Math.min(Math.max(g.anrechnungsFaktor || 0, 0) / 2, 0.75));
+          faktor = round2(grundfaktor - Math.min(Math.max(g.anrechnungsFaktor || 0, 0) / 2, 0.75));
           zusatz = ' nach Anrechnung gem. Vorbem. 3 Abs. 4 VV RVG';
         }
-        gebuehren.push([`${formatFaktor(faktor)} Verfahrensgebühr Nr. 3100 VV RVG${zusatz}${wertZusatz}`, rvgBetrag(faktor, wert)]);
+        gebuehren.push([`${formatFaktor(faktor)} Verfahrensgebühr Nr. ${nummer} VV RVG${zusatz}${wertZusatz}`, rvgBetrag(faktor, wert)]);
+      }
+      if (g.vollstreckungsbescheid && mahnverfahren) {
+        gebuehren.push([`0,5 Verfahrensgebühr Nr. 3308 VV RVG (Vollstreckungsbescheid)${wertZusatz}`, rvgBetrag(0.5, wert)]);
       }
       if (g.terminsgebuehr && !mahnverfahren) {
         gebuehren.push([`1,2 Terminsgebühr Nr. 3104 VV RVG${wertZusatz}`, rvgBetrag(1.2, wert)]);

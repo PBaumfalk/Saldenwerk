@@ -4,6 +4,26 @@ Alle nennenswerten Änderungen an Saldenwerk werden hier festgehalten.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionierung [Semantic Versioning](https://semver.org/lang/de/).
 
+## [Unveröffentlicht]
+
+**Ändert Ergebnisse:** Gebührenaufstellungen für das Mahnverfahren fallen
+niedriger aus als bisher.
+
+### Behoben
+
+- Der RVG-Rechner buchte im Mahnverfahren eine 1,3 Verfahrensgebühr nach
+  Nr. 3100 VV RVG. Dort entsteht aber die 1,0 Verfahrensgebühr nach
+  Nr. 3305 VV RVG. Betrag und Bezeichnung sind korrigiert; die Anrechnung
+  der Geschäftsgebühr (Vorbem. 3 Abs. 4 VV RVG) kürzt jetzt die Nr. 3305.
+  Das Klageverfahren ist unverändert.
+- Ganze Gebührenfaktoren erscheinen als „2,0" statt „2".
+
+### Neu
+
+- Im Mahnverfahren lässt sich die 0,5 Verfahrensgebühr nach Nr. 3308 VV RVG
+  für den Antrag auf Vollstreckungsbescheid hinzubuchen (standardmäßig aus;
+  in der Schnittstelle das Feld `vollstreckungsbescheid`).
+
 ## [1.1.1] – 2026-09-17
 
 Reine Fehlerbehebungen. **Zwei davon ändern Ergebnisse** — bitte die Hinweise
