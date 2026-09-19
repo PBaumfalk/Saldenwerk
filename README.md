@@ -18,7 +18,9 @@ Antragstext für Mahnbescheid oder Klage.
 Die **Browser-App** arbeitet dabei ohne Konto, ohne Cloud und ohne
 Datenübertragung — Ihre Eingaben bleiben auf Ihrem Rechner. Optional gibt
 es getrennte [Zusatzmodule](#zusatzmodule); sie sind standardmäßig aus und
-verändern, wo Ihre Daten verarbeitet werden.
+verändern, wo Ihre Daten verarbeitet werden. Einem KI-Agenten im Browser
+bietet die App [pseudonyme Rechenwerkzeuge](#werkzeuge-für-browser-agenten-webmcp)
+an; ohne Agent ändert sich nichts.
 
 > **English abstract** — Claims-account calculator for German legal
 > practice: manage receivables ledgers, compute default interest
@@ -148,6 +150,18 @@ Einrichtung, Endpunkte und Datenschutz:
 [Handbuch, Kapitel 12](docs/handbuch/12-rest-api.md). Die
 Schnittstellenbeschreibung liegt unter `/api/openapi.json`, eine
 Bedienoberfläche zum Ausprobieren unter `/api/docs`.
+
+## Werkzeuge für Browser-Agenten (WebMCP)
+
+Verwenden Sie in Ihrem Browser einen KI-Agenten, meldet Saldenwerk ihm über
+[WebMCP](https://webmachinelearning.github.io/webmcp/) vier Werkzeuge an:
+Konto berechnen, Antragstext, RVG-Nebenforderungen, Basiszins. Sie rechnen
+nur mit dem, was der Agent übergibt, kennen keine Namen (nur Beträge, Daten
+und Zinssätze), lesen Ihre gespeicherten Konten nicht und ändern nichts.
+Ohne Agent geschieht nichts; abschalten lässt es sich mit `webmcp: false`
+in `konfig.js`. WebMCP ist ein Entwurf, kein Standard, und setzt HTTPS
+voraus. Grenzen und Datenschutz:
+[Handbuch, Kapitel 13](docs/handbuch/13-webmcp.md).
 
 ## Für Entwickler
 

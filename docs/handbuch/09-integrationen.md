@@ -35,6 +35,16 @@ verfügbar sind — eine Bedienung über KI-Assistenten sowie eine direkte
 Anbindung an Kanzleisoftware ([j-lawyer.org](https://www.j-lawyer.org),
 ein Prototyp existiert bereits).
 
+## Werkzeuge für Browser-Agenten (WebMCP)
+
+Kein Zusatzmodul, sondern Teil der Browser-App, und deshalb die eine
+Ausnahme von „standardmäßig aus": Verwenden Sie in Ihrem Browser einen
+KI-Agenten, bietet Saldenwerk ihm vier Rechenwerkzeuge an. Sie rechnen nur
+mit dem, was der Agent übergibt, kennen keine Namen, lesen Ihre
+gespeicherten Konten nicht und ändern nichts. Ohne Agent geschieht nichts.
+Einzelheiten, Grenzen und der Schalter zum Abschalten stehen in
+[Kapitel 13](13-webmcp.md).
+
 Bevor Sie ein Zusatzmodul einrichten, lesen Sie den Abschnitt „Datenschutz"
 des jeweiligen Kapitels. Die Module unterscheiden sich darin **erheblich**:
 Die Rechen-Schnittstelle verlagert die Berechnung innerhalb Ihrer Kanzlei;

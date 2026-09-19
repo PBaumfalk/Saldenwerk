@@ -22,6 +22,7 @@ sind entsprechend gekennzeichnet.
 | [10 — Anpassung & Betrieb](10-anpassung.md) | Dunkelmodus, öffentliche Variante, eigenes Branding (IT) |
 | [11 — Rechenkonventionen](11-rechenkonventionen.md) | Wie Saldenwerk rechnet — im Detail |
 | [12 — Rechen-Schnittstelle](12-rest-api.md) | Optionale REST-API im Kanzleinetz (IT) |
+| [13 — Werkzeuge für Browser-Agenten](13-webmcp.md) | WebMCP: was ein KI-Agent im Browser rechnen lassen kann — und was er nicht erfährt |
 
 ## Schnelleinstieg in 5 Minuten
 

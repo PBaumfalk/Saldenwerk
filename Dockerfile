@@ -7,7 +7,7 @@ LABEL org.opencontainers.image.title="Saldenwerk" \
 # Statische App-Dateien (kein Build-Schritt nötig)
 COPY index.html impressum.html datenschutz.html styles.css konfig.js app.js \
      engine.js basiszins.js rvg.js tenor.js druck.js pdfexport.js \
-     dateispeicher.js /usr/share/nginx/html/
+     dateispeicher.js kern.js webmcp.js /usr/share/nginx/html/
 COPY vendor/ /usr/share/nginx/html/vendor/
 COPY assets/ /usr/share/nginx/html/assets/
 

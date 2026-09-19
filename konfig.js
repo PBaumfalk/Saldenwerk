@@ -22,6 +22,10 @@
 //     },
 //   }
 //
+// WebMCP (Handbuch, Kapitel 13): Saldenwerk meldet seine Rechenfunktionen bei
+// einem Browser-Agenten an, sofern der Browser das unterstützt. Abschalten:
+//   webmcp: false
+//
 // Zur Akzentfarbe: '--farbe-akzent' färbt aktive Navigation, Links, den
 // Fokusrahmen und die Akzentkante der Karten — im hellen wie im dunklen
 // Modus (für Dunkel wird der Wert automatisch aufgehellt; ein eigener Wert

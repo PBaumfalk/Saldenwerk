@@ -4,6 +4,32 @@ Alle nennenswerten Änderungen an Saldenwerk werden hier festgehalten.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionierung [Semantic Versioning](https://semver.org/lang/de/).
 
+## [Unveröffentlicht]
+
+### Neu
+
+- **Werkzeuge für Browser-Agenten (WebMCP).** Verwenden Sie in Ihrem
+  Browser einen KI-Agenten, meldet Saldenwerk ihm vier Rechenwerkzeuge an:
+  Konto berechnen, Antragstext, RVG-Nebenforderungen und Basiszins. Die
+  Werkzeuge sind **pseudonym** (nur Beträge, Daten und Zinssätze; kein Feld
+  für Namen, Aktenzeichen oder Buchungstexte), als nur lesend
+  gekennzeichnet und rechnen ausschließlich mit dem, was der Agent
+  übergibt — Ihre gespeicherten Konten lesen sie nicht. Ohne Agent verhält
+  sich die App unverändert. Abschalten: `webmcp: false` in `konfig.js`.
+  Einzelheiten und Grenzen im neuen Handbuch-Kapitel 13.
+- Fehler erreichen den Agenten mit denselben Codes wie in der
+  Rechen-Schnittstelle (`STICHTAG_UNGUELTIG`, `BESTAND_UNGUELTIG` …).
+
+### Geändert
+
+- `kern.js` wird jetzt auch von der Browser-App geladen und gehört damit
+  zum statischen Image. An den Berechnungen ändert das nichts.
+- Die Datenschutzzusagen nennen WebMCP ausdrücklich: Saldenwerk überträgt
+  weiterhin nichts; was ein vom Nutzer gewählter Agent an seinen Anbieter
+  weitergibt, liegt außerhalb von Saldenwerk. WebMCP ist die eine Ausnahme
+  von „standardmäßig aus" und als solche begründet.
+  `tests/doku-versprechen.test.js` bindet die neuen Sätze an `webmcp.js`.
+
 ## [1.1.2] – 2026-09-19
 
 **Ändert Ergebnisse:** Gebührenaufstellungen für das Mahnverfahren fallen

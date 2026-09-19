@@ -139,11 +139,10 @@ test('jede GitHub-Action wird im Workflow in genau einer Version verwendet', () 
 });
 
 test('Node-Module der Zusatzschicht landen nicht im nginx-Image', () => {
-  // kern.js und pdf-node.js sind (noch) reine Node-Module: die Browser-App
-  // nutzt sie nicht, also gehören sie nicht in das statische Image.
-  // Wird kern.js später in index.html eingebunden, schlägt der Test oben an
-  // und erzwingt den Eintrag im Dockerfile — dann ist diese Zusicherung
-  // bewusst zu streichen.
+  // pdf-node.js ist ein reines Node-Modul: die Browser-App nutzt es nicht,
+  // also gehört es nicht in das statische Image. kern.js stand bis 1.1.2
+  // ebenfalls hier; seit der WebMCP-Anmeldung (webmcp.js) läuft es auch im
+  // Browser und wird mit ausgeliefert.
   for (const datei of ['pdf-node.js']) {
     assert.ok(!new RegExp(`(^|\\s)${datei.replace(/\./g, '\\.')}(\\s|\\\\|$)`, 'm').test(DOCKERFILE),
       `„${datei}" hat im statischen nginx-Image nichts zu suchen`);
