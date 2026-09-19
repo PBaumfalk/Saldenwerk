@@ -34,7 +34,7 @@
   };
 
   const MINDESTGEBUEHR_RVG = 15; // § 13 Abs. 2 RVG
-  const MINDESTBETRAG_KV1100 = 38; // KV 1100 GKG
+  const MINDESTBETRAG_KV1100 = 38; // KV 1100 GKG: „0,5 – mindestens 38,00 €", geprüft 19.09.2026 an gesetze-im-internet.de
   const AUSLAGENPAUSCHALE_MAX = 20; // Nr. 7002 VV RVG
   const UST_SATZ = 0.19; // Nr. 7008 VV RVG
   const VERZUGSPAUSCHALE = 40; // § 288 Abs. 5 BGB
