@@ -59,6 +59,10 @@ Frage dazu: wer darauf zugreift.
   Datenbestand mit jeder Anfrage übermittelt, rechnet und antwortet. Sie
   **speichert nichts** — kein Konto, keine Datenbank, keine Datei auf dem
   Server. Nach der Antwort ist der Vorgang vorbei.
+- Die **Werkzeuge für Browser-Agenten** ([Kapitel 13](13-webmcp.md))
+  greifen auf Ihre gespeicherten Konten **nicht** zu. Sie rechnen allein
+  mit den Zahlen, die ein Agent ihnen übergibt. Was ein Agent darüber
+  hinaus auf dem Bildschirm mitlesen kann, steht dort unter „Datenschutz".
 
 **Wichtig, wenn ein Zusatzmodul Ihre Speicherdatei anfassen darf:**
 Richten Sie es **nicht auf dieselbe Datei**, mit der die Browser-App gerade

@@ -55,6 +55,11 @@ Saldenwerk ist bewusst **ohne Server-Datenhaltung** gebaut:
   standardmäßig aus. Sie ändern, **wo** Ihre Daten verarbeitet werden —
   bei manchen auch, **wer** sie zu sehen bekommt. Was das im Einzelnen
   bedeutet, steht in [Kapitel 9](09-integrationen.md).
+- Verwenden Sie in Ihrem Browser einen **KI-Agenten**, bietet Saldenwerk
+  ihm Rechenwerkzeuge an, die keine Namen kennen und Ihre gespeicherten
+  Konten nicht lesen. Saldenwerk überträgt auch dabei nichts; was der
+  Agent selbst an seinen Anbieter weitergibt, liegt außerhalb von
+  Saldenwerk ([Kapitel 13](13-webmcp.md)).
 
 Die Aussagen oben gelten also uneingeschränkt für Saldenwerk, wie Sie es
 herunterladen und öffnen. Richten Sie ein Zusatzmodul ein, lesen Sie

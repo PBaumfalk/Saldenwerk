@@ -128,6 +128,92 @@ test('kein Modul verspricht, was es nicht halten kann', () => {
     'wird sie mit einer Übermittlung an Dritte verwechselt.');
 });
 
+// ── WebMCP: die eine Ausnahme von „standardmäßig aus" ─────────────────────
+
+// Kapitel, die ein standardmäßig eingeschaltetes Modul beschreiben. Die Liste
+// soll kurz bleiben: Jeder Eintrag braucht unten einen technischen Beleg
+// dafür, dass das Modul ohne Zutun des Nutzers nichts preisgeben kann.
+const STANDARDMAESSIG_AN = ['13-webmcp.md'];
+
+// Quelltext ohne Kommentare — die Kommentare von webmcp.js nennen genau die
+// Dinge, die der Code nicht anfassen darf.
+function ohneKommentare(quelltext) {
+  return quelltext.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+}
+
+test('WebMCP: die Werkzeuge können gespeicherte Konten gar nicht lesen', () => {
+  const kapitel = 'docs/handbuch/13-webmcp.md';
+  enthaelt(kapitel, 'Sie rechnen nur mit dem, was der Agent ihnen übergibt.',
+    'Das ist der Satz, der „standardmäßig an" rechtfertigt.');
+  enthaelt('datenschutz.html',
+    '<strong>Die Werkzeuge rechnen ausschließlich mit den Angaben, die der Agent ihnen übergibt</strong>',
+    'Die Erklärung gegenüber Dritten muss dasselbe zusagen wie das Handbuch.');
+  enthaelt('docs/handbuch/08-datenspeicherung.md',
+    'greifen auf Ihre gespeicherten Konten **nicht** zu',
+    'Kapitel 8 zählt auf, wer auf die Daten zugreift — WebMCP gehört ausdrücklich nicht dazu.');
+
+  // Technische Grundlage: webmcp.js kennt weder Speicher noch Oberfläche
+  // noch Netz. Wer hier etwas ergänzt, macht die drei Sätze oben falsch.
+  const code = ohneKommentare(lies('webmcp.js'));
+  for (const verboten of ['localStorage', 'sessionStorage', 'indexedDB', 'Dateispeicher',
+    'fetch(', 'XMLHttpRequest', 'WebSocket', 'sendBeacon', 'querySelector', 'getElementById',
+    'root.App', 'window.', 'cookie']) {
+    assert.ok(!code.includes(verboten),
+      `webmcp.js verwendet „${verboten}". Handbuch und Datenschutzerklärung sichern zu, dass die ` +
+      'Werkzeuge nur mit den Angaben des Agenten rechnen — entweder den Zugriff entfernen oder ' +
+      'die Zusagen ehrlich neu fassen und „standardmäßig an" überdenken.');
+  }
+  assert.ok(!/require\(/.test(code), 'webmcp.js muss abhängigkeitsfrei bleiben');
+});
+
+test('WebMCP: „nur lesend" und „keine Namen" sind zugesagt und technisch gedeckt', () => {
+  const Kern = require('../kern.js');
+  const Webmcp = require('../webmcp.js');
+  enthaelt('docs/handbuch/13-webmcp.md', '**Sie ändern nichts.**',
+    'Kapitel 13 sagt zu, dass die Werkzeuge nichts ändern.');
+  enthaelt('docs/handbuch/13-webmcp.md', '**Sie kennen keine Namen.**',
+    'Kapitel 13 sagt zu, dass die Werkzeuge pseudonym sind.');
+  for (const tool of Webmcp.baueTools(Kern)) {
+    assert.strictEqual(tool.annotations.readOnlyHint, true,
+      `${tool.name} ist nicht als readOnly markiert — Kapitel 13 sagt das aber zu.`);
+    assert.doesNotMatch(JSON.stringify(Object.keys(tool.inputSchema.properties)),
+      /name|glaeubiger|schuldner|aktenzeichen|text/i,
+      `${tool.name} nimmt ein Namens- oder Textfeld an — Kapitel 13 und datenschutz.html ` +
+      'sichern das Gegenteil zu. (Die tiefe Prüfung steht in tests/webmcp.test.js.)');
+  }
+  // Der Schreibpfad des Kerns darf über WebMCP nicht erreichbar sein.
+  assert.ok(!ohneKommentare(lies('webmcp.js')).includes('baueBestand'),
+    'webmcp.js ruft Kern.baueBestand — das ist der Schreibpfad.');
+});
+
+test('WebMCP: die Grenze der Zusage steht dabei', () => {
+  // Die ehrliche Hälfte: Saldenwerk überträgt nichts, der Agent womöglich
+  // schon — und er kann den Bildschirm auch ohne WebMCP lesen.
+  enthaelt('docs/handbuch/13-webmcp.md',
+    'Saldenwerk sendet auch mit WebMCP keine Daten an uns oder an Dritte.',
+    'Die Kernzusage des Kapitels.');
+  enthaelt('docs/handbuch/13-webmcp.md',
+    '**Ein Browser-Agent kann unabhängig von WebMCP sehen, was auf dem Bildschirm steht.**',
+    'Ohne diesen Satz liest sich „pseudonym" wie ein Schutz vor dem Agenten. Das ist es nicht.');
+  enthaelt('docs/handbuch/13-webmcp.md', '§ 203 StGB, § 43e BRAO und Art. 28 DSGVO',
+    'Kapitel 13 muss Kanzleien sagen, woran sich der Einsatz eines Agenten entscheidet.');
+  enthaelt('datenschutz.html', 'liegt außerhalb unseres Einflusses',
+    'Die Erklärung darf nicht so klingen, als reiche unsere Zusage bis zum Anbieter des Agenten.');
+  enthaelt('README.md', 'ohne Agent ändert sich nichts',
+    'Das Kernversprechen im README muss WebMCP nennen, statt es zu verschweigen.');
+  enthaelt('docs/handbuch/09-integrationen.md', 'die eine Ausnahme von „standardmäßig aus"',
+    'Kapitel 9 verspricht „standardmäßig aus" — die Ausnahme muss dort stehen, wo das Versprechen steht.');
+});
+
+test('WebMCP lässt sich abschalten, wie Kapitel 13 es beschreibt', async () => {
+  const Webmcp = require('../webmcp.js');
+  enthaelt('docs/handbuch/13-webmcp.md', 'webmcp: false', 'Der Schalter muss im Kapitel stehen.');
+  let aufrufe = 0;
+  const umgebung = { document: { modelContext: { registerTool: async () => { aufrufe++; } } } };
+  await Webmcp.registriere(umgebung, require('../kern.js'), { webmcp: false });
+  assert.strictEqual(aufrufe, 0, 'Trotz webmcp: false wurden Werkzeuge angemeldet.');
+});
+
 // ── Vollständigkeit ───────────────────────────────────────────────────────
 
 test('jedes Zusatzmodul-Kapitel hat einen Datenschutz-Abschnitt', () => {
@@ -138,8 +224,17 @@ test('jedes Zusatzmodul-Kapitel hat einen Datenschutz-Abschnitt', () => {
     const inhalt = lies(path.join('docs', 'handbuch', datei));
     assert.match(inhalt, /## Datenschutz/,
       `${datei} beschreibt ein Zusatzmodul, hat aber keinen Datenschutz-Abschnitt.`);
-    assert.match(inhalt, /standardmäßig (aus|\*\*aus\*\*)/,
-      `${datei} sagt nicht, dass das Modul standardmäßig aus ist.`);
+    // Standard ist „aus". Wer davon abweicht, steht namentlich in
+    // STANDARDMAESSIG_AN und muss weiter oben technisch belegt sein.
+    if (STANDARDMAESSIG_AN.includes(datei)) {
+      assert.match(inhalt, /\*\*standardmäßig an\*\*/,
+        `${datei} steht in STANDARDMAESSIG_AN, sagt das dem Leser aber nicht.`);
+      assert.match(inhalt, /## Abschalten/,
+        `${datei} ist standardmäßig an und muss erklären, wie man es abschaltet.`);
+    } else {
+      assert.match(inhalt, /standardmäßig (aus|\*\*aus\*\*)/,
+        `${datei} sagt nicht, dass das Modul standardmäßig aus ist.`);
+    }
   }
 });
 
