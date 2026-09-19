@@ -4,6 +4,45 @@
 KI-Agenten verwenden.* Ohne Agent verhält sich Saldenwerk genau wie bisher;
 es gibt nichts einzurichten und nichts zu sehen.
 
+## In einfachen Worten
+
+Ein **Browser-Agent** ist ein KI-Assistent, der in Ihrem Browser mitarbeitet:
+Sie schreiben ihm in ein Seitenfenster, was Sie wollen, und er erledigt es
+auf der geöffneten Webseite. Haben Sie so etwas nie eingeschaltet, haben
+Sie keinen — dann können Sie dieses Kapitel überspringen.
+
+Normalerweise müsste ein solcher Assistent Saldenwerk bedienen wie ein
+Mensch: Felder suchen, klicken, tippen, ablesen. Das ist langsam und
+fehleranfällig. Saldenwerk stellt ihm deshalb eine Art **Taschenrechner**
+hin: Der Assistent gibt Zahlen hinein und bekommt das Ergebnis heraus.
+
+Ein Beispiel. Sie schreiben dem Assistenten:
+
+> „5.000 € Hauptforderung, Verzug seit dem 16.04.2024, 5 Prozentpunkte über
+> Basiszins, am 01.09.2024 wurden 1.500 € gezahlt. Was ist heute offen?"
+
+Der Assistent reicht diese Zahlen an den Saldenwerk-Rechner weiter und
+nennt Ihnen den offenen Betrag samt Zinsen — gerechnet von Saldenwerk,
+nicht von der KI geschätzt. Das ist der ganze Zweck: **Die KI soll nicht
+selbst rechnen, sondern rechnen lassen.**
+
+Drei Dinge sollten Sie dazu wissen:
+
+1. Der Rechner ist ein **Taschenrechner, kein Aktenschrank.** Er sieht
+   Ihre gespeicherten Konten nicht und legt nichts ab. Was der Assistent
+   ausrechnen lässt, steht danach nicht in Saldenwerk.
+2. Der Rechner nimmt **nur Zahlen und Daten** an, keine Namen. Wer
+   Gläubiger und wer Schuldner ist, muss der Assistent nicht wissen, um
+   Zinsen zu rechnen — also fragt Saldenwerk auch nicht danach.
+3. Der Assistent selbst ist **nicht Teil von Saldenwerk.** Er kann, wie
+   ein Kollege, der Ihnen über die Schulter schaut, alles lesen, was auf
+   dem Bildschirm steht — ganz gleich, ob es diesen Rechner gibt. Was das
+   für Mandatsdaten bedeutet, steht unten unter „Datenschutz".
+
+Der Rest des Kapitels sagt dasselbe genauer.
+
+## Im Einzelnen
+
 Manche Browser bringen inzwischen einen KI-Agenten mit oder lassen einen
 nachrüsten. Über **WebMCP** kann eine Webseite einem solchen Agenten
 Werkzeuge anbieten, damit er nicht mühsam Formulare bedienen muss.
